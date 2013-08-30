@@ -1,5 +1,6 @@
 (ns cljs-time.format
   (:require
+    [cljs-time.core :as time]
     [clojure.string :as string]
     [goog.date :as date]))
 
@@ -38,16 +39,16 @@
      "SSS" #(format "%03d" (S %))}))
 
 (def date-parsers
-  (let [y #(.setYear %1            (js/parseInt %2 10))
-        d #(.setUTCDate %1         (js/parseInt %2 10))
-        M #(.setUTCMonth %1   (dec (js/parseInt %2 10)))
-        h #(.setUTCHours %1        (js/parseInt %2 10))
-        m #(.setUTCMinutes %1      (js/parseInt %2 10))
-        s #(.setUTCSeconds %1      (js/parseInt %2 10))
-        S #(.setUTCMilliseconds %1 (js/parseInt %2 10))]
+  (let [y #(.setYear %1         (js/parseInt %2 10))
+        d #(.setDate %1         (js/parseInt %2 10))
+        M #(.setMonth %1   (dec (js/parseInt %2 10)))
+        h #(.setHours %1        (js/parseInt %2 10))
+        m #(.setMinutes %1      (js/parseInt %2 10))
+        s #(.setSeconds %1      (js/parseInt %2 10))
+        S #(.setMilliseconds %1 (js/parseInt %2 10))]
     {"d" ["(\\d{1,2})" d]
      "dd" ["(\\d{2})" d]
-     "dth" ["(\\d{1,2})(?:st|nd|rd|th)" d] 
+     "dth" ["(\\d{1,2})(?:st|nd|rd|th)" d]
      "M" ["(\\d{1,2})" M]
      "MM" ["(\\d{2})" M]
      "y" ["(\\d{1,4})" y]
@@ -65,6 +66,12 @@
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]}))
 
+(defn parser-sort-order-pred [parser]
+  (.indexOf
+    (into-array ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "dow" "h" "m"
+                 "s" "S" "hh" "mm" "ss" "SSS"])
+    parser))
+
 (def date-format-pattern
   (re-pattern
     (str "(" (string/join ")|(" (reverse (sort-by count (keys date-formatters)))) ")")))
@@ -76,9 +83,12 @@
 (defn parse [s formatter]
   (reduce (fn [date [part do-parse]] #_(.log js/console part) (do-parse date part) date)
           (doto (date/DateTime.) (.set (js/Date. 0 0 0 0 0 0 0)))
-          (map (fn [a b] [a (second (date-parsers b))])
-               (nfirst (re-seq (date-parse-pattern formatter) s))
-               (map first (re-seq date-format-pattern formatter)))))
+          (map (fn [[a b]] [a (second (date-parsers b))])
+               (sort-by (comp parser-sort-order-pred second)
+                        (partition 2
+                                   (interleave
+                                     (nfirst (re-seq (date-parse-pattern formatter) s))
+                                     (map first (re-seq date-format-pattern formatter))))))))
 
 (defn unparse [date formatter]
   {:pre [(not (nil? date)) (instance? date/DateTime date)]}
