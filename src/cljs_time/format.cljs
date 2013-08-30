@@ -80,7 +80,10 @@
   (re-pattern
     (string/replace formatter date-format-pattern #(first (date-parsers %)))))
 
-(defn parse [s formatter]
+(defn parse
+  "Returns a DateTime instance in the UTC time zone obtained by parsing the
+given string according to the given formatter."
+  [s formatter]
   (reduce (fn [date [part do-parse]] #_(.log js/console part) (do-parse date part) date)
           (doto (date/DateTime.) (.set (js/Date. 0 0 0 0 0 0 0)))
           (map (fn [[a b]] [a (second (date-parsers b))])
@@ -90,6 +93,9 @@
                                      (nfirst (re-seq (date-parse-pattern formatter) s))
                                      (map first (re-seq date-format-pattern formatter))))))))
 
-(defn unparse [date formatter]
+(defn unparse
+  "Returns a string representing the given DateTime instance in UTC and in the
+form determined by the given formatter."
+  [date formatter]
   {:pre [(not (nil? date)) (instance? date/DateTime date)]}
   (string/replace formatter date-format-pattern #((date-formatters %) date)))
