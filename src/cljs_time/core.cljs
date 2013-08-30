@@ -1,5 +1,5 @@
 (ns cljs-time.core
-  (:refer-clojure :exclude [second]))
+  (:refer-clojure :exclude [extend second]))
 
 (set! *print-fn* (fn [x] (.log js/console x)))
 
@@ -43,7 +43,7 @@
                 date))
      :months (fn [op date value]
                (let [date (.clone date)
-                     m (op (inc (month date)) value)
+                     m (op (month date) value)
                      y (year date)
                      y (cond (> m 12) (+ y 1)
                              (< m 1) (- y 1)
@@ -57,7 +57,7 @@
      :years (fn [op date value]
               (let [date (.clone date)]
                 (if (and (leap-year? (year date))
-                         (= 1 (month date))
+                         (= 2 (month date))
                          (= 29 (day date)))
                   (.setDate date 28))
                 (.setYear date (op (year date) value))
@@ -70,7 +70,7 @@
 (extend-protocol DateTimeProtocol
   goog.date.DateTime
   (year [this] (.getYear this))
-  (month [this] (.getMonth this))
+  (month [this] (inc (.getMonth this)))
   (day [this] (.getDate this))
   (day-of-week [this] (.getDay this))
   (hour [this] (.getHours this))
@@ -129,7 +129,7 @@ they will default to 1 or 0 as appropriate."
   ([year month day hour minute second]
    (date-time year month day hour minute second 0))
   ([year month day hour minute second millis]
-   (goog.date.DateTime. year month day hour minute second millis)))
+   (goog.date.DateTime. year (dec month) day hour minute second millis)))
 
 (defn period [period value]
   {:period period :value value})
@@ -210,9 +210,68 @@ e.g. (-> 30 minutes from-now)"
   [period]
   (plus (now) period))
 
-(defn interval [^goog.date.DateTime start ^goog.date.DateTime end]
+(defn interval
+  "Returns an interval representing the span between the two given ReadableDateTimes.
+Note that intervals are closed on the left and open on the right."
+  [^goog.date.DateTime start ^goog.date.DateTime end]
   {:pre [(< (.getTime start) (.getTime end))]}
   {:start start :end end})
+
+(defn start
+  "Returns the start DateTime of an Interval."
+  [in]
+  (:start in))
+
+(defn end
+  "Returns the end DateTime of an Interval."
+  [in]
+  (:end in))
+
+(defn extend
+  "Returns an Interval with an end ReadableDateTime the specified Period after the end
+of the given Interval"
+  [in & by]
+  (assoc in :end (apply plus (end in) by)))
+
+(defn in-millis
+  "Returns the number of milliseconds in the given Interval."
+  [{:keys [start end]}]
+  (- (.getTime end) (.getTime start)))
+
+(defn in-seconds
+  "Returns the number of standard seconds in the given Interval."
+  [in]
+  (int (/ (in-millis in) 1000)))
+
+(defn in-minutes
+  "Returns the number of standard minutes in the given Interval."
+  [in]
+  (int (/ (in-seconds in) 60)))
+
+(defn in-hours
+  "Returns the number of standard hours in the given Interval."
+  [in]
+  (int (/ (in-minutes in) 60)))
+
+(defn in-days
+  "Returns the number of standard days in the given Interval."
+  [in]
+  (int (/ (in-hours in) 24)))
+
+(defn in-weeks
+  "Returns the number of standard weeks in the given Interval."
+  [in]
+  (int (/ (in-days in) 7)))
+
+(defn in-months
+  "Returns the number of standard months in the given Interval."
+  [in]
+  (.getMonths (.toPeriod in (months))))
+
+(defn in-years
+  "Returns the number of standard years in the given Interval."
+  [in]
+  (.getYears (.toPeriod in (years))))
 
 (defn t= [& args]
   (apply = (map #(.getTime %) args)))
@@ -254,28 +313,28 @@ beginning of b."
   (in-minutes (interval d (now))))
 
 
-(defn ^DateTime last-day-of-the-month
-  ([^DateTime dt]
-     (last-day-of-the-month (.getYear dt) (.getMonthOfYear dt)))
-  ([^long year ^long month]
-     (-> ^DateTime (date-time year month) .dayOfMonth .withMaximumValue)))
+(defn last-day-of-the-month
+  ([dt]
+     (last-day-of-the-month (year dt) (month dt)))
+  ([year month]
+     (minus (date-time year (inc month) 1) (days 1))))
 
 (defn number-of-days-in-the-month
-  (^long [^DateTime dt]
-         (number-of-days-in-the-month (.getYear dt) (.getMonthOfYear dt)))
-  (^long [^long year ^long month]
-         (.getDayOfMonth ^DateTime (last-day-of-the-month year month))))
+  ([dt]
+   (number-of-days-in-the-month (year dt) (month dt)))
+  ([year month]
+   (.getDate (last-day-of-the-month year month))))
 
 (defn ^DateTime first-day-of-the-month
-  ([^DateTime dt]
-     (first-day-of-the-month (.getYear dt) (.getMonthOfYear dt)))
-  ([^long year ^long month]
-     (-> ^DateTime (date-time year month) .dayOfMonth .withMinimumValue)))
+  ([dt]
+     (first-day-of-the-month (year dt) (month dt)))
+  ([year month]
+     (-> (date-time year month 1))))
 
 
 (defn today-at
   ([hours minutes seconds millis]
-     (let [today (goog.date.Date.)]
+     (let [today (doto (goog.date.DateTime.) (.set (goog.date.Date.)))]
        (doto today
          (.setHours hours)
          (.setMinutes minutes)
