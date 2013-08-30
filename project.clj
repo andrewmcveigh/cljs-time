@@ -4,8 +4,9 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :scm {:url "git@github.com:andrewmcveigh/cljs-time.git"}
-  :dependencies [[prismatic/cljs-test "0.0.5"]] 
-  :plugins [[lein-cljsbuild "0.3.0"]]
+  :dependencies [[prismatic/cljs-test "0.0.5"]]
+  :plugins [[lein-cljsbuild "0.3.0"]
+            [lein-marginalia "0.7.1"]]
   :hooks [leiningen.cljsbuild]
   :clojurescript? true
   :cljsbuild

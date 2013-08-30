@@ -12,9 +12,9 @@ Put `[com.andrewmcveigh/cljs-time "0.1.0-SNAPSHOT"]` into your `:dependencies`.
 
 ## API
 
-So far, the API is very limited, and is likely to change. Only basic
-implementations of `cljs-time.format/parse` and `cljs-time.format/unparse` have
-been realised, however for me it is already useful.
+So far, the API is limited, and is likely to change.
+
+Basic documentation is available here.
 
 ## Examples
 
