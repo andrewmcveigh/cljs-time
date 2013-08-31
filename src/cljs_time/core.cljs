@@ -152,9 +152,9 @@
                 (.setYear date (op (year date) value))
                 date))}))
 
-(defn period-fn [{:keys [period value]}]
+(defn period-fn [p]
   (fn [operator date]
-    ((periods period) operator date value)))
+    (reduce #((periods (key %2)) operator %1 (val %2)) date p)))
 
 (extend-protocol DateTimeProtocol
   goog.date.UtcDateTime
@@ -234,8 +234,11 @@
   ([year month day hour minute second millis]
    (goog.date.UtcDateTime. year (dec month) day hour minute second millis)))
 
-(defn period [period value]
-  {:period period :value value})
+(defn period
+  ([period value]
+   (with-meta {period value} {:type ::period}))
+  ([p1 v1 & kvs]
+   (apply assoc (period p1 v1) kvs)))
 
 (defn years
   "Given a number, returns a Period representing that many years.
@@ -319,7 +322,7 @@
   Note that intervals are closed on the left and open on the right."
   [start end]
   {:pre [(< (.getTime start) (.getTime end))]}
-  {:start start :end end})
+  (with-meta {:start start :end end} {:type ::interval}))
 
 (defn start
   "Returns the start DateTime of an Interval."
@@ -386,6 +389,31 @@
                          (date-time (year start) em ed)) 1
                  :else-is-same-date 0)]
     (- (year end) (year start) d1)))
+
+(defmulti ->period meta)
+
+(defmethod ->period {:type ::interval} [{:keys [start end] :as interval}]
+  (let [years (in-years interval)
+        months (- (in-months interval) (* 12 years))
+        start-year (year start)
+        leap-years (count
+                     (remove false?
+                             (map leap-year?
+                                  (range start-year (+ start-year years)))))
+        ;_ (pr leap-years)
+        days (- (in-days interval) (* 365 years) leap-years)
+        ]
+    (period :years years
+            :months months
+            :days days
+            :hours (in-hours interval)
+            :minutes (in-minutes interval)
+            :seconds (in-seconds interval)
+            ))
+  )
+
+(pr (->period (interval (date-time 2012) (date-time 2013 2))))
+
 
 (defn within?
   "With 2 arguments: Returns true if the given Interval contains the given
