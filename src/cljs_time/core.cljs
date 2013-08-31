@@ -265,13 +265,23 @@ of the given Interval"
 
 (defn in-months
   "Returns the number of standard months in the given Interval."
-  [in]
-  (.getMonths (.toPeriod in (months))))
+  [{:keys [start end]}]
+  (let [start-month (month start)
+        start-month (if (= 1 (day start)) start-month (inc start-month))]
+    (+ (* 12 (- (year end) (year start))) (- (month end) start-month))))
 
 (defn in-years
   "Returns the number of standard years in the given Interval."
-  [in]
-  (.getYears (.toPeriod in (years))))
+  [{:keys [start end]}]
+  (let [sm (month start) sd (day start)
+        em (month end) ed (day end)
+        d1 (cond (and (= sm 2) (= sd 29) (= em 2) (= ed 28)) 0
+                 (before? (date-time (year start) sm sd)
+                          (date-time (year start) em ed)) 0
+                 (after? (date-time (year start) sm sd)
+                         (date-time (year start) em ed)) 1
+                 :else-is-same-date 0)]
+    (- (year end) (year start) d1)))
 
 (defn t= [& args]
   (apply = (map #(.getTime %) args)))
@@ -287,7 +297,7 @@ ReadablePartial."
    (within? start end date))
   ([start end date]
    (or (t= start date)
-       (t= end date)
+       ;(t= end date)
        (and (before? start date) (after? end date)))))
 
 (defn overlaps?
@@ -300,7 +310,8 @@ overlaps with the range specified by start-b and end-b."
   ([start-a end-a start-b end-b]
    (or (and (before? start-b end-a) (after? end-b start-a))
        (and (after? end-b start-a) (before? start-b end-a))
-       (or (t= start-a end-b) (t= start-b end-a)))))
+       ;(or (t= start-a end-b) (t= start-b end-a))
+       )))
 
 (defn abuts?
   "Returns true if Interval a abuts b, i.e. then end of a is exactly the

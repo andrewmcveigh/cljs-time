@@ -235,8 +235,11 @@
   (is (i= (interval (date-time 1986) (date-time 1988))
          (extend (interval (date-time 1986) (date-time 1987)) (years 1)))))
 
-(pr (interval (date-time 1986) (date-time 1988)))
-(pr (extend (interval (date-time 1986) (date-time 1987)) (years 1)))
+(deftest leap-year-interval-in
+  (is= 1 (in-years (interval (date-time 2012 2 29 12 5 4)
+                             (date-time 2013 2 28 22 2 6))))
+  (is= 1 (in-years (interval (date-time 2011 2 28 12 5 4)
+                             (date-time 2012 2 29 22 2 6)))))
 
 (deftest test-interval-in
   (let [p (interval (date-time 1986 10 14 12 5 4) (date-time 1986 11 3  22 2 6))]

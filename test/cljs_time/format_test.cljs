@@ -99,7 +99,14 @@
   (is (within?
         (interval (goog.date.DateTime. 2013 0 1 0 0 0 0)
                   (goog.date.DateTime. 2013 1 1 0 0 0 0))
-        (goog.date.DateTime. 2013 1 1 0 0 0 0)))
+        (time/minus (goog.date.DateTime. 2013 1 1 0 0 0 0)
+                    (time/millis 1))))
+
+  (is (not
+        (within?
+          (interval (goog.date.DateTime. 2013 0 1 0 0 0 0)
+                    (goog.date.DateTime. 2013 1 1 0 0 0 0))
+          (goog.date.DateTime. 2013 1 1 0 0 0 0))))
 
   (is (not (within?
              (interval (goog.date.DateTime. 2013 0 1 0 0 0 0)
