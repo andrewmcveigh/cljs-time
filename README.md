@@ -14,7 +14,7 @@ Put `[com.andrewmcveigh/cljs-time "0.1.0-SNAPSHOT"]` into your `:dependencies`.
 
 So far, the API is limited, and is likely to change.
 
-Basic documentation is available here.
+[API documentation](http://andrewmcveigh.github.io/cljs-time/uberdoc.html) is available.
 
 ## Examples
 
