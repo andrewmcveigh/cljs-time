@@ -1,25 +1,26 @@
 (ns cljs-time.core-test
-  (:refer-clojure :exclude [extend second])
+  (:refer-clojure :exclude [= extend second])
   (:require-macros
-   [cljs-test.macros :refer [is is= deftest]])
+    [cljs-test.macros :refer [is is= deftest]]
+    [cljs-time.macros :refer [do-at]])
   (:require
     [cljs-time.core :refer
-     [date-time epoch year month day hour minute second milli abuts? interval
-      overlaps? last-day-of-the-month number-of-days-in-the-month
-      first-day-of-the-month today-at now within? in-years in-months in-weeks
-      in-days in-hours in-minutes in-seconds in-millis minus plus year-month
-      day-of-week after? before?  years months weeks days hours minutes seconds
-      millis extend start end mins-ago t=]]))
+     [= date-time epoch year month day date-midnight today-at-midnight hour
+      minute second milli abuts? interval overlaps? last-day-of-the-month
+      number-of-days-in-the-month first-day-of-the-month today-at now within?
+      in-years in-months in-weeks in-days in-hours in-minutes in-seconds
+      in-millis minus plus year-month day-of-week after? before?  years months
+      weeks days hours minutes seconds millis extend start end mins-ago]]))
 
-;(deftest test-now
-  ;(is (= (date-time 2010 1 1)
-         ;(do-at (date-time 2010 1 1)
-                ;(now)))))
+(deftest test-now
+  (is (= (date-time 2010 1 1)
+         (do-at (date-time 2010 1 1)
+                (now)))))
 
-;(deftest test-today-at-midnight
-  ;(is (= (date-midnight 2010 1 1)
-         ;(do-at (date-midnight 2010 1 1)
-                ;(today-at-midnight)))))
+(deftest test-today-at-midnight
+  (is (= (date-midnight 2010 1 1)
+          (do-at (date-midnight 2010 1 1)
+                 (today-at-midnight)))))
 
 (deftest test-epoch
   (let [e (epoch)]
@@ -44,23 +45,23 @@
     (is (= 2    (second d)))
     (is (= 1    (milli  d)))))
 
-;(deftest test-date-midnight-and-accessors
-  ;(let [d (date-midnight 1986)]
-    ;(is (= 1986 (year   d)))
-    ;(is (= 1    (month  d)))
-    ;(is (= 1    (day    d)))
-    ;(is (= 0    (hour   d)))
-    ;(is (= 0    (minute d)))
-    ;(is (= 0    (second    d)))
-    ;(is (= 0    (milli  d))))
-  ;(let [d (date-midnight 1986 10 14)]
-    ;(is (= 1986 (year   d)))
-    ;(is (= 10   (month  d)))
-    ;(is (= 14   (day    d)))
-    ;(is (= 0    (hour   d)))
-    ;(is (= 0    (minute d)))
-    ;(is (= 0    (second d)))
-    ;(is (= 0    (milli  d)))))
+(deftest test-date-midnight-and-accessors
+  (let [d (date-midnight 1986)]
+    (is (= 1986 (year   d)))
+    (is (= 1    (month  d)))
+    (is (= 1    (day    d)))
+    (is (= 0    (hour   d)))
+    (is (= 0    (minute d)))
+    (is (= 0    (second    d)))
+    (is (= 0    (milli  d))))
+  (let [d (date-midnight 1986 10 14)]
+    (is (= 1986 (year   d)))
+    (is (= 10   (month  d)))
+    (is (= 14   (day    d)))
+    (is (= 0    (hour   d)))
+    (is (= 0    (minute d)))
+    (is (= 0    (second d)))
+    (is (= 0    (milli  d)))))
 
 ;(deftest test-local-date-time-and-accessors
   ;(let [d (local-date-time 1986)]
@@ -96,16 +97,15 @@
     ;(is (= 2    (day-of-week d)))))
 
 ;(deftest test-today
-  ;(is (= (local-date 2013 4 20) (do-at (from-time-zone (date-time 2013 4 20) (default-time-zone))
-                                  ;(today)))))
+  ;(is (= (local-date 2013 4 20)
+         ;(do-at (from-time-zone (date-time 2013 4 20) (default-time-zone))
+                ;(today)))))
 
 (deftest test-day-of-week
   (let [d (date-time 2010 4 24)]
     (is (= 6 (day-of-week d))))
   (let [d (date-time 1918 11 11)]
     (is (= 1 (day-of-week d)))))
-
-;(day-of-week (date-time 2010 4 24))
 
 (deftest test-after?
   (is (after? (date-time 1987) (date-time 1986)))
@@ -118,7 +118,7 @@
   (is (not (before? (date-time 1986) (date-time 1986)))))
 
 (deftest test-periods
-  (is (t= (date-time 1986 10 14 4 3 2 1)
+  (is (= (date-time 1986 10 14 4 3 2 1)
          (plus (date-time 1984)
            (years 2)
            (months 9)
@@ -127,19 +127,19 @@
            (minutes 3)
            (seconds 2)
            (millis 1))))
-  (is (t= (date-time 1986 1 8)
+  (is (= (date-time 1986 1 8)
          (plus (date-time 1986 1 1) (weeks 1)))))
 
 (deftest test-plus
-  (is (t= (date-time 1986 10 14 6)
+  (is (= (date-time 1986 10 14 6)
          (plus (date-time 1986 10 14 4) (hours 2))))
-  (is (t= (date-time 1986 10 14 6 5)
+  (is (= (date-time 1986 10 14 6 5)
          (plus (date-time 1986 10 14 4 2) (hours 2) (minutes 3)))))
 
 (deftest test-minus
-  (is (t= (date-time 1986 10 14 4)
+  (is (= (date-time 1986 10 14 4)
          (minus (date-time 1986 10 14 6) (hours 2))))
-  (is (t= (date-time 1986 10 14 4 2)
+  (is (= (date-time 1986 10 14 4 2)
          (minus (date-time 1986 10 14 6 5) (hours 2) (minutes 3)))))
 
 ;(deftest test-after?-local
@@ -349,16 +349,16 @@
         d6 (date-time 2012 6 30)
         d7 (date-time 2013 2 28)
         d8 (date-time 2016 2 29)]
-    (is (t= d1 (last-day-of-the-month 2012 1)))
-    (is (t= d1 (last-day-of-the-month (date-time 2012 1 13))))
-    (is (t= d2 (last-day-of-the-month 2012 2)))
-    (is (t= d2 (last-day-of-the-month (date-time 2012 2 8))))
-    (is (t= d3 (last-day-of-the-month 2012 3)))
-    (is (t= d4 (last-day-of-the-month 2012 4)))
-    (is (t= d5 (last-day-of-the-month 2012 5)))
-    (is (t= d6 (last-day-of-the-month 2012 6)))
-    (is (t= d7 (last-day-of-the-month 2013 2)))
-    (is (t= d8 (last-day-of-the-month 2016 2)))))
+    (is (= d1 (last-day-of-the-month 2012 1)))
+    (is (= d1 (last-day-of-the-month (date-time 2012 1 13))))
+    (is (= d2 (last-day-of-the-month 2012 2)))
+    (is (= d2 (last-day-of-the-month (date-time 2012 2 8))))
+    (is (= d3 (last-day-of-the-month 2012 3)))
+    (is (= d4 (last-day-of-the-month 2012 4)))
+    (is (= d5 (last-day-of-the-month 2012 5)))
+    (is (= d6 (last-day-of-the-month 2012 6)))
+    (is (= d7 (last-day-of-the-month 2013 2)))
+    (is (= d8 (last-day-of-the-month 2016 2)))))
 
 (deftest test-number-of-days-in-the-month
   (is (= 31 (number-of-days-in-the-month 2012 1)))
@@ -382,16 +382,16 @@
         d6 (date-time 2012 6 1)
         d7 (date-time 2013 2 1)
         d8 (date-time 2016 2 1)]
-    (is (t= d1 (first-day-of-the-month 2012 1)))
-    (is (t= d1 (first-day-of-the-month (date-time 2012 1 24))))
-    (is (t= d2 (first-day-of-the-month 2012 2)))
-    (is (t= d2 (first-day-of-the-month (date-time 2012 2 24))))
-    (is (t= d3 (first-day-of-the-month 2012 3)))
-    (is (t= d4 (first-day-of-the-month 2012 4)))
-    (is (t= d5 (first-day-of-the-month 2012 5)))
-    (is (t= d6 (first-day-of-the-month 2012 6)))
-    (is (t= d7 (first-day-of-the-month 2013 2)))
-    (is (t= d8 (first-day-of-the-month 2016 2)))))
+    (is (= d1 (first-day-of-the-month 2012 1)))
+    (is (= d1 (first-day-of-the-month (date-time 2012 1 24))))
+    (is (= d2 (first-day-of-the-month 2012 2)))
+    (is (= d2 (first-day-of-the-month (date-time 2012 2 24))))
+    (is (= d3 (first-day-of-the-month 2012 3)))
+    (is (= d4 (first-day-of-the-month 2012 4)))
+    (is (= d5 (first-day-of-the-month 2012 5)))
+    (is (= d6 (first-day-of-the-month 2012 6)))
+    (is (= d7 (first-day-of-the-month 2013 2)))
+    (is (= d8 (first-day-of-the-month 2016 2)))))
 
 
 (deftest test-today-at
@@ -400,5 +400,5 @@
         m  (month n)
         d  (day n)
         d1 (date-time y m d 13 0)]
-    (is (t= d1 (today-at 13 0)))
-    (is (t= d1 (today-at 13 0 0)))))
+    (is (= d1 (today-at 13 0)))
+    (is (= d1 (today-at 13 0 0)))))

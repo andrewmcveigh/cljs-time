@@ -81,11 +81,16 @@
   Note that all functions in this namespace work with Joda objects or ints. If
   you need to print or parse date-times, see cljs-time.format. If you need to
   ceorce date-times to or from other types, see cljs-time.coerce."
-  (:refer-clojure :exclude [extend second])
+  (:refer-clojure :exclude [= extend second])
   (:require goog.date.UtcDateTime)
   )
 
 (set! *print-fn* (fn [x] (.log js/console x)))
+
+(defn = [& args]
+  (cond (every? #(instance? goog.date.UtcDateTime %) args)
+        (apply cljs.core/= (map #(.getTime %) args))
+        :default (apply cljs.core/= args)))
 
 (defprotocol DateTimeProtocol
   "Interface for various date time functions"
@@ -164,34 +169,46 @@
   (after? [this that] (> (.getTime this) (.getTime that)))
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
-  (minus- [this period] ((period-fn period) - this)))
+  (minus- [this period] ((period-fn period) - this))
+  )
+
+
+(def ^:dynamic *sys-time* nil)
 
 (defn now
   "Returns a DateTime for the current instant in the UTC time zone."
   []
-  (goog.date.UtcDateTime.))
+  (if *sys-time* *sys-time* (goog.date.UtcDateTime.)))
+
+(defn at-midnight [datetime]
+  (let [datetime (.clone datetime)]
+    (doto datetime
+      (.setHours 0)
+      (.setMinutes 0)
+      (.setSeconds 0)
+      (.setMilliseconds 0))))
 
 (defn today-at-midnight
   "Returns a DateMidnight for today at midnight in the UTC time zone."
   []
-  (doto (goog.date.UtcDateTime.) (.set (goog.date.Date.))))
+  (at-midnight (if *sys-time* *sys-time* (now))))
 
 (defn epoch
   "Returns a DateTime for the begining of the Unix epoch in the UTC time zone."
   []
   (doto (goog.date.UtcDateTime.) (.setTime 0)))
 
-;(defn date-midnight
-;"Constructs and returns a new DateMidnight in UTC.
-;Specify the year, month of year, day of month. Note that month and day are
-;1-indexed. Any number of least-significant components can be ommited, in which case
-;they will default to 1."
-;([year]
-;(date-midnight year 1 1))
-;([^long year ^long month]
-;(date-midnight year month 1))
-;([^Long year ^Long month ^Long day]
-;(DateMidnight. year month day #^DateTimeZone utc)))
+(defn date-midnight
+  "Constructs and returns a new DateMidnight in UTC.
+  Specify the year, month of year, day of month. Note that month and day are
+  1-indexed. Any number of least-significant components can be ommited, in which case
+  they will default to 1."
+  ([year]
+   (date-midnight year 1 1))
+  ([year month]
+   (date-midnight year month 1))
+  ([year month day]
+   (goog.date.UtcDateTime. year (dec month) day)))
 
 (defn date-time
   "Constructs and returns a new DateTime in UTC.
@@ -370,9 +387,6 @@
                  :else-is-same-date 0)]
     (- (year end) (year start) d1)))
 
-(defn t= [& args]
-  (apply = (map #(.getTime %) args)))
-
 (defn within?
   "With 2 arguments: Returns true if the given Interval contains the given
   ReadableDateTime. Note that if the ReadableDateTime is exactly equal to the
@@ -384,8 +398,8 @@
   ([{:keys [start end]} date]
    (within? start end date))
   ([start end date]
-   (or (t= start date)
-       ;(t= end date)
+   (or (= start date)
+       ;(= end date)
        (and (before? start date) (after? end date)))))
 
 (defn overlaps?
@@ -399,14 +413,14 @@
   ([start-a end-a start-b end-b]
    (or (and (before? start-b end-a) (after? end-b start-a))
        (and (after? end-b start-a) (before? start-b end-a))
-       ;(or (t= start-a end-b) (t= start-b end-a))
+       ;(or (= start-a end-b) (= start-b end-a))
        )))
 
 (defn abuts?
   "Returns true if Interval a abuts b, i.e. then end of a is exactly the
   beginning of b."
   [{start-a :start end-a :end} {start-b :start end-b :end}]
-  (or (t= start-a end-b) (t= end-a start-b)))
+  (or (= start-a end-b) (= end-a start-b)))
 
 (defn mins-ago
   [d]
@@ -445,3 +459,7 @@
    (today-at hours minutes seconds 0))
   ([hours minutes]
    (today-at hours minutes 0)))
+
+(defn do-at* [base-date-time body-fn]
+  (binding [*sys-time* base-date-time]
+    (body-fn)))
