@@ -36,7 +36,9 @@
      "hh" #(format "%02d" (h %))
      "mm" #(format "%02d" (m %))
      "ss" #(format "%02d" (s %))
-     "SSS" #(format "%03d" (S %))}))
+     "SSS" #(format "%03d" (S %))
+     "Z" #(.getTimezoneOffsetString %)
+     }))
 
 (def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))
@@ -64,12 +66,13 @@
      "hh" ["(\\d{2})" h]
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
-     "SSS" ["(\\d{3})" S]}))
+     "SSS" ["(\\d{3})" S]
+     "Z" ["(\\+|\\-\\d{2}:\\d{2})" (constantly nil)]}))
 
 (defn parser-sort-order-pred [parser]
   (.indexOf
     (into-array ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "dow" "h" "m"
-                 "s" "S" "hh" "mm" "ss" "SSS"])
+                 "s" "S" "hh" "mm" "ss" "SSS" "Z"])
     parser))
 
 (def date-format-pattern
@@ -85,7 +88,7 @@
 given string according to the given formatter."
   [s formatter]
   (reduce (fn [date [part do-parse]] #_(.log js/console part) (do-parse date part) date)
-          (doto (date/DateTime.) (.set (js/Date. 0 0 0 0 0 0 0)))
+          (date/UtcDateTime. 0 0 0 0 0 0 0)
           (map (fn [[a b]] [a (second (date-parsers b))])
                (sort-by (comp parser-sort-order-pred second)
                         (partition 2

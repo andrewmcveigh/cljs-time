@@ -3,15 +3,13 @@
   (:require-macros
    [cljs-test.macros :refer [is is= deftest]])
   (:require
-    [cljs-time.core
-     :refer [date-time epoch year month day hour minute second milli abuts? interval
-             overlaps? last-day-of-the-month number-of-days-in-the-month first-day-of-the-month
-             today-at now within? in-years in-months in-weeks in-days in-hours
-             in-minutes in-seconds in-millis minus plus
-             year-month day-of-week after? before?
-             years months weeks days hours minutes seconds millis extend start end mins-ago
-             t=
-             ]]))
+    [cljs-time.core :refer
+     [date-time epoch year month day hour minute second milli abuts? interval
+      overlaps? last-day-of-the-month number-of-days-in-the-month
+      first-day-of-the-month today-at now within? in-years in-months in-weeks
+      in-days in-hours in-minutes in-seconds in-millis minus plus year-month
+      day-of-week after? before?  years months weeks days hours minutes seconds
+      millis extend start end mins-ago t=]]))
 
 ;(deftest test-now
   ;(is (= (date-time 2010 1 1)
@@ -402,5 +400,6 @@
         m  (month n)
         d  (day n)
         d1 (date-time y m d 13 0)]
+    (pr d1 (today-at 13 0))
     (is (t= d1 (today-at 13 0)))
     (is (t= d1 (today-at 13 0 0)))))

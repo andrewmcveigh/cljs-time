@@ -6,4 +6,4 @@
   (js/Date. (.getTime d)))
 
 (defn from-date [date]
-  (doto (date/DateTime.) (.set date)))
+  (doto (date/UtcDateTime.) (.setTime (.getTime date))))

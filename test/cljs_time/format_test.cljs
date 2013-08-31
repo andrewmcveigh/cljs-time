@@ -29,7 +29,7 @@
 (deftest unparse-test
   (let [date (from-date #inst "2013-08-29T00:00:00.000-00:00")]
     (is= "Thursday 29th August 2013" (format/unparse date "dow dth MMM yyyy"))
-    (is= "29/08/2013 00:00:00.000" (format/unparse date "dd/MM/yyyy hh:mm:ss.SSS"))))
+    (is= "29/08/2013 00:00:00.000Z" (format/unparse date "dd/MM/yyyy hh:mm:ss.SSSZ"))))
 
 (defn ist=
   "Is time ="
@@ -87,33 +87,33 @@
 (deftest within?-test
 
   (is (within?
-        (interval (goog.date.DateTime. 2013 0 1 0 0 0 0)
-                  (goog.date.DateTime. 2013 1 1 0 0 0 0))
-        (goog.date.DateTime. 2013 0 1 0 0 0 0)))
+        (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                  (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
+        (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)))
 
   (is (within?
-        (interval (goog.date.DateTime. 2013 0 1 0 0 0 0)
-                  (goog.date.DateTime. 2013 1 1 0 0 0 0))
-        (goog.date.DateTime. 2013 0 11 0 0 0 0)))
+        (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                  (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
+        (goog.date.UtcDateTime. 2013 0 11 0 0 0 0)))
 
   (is (within?
-        (interval (goog.date.DateTime. 2013 0 1 0 0 0 0)
-                  (goog.date.DateTime. 2013 1 1 0 0 0 0))
-        (time/minus (goog.date.DateTime. 2013 1 1 0 0 0 0)
+        (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                  (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
+        (time/minus (goog.date.UtcDateTime. 2013 1 1 0 0 0 0)
                     (time/millis 1))))
 
   (is (not
         (within?
-          (interval (goog.date.DateTime. 2013 0 1 0 0 0 0)
-                    (goog.date.DateTime. 2013 1 1 0 0 0 0))
-          (goog.date.DateTime. 2013 1 1 0 0 0 0))))
+          (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                    (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
+          (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))))
 
   (is (not (within?
-             (interval (goog.date.DateTime. 2013 0 1 0 0 0 0)
-                       (goog.date.DateTime. 2013 2 1 0 0 0 0))
-             (goog.date.DateTime. 2013 2 1 0 0 0 1))))
+             (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                       (goog.date.UtcDateTime. 2013 2 1 0 0 0 0))
+             (goog.date.UtcDateTime. 2013 2 1 0 0 0 1))))
 
   (is (not (within?
-             (interval (goog.date.DateTime. 2013 0 1 0 0 0 0)
-                       (goog.date.DateTime. 2013 2 1 0 0 0 0))
-             (goog.date.DateTime. 2012 11 31 23 59 59 999)))))
+             (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                       (goog.date.UtcDateTime. 2013 2 1 0 0 0 0))
+             (goog.date.UtcDateTime. 2012 11 31 23 59 59 999)))))
