@@ -102,3 +102,43 @@ form determined by the given formatter."
   [date formatter]
   {:pre [(not (nil? date)) (instance? date/DateTime date)]}
   (string/replace formatter date-format-pattern #((date-formatters %) date)))
+
+(defprotocol Mappable
+  (instant->map [instant] "Returns a map representation of the given instant.
+                          It will contain the following keys: :years, :months,
+                          :days, :hours, :minutes and :seconds."))
+
+(defn- to-map [years months days hours minutes seconds]
+  {:years years
+   :months months
+   :days days
+   :hours hours
+   :minutes minutes
+   :seconds seconds})
+
+(extend-protocol Mappable
+  goog.date.UtcDateTime
+  (instant->map [dt]
+    (to-map
+      (.getYear dt)
+      (.getMonth dt)
+      (.getDate dt)
+      (.getHours dt)
+      (.getMinutes dt)
+      (.getSeconds dt))))
+
+(extend-protocol Mappable
+  Period
+  (instant->map [period]
+    (to-map
+      (.getYears period)
+      (.getMonths period)
+      (.getDays period)
+      (.getHours period)
+      (.getMinutes period)
+      (.getSeconds period))))
+
+(extend-protocol Mappable
+  Interval
+  (instant->map [it]
+    (instant->map (.toPeriod it (PeriodType/yearMonthDayTime)))))
