@@ -400,6 +400,5 @@
         m  (month n)
         d  (day n)
         d1 (date-time y m d 13 0)]
-    (pr d1 (today-at 13 0))
     (is (t= d1 (today-at 13 0)))
     (is (t= d1 (today-at 13 0 0)))))

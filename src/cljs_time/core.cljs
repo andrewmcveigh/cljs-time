@@ -156,7 +156,7 @@
   (year [this] (.getYear this))
   (month [this] (inc (.getMonth this)))
   (day [this] (.getDate this))
-  (day-of-week [this] (.getDay this))
+  (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
   (hour [this] (.getHours this))
   (minute [this] (.getMinutes this))
   (second [this] (.getSeconds this))
