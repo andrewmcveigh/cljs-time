@@ -17,9 +17,9 @@
   (after? [this that] "Returns true if ReadableDateTime 'this' is strictly after date/time 'that'.")
   (before? [this that] "Returns true if ReadableDateTime 'this' is strictly before date/time 'that'.")
   (plus- [this period]
-    "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
+         "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
   (minus- [this period]
-    "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
+          "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
 
 (defn leap-year? [y]
   (cond (zero? (mod y 400)) true
@@ -98,24 +98,26 @@
   (doto (goog.date.DateTime.) (.setTime 0)))
 
 ;(defn date-midnight
-  ;"Constructs and returns a new DateMidnight in UTC.
+;"Constructs and returns a new DateMidnight in UTC.
 ;Specify the year, month of year, day of month. Note that month and day are
 ;1-indexed. Any number of least-significant components can be ommited, in which case
 ;they will default to 1."
-  ;([year]
-    ;(date-midnight year 1 1))
-  ;([^long year ^long month]
-    ;(date-midnight year month 1))
-  ;([^Long year ^Long month ^Long day]
-    ;(DateMidnight. year month day #^DateTimeZone utc)))
+;([year]
+;(date-midnight year 1 1))
+;([^long year ^long month]
+;(date-midnight year month 1))
+;([^Long year ^Long month ^Long day]
+;(DateMidnight. year month day #^DateTimeZone utc)))
 
 (defn date-time
   "Constructs and returns a new DateTime in UTC.
-Specify the year, month of year, day of month, hour of day, minute if hour,
-second of minute, and millisecond of second. Note that month and day are
-1-indexed while hour, second, minute, and millis are 0-indexed.
-Any number of least-significant components can be ommited, in which case
-they will default to 1 or 0 as appropriate."
+
+  Specify the year, month of year, day of month, hour of day, minute if hour,
+  second of minute, and millisecond of second. Note that month and day are
+  1-indexed while hour, second, minute, and millis are 0-indexed.
+
+  Any number of least-significant components can be ommited, in which case
+  they will default to 1 or 0 as appropriate."
   ([year]
    (date-time year 1 1 0 0 0 0))
   ([year month]
@@ -136,83 +138,84 @@ they will default to 1 or 0 as appropriate."
 
 (defn years
   "Given a number, returns a Period representing that many years.
-Without an argument, returns a PeriodType representing only years."
+  Without an argument, returns a PeriodType representing only years."
   ([] (years nil))
   ([n] (period :years n)))
 
 (defn months
   "Given a number, returns a Period representing that many months.
-Without an argument, returns a PeriodType representing only months."
+  Without an argument, returns a PeriodType representing only months."
   ([] (months nil))
   ([n] (period :months n)))
 
 (defn weeks
   "Given a number, returns a Period representing that many weeks.
-Without an argument, returns a PeriodType representing only weeks."
+  Without an argument, returns a PeriodType representing only weeks."
   ([] (weeks nil))
   ([n] (period :weeks n)))
 
 (defn days
   "Given a number, returns a Period representing that many days.
-Without an argument, returns a PeriodType representing only days."
+  Without an argument, returns a PeriodType representing only days."
   ([] (days nil))
   ([n] (period :days n)))
 
 (defn hours
   "Given a number, returns a Period representing that many hours.
-Without an argument, returns a PeriodType representing only hours."
+  Without an argument, returns a PeriodType representing only hours."
   ([] (hours nil))
   ([n] (period :hours n)))
 
 (defn minutes
   "Given a number, returns a Period representing that many minutes.
-Without an argument, returns a PeriodType representing only minutes."
+  Without an argument, returns a PeriodType representing only minutes."
   ([] (minutes nil))
   ([n] (period :minutes n)))
 
 (defn seconds
   "Given a number, returns a Period representing that many seconds.
-Without an argument, returns a PeriodType representing only seconds."
+  Without an argument, returns a PeriodType representing only seconds."
   ([] (seconds nil))
   ([n] (period :seconds n)))
 
 (defn millis
   "Given a number, returns a Period representing that many milliseconds.
-Without an argument, returns a PeriodType representing only milliseconds."
+  Without an argument, returns a PeriodType representing only milliseconds."
   ([] (millis nil))
   ([n] (period :millis n)))
 
 (defn plus
   "Returns a new date/time corresponding to the given date/time moved forwards by
-the given Period(s)."
+  the given Period(s)."
   ([dt p]
-     (plus- dt p))
+   (plus- dt p))
   ([dt p & ps]
-     (reduce plus- (plus- dt p) ps)))
+   (reduce plus- (plus- dt p) ps)))
 
 (defn minus
   "Returns a new date/time object corresponding to the given date/time moved backwards by
-the given Period(s)."
+  the given Period(s)."
   ([dt p]
    (minus- dt p))
   ([dt p & ps]
-     (reduce minus- (minus- dt p) ps)))
+   (reduce minus- (minus- dt p) ps)))
 
 (defn ago
   "Returns a DateTime a supplied period before the present.
-e.g. (-> 5 years ago)"
+
+  e.g. `(-> 5 years ago)`"
   [period]
   (minus (now) period))
 
 (defn from-now
   "Returns a DateTime a supplied period after the present.
-e.g. (-> 30 minutes from-now)"
+  e.g. `(-> 30 minutes from-now)`"
   [period]
   (plus (now) period))
 
 (defn interval
   "Returns an interval representing the span between the two given ReadableDateTimes.
-Note that intervals are closed on the left and open on the right."
+  Note that intervals are closed on the left and open on the right."
   [^goog.date.DateTime start ^goog.date.DateTime end]
   {:pre [(< (.getTime start) (.getTime end))]}
   {:start start :end end})
@@ -229,7 +232,7 @@ Note that intervals are closed on the left and open on the right."
 
 (defn extend
   "Returns an Interval with an end ReadableDateTime the specified Period after the end
-of the given Interval"
+  of the given Interval"
   [in & by]
   (assoc in :end (apply plus (end in) by)))
 
@@ -288,11 +291,12 @@ of the given Interval"
 
 (defn within?
   "With 2 arguments: Returns true if the given Interval contains the given
-ReadableDateTime. Note that if the ReadableDateTime is exactly equal to the
-end of the interval, this function returns false.
-With 3 arguments: Returns true if the start ReadablePartial is
-equal to or before and the end ReadablePartial is equal to or after the test
-ReadablePartial."
+  ReadableDateTime. Note that if the ReadableDateTime is exactly equal to the
+  end of the interval, this function returns false.
+
+  With 3 arguments: Returns true if the start ReadablePartial is
+  equal to or before and the end ReadablePartial is equal to or after the test
+  ReadablePartial."
   ([{:keys [start end]} date]
    (within? start end date))
   ([start end date]
@@ -302,9 +306,10 @@ ReadablePartial."
 
 (defn overlaps?
   "With 2 arguments: Returns true of the two given Intervals overlap.
-Note that intervals that satisfy abuts? do not satisfy overlaps?
-With 4 arguments: Returns true if the range specified by start-a and end-a
-overlaps with the range specified by start-b and end-b."
+  Note that intervals that satisfy abuts? do not satisfy overlaps?
+
+  With 4 arguments: Returns true if the range specified by start-a and end-a
+  overlaps with the range specified by start-b and end-b."
   ([{start-a :start end-a :end} {start-b :start end-b :end}]
    (overlaps? start-a end-a start-b end-b))
   ([start-a end-a start-b end-b]
@@ -315,7 +320,7 @@ overlaps with the range specified by start-b and end-b."
 
 (defn abuts?
   "Returns true if Interval a abuts b, i.e. then end of a is exactly the
-beginning of b."
+  beginning of b."
   [{start-a :start end-a :end} {start-b :start end-b :end}]
   (or (t= start-a end-b) (t= end-a start-b)))
 
@@ -323,12 +328,11 @@ beginning of b."
   [d]
   (in-minutes (interval d (now))))
 
-
 (defn last-day-of-the-month
   ([dt]
-     (last-day-of-the-month (year dt) (month dt)))
+   (last-day-of-the-month (year dt) (month dt)))
   ([year month]
-     (minus (date-time year (inc month) 1) (days 1))))
+   (minus (date-time year (inc month) 1) (days 1))))
 
 (defn number-of-days-in-the-month
   ([dt]
@@ -336,35 +340,21 @@ beginning of b."
   ([year month]
    (.getDate (last-day-of-the-month year month))))
 
-(defn ^DateTime first-day-of-the-month
+(defn first-day-of-the-month
   ([dt]
-     (first-day-of-the-month (year dt) (month dt)))
+   (first-day-of-the-month (year dt) (month dt)))
   ([year month]
-     (-> (date-time year month 1))))
-
+   (-> (date-time year month 1))))
 
 (defn today-at
   ([hours minutes seconds millis]
-     (let [today (doto (goog.date.DateTime.) (.set (goog.date.Date.)))]
-       (doto today
-         (.setHours hours)
-         (.setMinutes minutes)
-         (.setSeconds seconds)
-         (.setMilliseconds millis))))
+   (let [today (doto (goog.date.DateTime.) (.set (goog.date.Date.)))]
+     (doto today
+       (.setHours hours)
+       (.setMinutes minutes)
+       (.setSeconds seconds)
+       (.setMilliseconds millis))))
   ([hours minutes seconds]
-     (today-at hours minutes seconds 0))
+   (today-at hours minutes seconds 0))
   ([hours minutes]
-     (today-at hours minutes 0)))
-
-;(defn do-at* [^BaseDateTime base-date-time body-fn]
-  ;(DateTimeUtils/setCurrentMillisFixed (.getMillis base-date-time))
-  ;(try
-    ;(body-fn)
-    ;(finally
-      ;(DateTimeUtils/setCurrentMillisSystem))))
-
-;(defmacro do-at
-  ;"Like clojure.core/do except evalautes the expression at the given date-time"
-  ;[^BaseDateTime base-date-time & body]
-  ;`(do-at* ~base-date-time
-    ;(fn [] ~@body)))
+   (today-at hours minutes 0)))

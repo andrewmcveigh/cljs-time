@@ -3038,8 +3038,8 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn from-date [date]
   (doto (date/DateTime.) (.set date)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.core" name="cljs-time.core"><h1 class="project-name">cljs-time.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns cljs-time.core
-  (:refer-clojure :exclude [second]))</pre></td></tr><tr><td class="docs"><p>(set! <em>print-fn</em> (fn [x] (.log js/console x)))</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Interface for various date time functions</p>
+  (:refer-clojure :exclude [extend second]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(set! *print-fn* (fn [x] (.log js/console x)))</pre></td></tr><tr><td class="docs"><p>Interface for various date time functions</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol DateTimeProtocol
   (year [this] &quot;Return the year component of the given date/time.&quot;)
   (month [this] &quot;Return the month component of the given date/time.&quot;)
@@ -3053,9 +3053,9 @@ net.brehaut.ClojureTools = (function (SH) {
   (after? [this that] &quot;Returns true if ReadableDateTime 'this' is strictly after date/time 'that'.&quot;)
   (before? [this that] &quot;Returns true if ReadableDateTime 'this' is strictly before date/time 'that'.&quot;)
   (plus- [this period]
-    &quot;Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).&quot;)
+         &quot;Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).&quot;)
   (minus- [this period]
-    &quot;Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s).&quot;))</pre></td></tr><tr><td class="docs">
+          &quot;Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s).&quot;))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn leap-year? [y]
   (cond (zero? (mod y 400)) true
         (zero? (mod y 100)) false
@@ -3077,7 +3077,7 @@ net.brehaut.ClojureTools = (function (SH) {
                 date))
      :months (fn [op date value]
                (let [date (.clone date)
-                     m (op (inc (month date)) value)
+                     m (op (month date) value)
                      y (year date)
                      y (cond (&gt; m 12) (+ y 1)
                              (&lt; m 1) (- y 1)
@@ -3091,7 +3091,7 @@ net.brehaut.ClojureTools = (function (SH) {
      :years (fn [op date value]
               (let [date (.clone date)]
                 (if (and (leap-year? (year date))
-                         (= 1 (month date))
+                         (= 2 (month date))
                          (= 29 (day date)))
                   (.setDate date 28))
                 (.setYear date (op (year date) value))
@@ -3102,7 +3102,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(extend-protocol DateTimeProtocol
   goog.date.DateTime
   (year [this] (.getYear this))
-  (month [this] (.getMonth this))
+  (month [this] (inc (.getMonth this)))
   (day [this] (.getDate this))
   (day-of-week [this] (.getDay this))
   (hour [this] (.getHours this))
@@ -3112,61 +3112,213 @@ net.brehaut.ClojureTools = (function (SH) {
   (after? [this that] (&gt; (.getTime this) (.getTime that)))
   (before? [this that] (&lt; (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
-  (minus- [this period] ((period-fn period) - this)))</pre></td></tr><tr><td class="docs">
+  (minus- [this period] ((period-fn period) - this)))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime for the current instant in the UTC time zone.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn now
+  []
+  (goog.date.DateTime.))</pre></td></tr><tr><td class="docs"><p>Returns a DateMidnight for today at midnight in the UTC time zone.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn today-at-midnight
+  [] 
+  (doto (goog.date.DateTime.) (.set (goog.date.Date.))))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime for the begining of the Unix epoch in the UTC time zone.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn epoch
+  []
+  (doto (goog.date.DateTime.) (.setTime 0)))</pre></td></tr><tr><td class="docs"><p>(defn date-midnight
+"Constructs and returns a new DateMidnight in UTC.
+Specify the year, month of year, day of month. Note that month and day are
+1-indexed. Any number of least-significant components can be ommited, in which case
+they will default to 1."
+([year]
+(date-midnight year 1 1))
+([^long year ^long month]
+(date-midnight year month 1))
+([^Long year ^Long month ^Long day]
+(DateMidnight. year month day #^DateTimeZone utc)))</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Constructs and returns a new DateTime in UTC.</p>
+
+<p>  Specify the year, month of year, day of month, hour of day, minute if hour,
+  second of minute, and millisecond of second. Note that month and day are
+  1-indexed while hour, second, minute, and millis are 0-indexed.</p>
+
+<p>  Any number of least-significant components can be ommited, in which case
+  they will default to 1 or 0 as appropriate.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn date-time
+  ([year]
+   (date-time year 1 1 0 0 0 0))
+  ([year month]
+   (date-time year month 1 0 0 0 0))
+  ([year month day]
+   (date-time year month day 0 0 0 0))
+  ([year month day hour]
+   (date-time year month day hour 0 0 0))
+  ([year month day hour minute]
+   (date-time year month day hour minute 0 0))
+  ([year month day hour minute second]
+   (date-time year month day hour minute second 0))
+  ([year month day hour minute second millis]
+   (goog.date.DateTime. year (dec month) day hour minute second millis)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn period [period value]
-  {:period period :value value})</pre></td></tr><tr><td class="docs">
+  {:period period :value value})</pre></td></tr><tr><td class="docs"><p>Given a number, returns a Period representing that many years.
+  Without an argument, returns a PeriodType representing only years.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn years
   ([] (years nil))
-  ([n] (period :years n)))</pre></td></tr><tr><td class="docs">
+  ([n] (period :years n)))</pre></td></tr><tr><td class="docs"><p>Given a number, returns a Period representing that many months.
+  Without an argument, returns a PeriodType representing only months.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn months
   ([] (months nil))
-  ([n] (period :months n)))</pre></td></tr><tr><td class="docs">
+  ([n] (period :months n)))</pre></td></tr><tr><td class="docs"><p>Given a number, returns a Period representing that many weeks.
+  Without an argument, returns a PeriodType representing only weeks.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn weeks
   ([] (weeks nil))
-  ([n] (period :weeks n)))</pre></td></tr><tr><td class="docs">
+  ([n] (period :weeks n)))</pre></td></tr><tr><td class="docs"><p>Given a number, returns a Period representing that many days.
+  Without an argument, returns a PeriodType representing only days.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn days
   ([] (days nil))
-  ([n] (period :days n)))</pre></td></tr><tr><td class="docs">
+  ([n] (period :days n)))</pre></td></tr><tr><td class="docs"><p>Given a number, returns a Period representing that many hours.
+  Without an argument, returns a PeriodType representing only hours.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn hours
   ([] (hours nil))
-  ([n] (period :hours n)))</pre></td></tr><tr><td class="docs">
+  ([n] (period :hours n)))</pre></td></tr><tr><td class="docs"><p>Given a number, returns a Period representing that many minutes.
+  Without an argument, returns a PeriodType representing only minutes.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn minutes
   ([] (minutes nil))
-  ([n] (period :minutes n)))</pre></td></tr><tr><td class="docs">
+  ([n] (period :minutes n)))</pre></td></tr><tr><td class="docs"><p>Given a number, returns a Period representing that many seconds.
+  Without an argument, returns a PeriodType representing only seconds.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn seconds
   ([] (seconds nil))
-  ([n] (period :seconds n)))</pre></td></tr><tr><td class="docs">
+  ([n] (period :seconds n)))</pre></td></tr><tr><td class="docs"><p>Given a number, returns a Period representing that many milliseconds.
+  Without an argument, returns a PeriodType representing only milliseconds.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn millis
   ([] (millis nil))
-  ([n] (period :millis n)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn today-at-midnight []
-  (doto (goog.date.DateTime.) (.set (goog.date.Date.))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn interval [^goog.date.DateTime start ^goog.date.DateTime end]
+  ([n] (period :millis n)))</pre></td></tr><tr><td class="docs"><p>Returns a new date/time corresponding to the given date/time moved forwards by
+  the given Period(s).</p>
+</td><td class="codes"><pre class="brush: clojure">(defn plus
+  ([dt p]
+   (plus- dt p))
+  ([dt p &amp; ps]
+   (reduce plus- (plus- dt p) ps)))</pre></td></tr><tr><td class="docs"><p>Returns a new date/time object corresponding to the given date/time moved backwards by
+  the given Period(s).</p>
+</td><td class="codes"><pre class="brush: clojure">(defn minus
+  ([dt p]
+   (minus- dt p))
+  ([dt p &amp; ps]
+   (reduce minus- (minus- dt p) ps)))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime a supplied period before the present.</p>
+
+<p>  e.g. <code>(-&gt; 5 years ago)</code></p>
+</td><td class="codes"><pre class="brush: clojure">(defn ago
+  [period]
+  (minus (now) period))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime a supplied period after the present.
+  e.g. <code>(-&gt; 30 minutes from-now)</code></p>
+</td><td class="codes"><pre class="brush: clojure">(defn from-now
+  [period]
+  (plus (now) period))</pre></td></tr><tr><td class="docs"><p>Returns an interval representing the span between the two given ReadableDateTimes.
+  Note that intervals are closed on the left and open on the right.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn interval
+  [^goog.date.DateTime start ^goog.date.DateTime end]
   {:pre [(&lt; (.getTime start) (.getTime end))]}
-  {:start start :end end})</pre></td></tr><tr><td class="docs">
+  {:start start :end end})</pre></td></tr><tr><td class="docs"><p>Returns the start DateTime of an Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn start
+  [in]
+  (:start in))</pre></td></tr><tr><td class="docs"><p>Returns the end DateTime of an Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn end
+  [in]
+  (:end in))</pre></td></tr><tr><td class="docs"><p>Returns an Interval with an end ReadableDateTime the specified Period after the end
+  of the given Interval</p>
+</td><td class="codes"><pre class="brush: clojure">(defn extend
+  [in &amp; by]
+  (assoc in :end (apply plus (end in) by)))</pre></td></tr><tr><td class="docs"><p>Returns the number of milliseconds in the given Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn in-millis
+  [{:keys [start end]}]
+  (- (.getTime end) (.getTime start)))</pre></td></tr><tr><td class="docs"><p>Returns the number of standard seconds in the given Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn in-seconds
+  [in]
+  (int (/ (in-millis in) 1000)))</pre></td></tr><tr><td class="docs"><p>Returns the number of standard minutes in the given Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn in-minutes
+  [in]
+  (int (/ (in-seconds in) 60)))</pre></td></tr><tr><td class="docs"><p>Returns the number of standard hours in the given Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn in-hours
+  [in]
+  (int (/ (in-minutes in) 60)))</pre></td></tr><tr><td class="docs"><p>Returns the number of standard days in the given Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn in-days
+  [in]
+  (int (/ (in-hours in) 24)))</pre></td></tr><tr><td class="docs"><p>Returns the number of standard weeks in the given Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn in-weeks
+  [in]
+  (int (/ (in-days in) 7)))</pre></td></tr><tr><td class="docs"><p>Returns the number of standard months in the given Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn in-months
+  [{:keys [start end]}]
+  (let [start-month (month start)
+        start-month (if (= 1 (day start)) start-month (inc start-month))]
+    (+ (* 12 (- (year end) (year start))) (- (month end) start-month))))</pre></td></tr><tr><td class="docs"><p>Returns the number of standard years in the given Interval.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn in-years
+  [{:keys [start end]}]
+  (let [sm (month start) sd (day start)
+        em (month end) ed (day end)
+        d1 (cond (and (= sm 2) (= sd 29) (= em 2) (= ed 28)) 0
+                 (before? (date-time (year start) sm sd)
+                          (date-time (year start) em ed)) 0
+                 (after? (date-time (year start) sm sd)
+                         (date-time (year start) em ed)) 1
+                 :else-is-same-date 0)]
+    (- (year end) (year start) d1)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn t= [&amp; args]
-  (apply = (map #(.getTime %) args)))</pre></td></tr><tr><td class="docs">
+  (apply = (map #(.getTime %) args)))</pre></td></tr><tr><td class="docs"><p>With 2 arguments: Returns true if the given Interval contains the given
+  ReadableDateTime. Note that if the ReadableDateTime is exactly equal to the
+  end of the interval, this function returns false.</p>
+
+<p>  With 3 arguments: Returns true if the start ReadablePartial is
+  equal to or before and the end ReadablePartial is equal to or after the test
+  ReadablePartial.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn within?
   ([{:keys [start end]} date]
    (within? start end date))
   ([start end date]
    (or (t= start date)
-       (t= end date)
+       ;(t= end date)
        (and (before? start date) (after? end date)))))</pre></td></tr><tr><td class="docs"><p>With 2 arguments: Returns true of the two given Intervals overlap.
-Note that intervals that satisfy abuts? do not satisfy overlaps?
-With 4 arguments: Returns true if the range specified by start-a and end-a
-overlaps with the range specified by start-b and end-b.</p>
+  Note that intervals that satisfy abuts? do not satisfy overlaps?</p>
+
+<p>  With 4 arguments: Returns true if the range specified by start-a and end-a
+  overlaps with the range specified by start-b and end-b.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn overlaps?
   ([{start-a :start end-a :end} {start-b :start end-b :end}]
    (overlaps? start-a end-a start-b end-b))
   ([start-a end-a start-b end-b]
    (or (and (before? start-b end-a) (after? end-b start-a))
        (and (after? end-b start-a) (before? start-b end-a))
-       (or (t= start-a end-b) (t= start-b end-a)))))</pre></td></tr><tr><td class="docs"><p>Returns true if Interval a abuts b, i.e. then end of a is exactly the
-beginning of b.</p>
+       ;(or (t= start-a end-b) (t= start-b end-a)))))</pre></td></tr><tr><td class="docs"><p>Returns true if Interval a abuts b, i.e. then end of a is exactly the
+  beginning of b.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn abuts?
   [{start-a :start end-a :end} {start-b :start end-b :end}]
-  (or (t= start-a end-b) (t= end-a start-b)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.format" name="cljs-time.format"><h1 class="project-name">cljs-time.format</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  (or (t= start-a end-b) (t= end-a start-b)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn mins-ago
+  [d]
+  (in-minutes (interval d (now))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn last-day-of-the-month
+  ([dt]
+   (last-day-of-the-month (year dt) (month dt)))
+  ([year month]
+   (minus (date-time year (inc month) 1) (days 1))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn number-of-days-in-the-month
+  ([dt]
+   (number-of-days-in-the-month (year dt) (month dt)))
+  ([year month]
+   (.getDate (last-day-of-the-month year month))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn first-day-of-the-month
+  ([dt]
+   (first-day-of-the-month (year dt) (month dt)))
+  ([year month]
+   (-&gt; (date-time year month 1))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn today-at
+  ([hours minutes seconds millis]
+   (let [today (doto (goog.date.DateTime.) (.set (goog.date.Date.)))]
+     (doto today
+       (.setHours hours)
+       (.setMinutes minutes)
+       (.setSeconds seconds)
+       (.setMilliseconds millis))))
+  ([hours minutes seconds]
+   (today-at hours minutes seconds 0))
+  ([hours minutes]
+   (today-at hours minutes 0)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.format" name="cljs-time.format"><h1 class="project-name">cljs-time.format</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns cljs-time.format
   (:require
     [cljs-time.core :as time]
@@ -3240,8 +3392,10 @@ beginning of b.</p>
     (str &quot;(&quot; (string/join &quot;)|(&quot; (reverse (sort-by count (keys date-formatters)))) &quot;)&quot;)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn date-parse-pattern [formatter]
   (re-pattern
-    (string/replace formatter date-format-pattern #(first (date-parsers %)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn parse [s formatter]
+    (string/replace formatter date-format-pattern #(first (date-parsers %)))))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime instance in the UTC time zone obtained by parsing the
+given string according to the given formatter.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn parse
+  [s formatter]
   (reduce (fn [date [part do-parse]] #_(.log js/console part) (do-parse date part) date)
           (doto (date/DateTime.) (.set (js/Date. 0 0 0 0 0 0 0)))
           (map (fn [[a b]] [a (second (date-parsers b))])
@@ -3249,8 +3403,10 @@ beginning of b.</p>
                         (partition 2
                                    (interleave
                                      (nfirst (re-seq (date-parse-pattern formatter) s))
-                                     (map first (re-seq date-format-pattern formatter))))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn unparse [date formatter]
+                                     (map first (re-seq date-format-pattern formatter))))))))</pre></td></tr><tr><td class="docs"><p>Returns a string representing the given DateTime instance in UTC and in the
+form determined by the given formatter.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn unparse
+  [date formatter]
   {:pre [(not (nil? date)) (instance? date/DateTime date)]}
   (string/replace formatter date-format-pattern #((date-formatters %) date)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
        SyntaxHighlighter.all()</script></body></html>
