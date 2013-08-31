@@ -400,20 +400,29 @@
                      (remove false?
                              (map leap-year?
                                   (range start-year (+ start-year years)))))
-        ;_ (pr leap-years)
-        days (- (in-days interval) (* 365 years) leap-years)
-        ]
+        start-month  (let [start-month (month start)]
+                       (if (= 1 (day start)) start-month (inc start-month)))
+        days-in-months (reduce +
+                               (map #(.getNumberOfDaysInMonth (date-time start-year %))
+                                    (range start-month (+ start-month months))))
+        days-to-remove (+ (* 365 years) (dec leap-years) days-in-months)
+        days (- (in-days interval) days-to-remove)
+        hours-to-remove (* 24 (+ days days-to-remove))
+        hours (- (in-hours interval) hours-to-remove)
+        minutes-to-remove (* 60 (+ hours hours-to-remove))
+        minutes (- (in-minutes interval) minutes-to-remove)
+        seconds-to-remove (* 60 (+ minutes minutes-to-remove))
+        seconds (- (in-seconds interval) seconds-to-remove)]
     (period :years years
             :months months
             :days days
-            :hours (in-hours interval)
-            :minutes (in-minutes interval)
-            :seconds (in-seconds interval)
-            ))
-  )
+            :hours hours
+            :minutes minutes
+            :seconds seconds
+            :millis (- (in-millis interval)
+                       (* 1000 (+ seconds seconds-to-remove))))))
 
-(pr (->period (interval (date-time 2012) (date-time 2013 2))))
-
+;(pr (->period (interval (date-time 2012) (date-time 2013 3 2 23 6 3 2))))
 
 (defn within?
   "With 2 arguments: Returns true if the given Interval contains the given

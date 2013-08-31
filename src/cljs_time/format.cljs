@@ -127,18 +127,18 @@ form determined by the given formatter."
       (.getMinutes dt)
       (.getSeconds dt))))
 
-(extend-protocol Mappable
-  Period
-  (instant->map [period]
-    (to-map
-      (.getYears period)
-      (.getMonths period)
-      (.getDays period)
-      (.getHours period)
-      (.getMinutes period)
-      (.getSeconds period))))
+;(extend-protocol Mappable
+  ;Period
+  ;(instant->map [period]
+    ;(to-map
+      ;(.getYears period)
+      ;(.getMonths period)
+      ;(.getDays period)
+      ;(.getHours period)
+      ;(.getMinutes period)
+      ;(.getSeconds period))))
 
-(extend-protocol Mappable
-  Interval
-  (instant->map [it]
-    (instant->map (.toPeriod it (PeriodType/yearMonthDayTime)))))
+;(extend-protocol Mappable
+  ;Interval
+  ;(instant->map [it]
+    ;(instant->map (.toPeriod it (PeriodType/yearMonthDayTime)))))
