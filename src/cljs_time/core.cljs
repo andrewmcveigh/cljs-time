@@ -82,7 +82,10 @@
   you need to print or parse date-times, see cljs-time.format. If you need to
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
-  (:require goog.date.UtcDateTime)
+  (:require
+    goog.date.UtcDateTime
+    goog.i18n.TimeZone
+    )
   )
 
 (set! *print-fn* (fn [x] (.log js/console x)))
@@ -109,6 +112,13 @@
          "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
   (minus- [this period]
           "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
+
+
+(def utc (goog.i18n.TimeZone/createTimeZone 
+           (clj->js {:id "UTC"
+                     :std_offset 0
+                     :names ["UTC"]
+                     :transitions []})))
 
 (defn leap-year? [y]
   (cond (zero? (mod y 400)) true

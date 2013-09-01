@@ -25,6 +25,7 @@
      "dd" #(format "%02d" (d %))
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
      "dow" #(days (.getDay %))
+     "EEE" #(days (.getDay %))
      "M" M
      "MM" #(format "%02d" (M %))
      "yyyy" y
@@ -35,10 +36,12 @@
      "s" s
      "S" S
      "hh" #(format "%02d" (h %))
+     "HH" #(format "%02d" (h %))
      "mm" #(format "%02d" (m %))
      "ss" #(format "%02d" (s %))
      "SSS" #(format "%03d" (S %))
      "Z" #(.getTimezoneOffsetString %)
+     "'T'" #(do #_(pr %) "T")
      }))
 
 (def date-parsers
@@ -65,10 +68,14 @@
      "s" ["(\\d{1,2})" s]
      "S" ["(\\d{1,2})" S]
      "hh" ["(\\d{2})" h]
+     "HH" ["(\\d{2})" h]
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]
-     "Z" ["(\\+|\\-\\d{2}:\\d{2})" (constantly nil)]}))
+     "Z" ["(\\+|\\-\\d{2}:\\d{2})" (constantly nil)]
+     ;"T" ["T" #(do (pr %1 %2))]
+     }))
+
 
 (defn parser-sort-order-pred [parser]
   (.indexOf
@@ -166,17 +173,23 @@
 
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
-given string according to the given formatter."
-  [s {:keys [parser]}]
-  (reduce (fn [date [part do-parse]] #_(.log js/console part) (do-parse date part) date)
-          (date/UtcDateTime. 0 0 0 0 0 0 0)
-          (map (fn [[a b]] [a (second (date-parsers b))])
-               (parser s))))
+  given string according to the given formatter."
+  ([{:keys [parser]} s]
+   (when-let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
+                                  (parser s)))]
+     (reduce (fn [date [part do-parse]] (do-parse date part) date)
+             (date/UtcDateTime. 0 0 0 0 0 0 0)
+             parse-seq)))
+  ([s]
+   (first
+     (for [f (vals formatters)
+           :let [d (try (parse f s) (catch js/Error _))]
+           :when d] d))))
 
 (defn unparse
   "Returns a string representing the given DateTime instance in UTC and in the
 form determined by the given formatter."
-  [date {:keys [formatter]}]
+  [{:keys [formatter]} date]
   {:pre [(not (nil? date)) (instance? date/DateTime date)]}
   (apply string/replace (formatter date)))
 
@@ -204,18 +217,9 @@ form determined by the given formatter."
       (.getMinutes dt)
       (.getSeconds dt))))
 
-;(extend-protocol Mappable
-  ;Period
-  ;(instant->map [period]
-    ;(to-map
-      ;(.getYears period)
-      ;(.getMonths period)
-      ;(.getDays period)
-      ;(.getHours period)
-      ;(.getMinutes period)
-      ;(.getSeconds period))))
-
-;(extend-protocol Mappable
-  ;Interval
-  ;(instant->map [it]
-    ;(instant->map (.toPeriod it (PeriodType/yearMonthDayTime)))))
+(extend-protocol Mappable
+  ObjMap
+  (instant->map [m]
+    (case (:type (meta m))
+      :cljs-time.core/period m
+      :cljs-time.core/interval (time/->period m))))
