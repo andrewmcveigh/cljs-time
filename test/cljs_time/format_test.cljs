@@ -124,6 +124,10 @@
     ;(is (= (local-date-time 2010 3 11)
            ;(parse-local fmt "20100311")))))
 
+;(let [fmt (formatters :basic-date-time)]
+  ;(pr (parse fmt "20100311T174920.881Z")))
+;(pr (parse "2010-10-11T00:00:00"))
+
 (deftest test-parse
   ;(pr (parse (formatter "yyyy-MM-dd'T'HH:mm:ss") "2010-10-11T00:00:00"))
   (is (= (date-time 2010 10 11)
@@ -216,10 +220,11 @@
            ;(unparse fmt (date-time 2012 2 1 22 15))))))
 
 (deftest test-mysql-format
-  ;(pr (parse "2013-01-01 00:00:00"))
   (is (= (date-time 2013 1 1 0 0 0) (parse "2013-01-01 00:00:00")))
   (is (= (date-time 1991 1 13 11 30 45) (parse "1991-1-13 11:30:45")))
   (is (= (date-time 2013 8 3 12 11 13) (parse "2013-08-03 12:11:13"))))
+
+(pr (instant->map (interval (date-time 1986 9 2 0 0 2)  (date-time 1986 11 30 2 5 12))))
 
 (deftest test-instant->map-from-interval
   (let [it (interval (date-time 1986 9 2 0 0 2)  (date-time 1986 11 30 2 5 12))]

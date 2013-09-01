@@ -41,7 +41,9 @@
      "ss" #(format "%02d" (s %))
      "SSS" #(format "%03d" (S %))
      "Z" #(.getTimezoneOffsetString %)
-     "'T'" #(do #_(pr %) "T")
+     ;"'T'" #(str "T")
+     ;"'W'" #(str "W")
+     ;"'" #(str "")
      }))
 
 (def date-parsers
@@ -56,24 +58,30 @@
      "dd" ["(\\d{2})" d]
      "dth" ["(\\d{1,2})(?:st|nd|rd|th)" d]
      "M" ["(\\d{1,2})" M]
-     "MM" ["(\\d{2})" M]
+     "MM" ["((?:\\d{2})|(?:\\b\\d{1,2}\\b))" M]
      "y" ["(\\d{1,4})" y]
      "yy" ["(\\d{2,4})" y]
      "yyyy" ["(\\d{4})" y]
      "MMM" [(str \( (string/join \| months) \))
             #(M %1 (str (inc (.indexOf (into-array months) %2))))]
+     "E" [(str \( (string/join \| (map #(string/join (take 3 %)) days)) \))
+          (constantly nil)]
+     "EEE" [(str \( (string/join \| days) \)) (constantly nil)]
      "dow" [(str \( (string/join \| days) \)) (constantly nil)]
-     "h" ["(\\d{1,2})" h]
+     ;"h" ["(\\d{1,2})" h]
      "m" ["(\\d{1,2})" m]
      "s" ["(\\d{1,2})" s]
      "S" ["(\\d{1,2})" S]
      "hh" ["(\\d{2})" h]
+     ;"hh" ["((?:\\d{2})|(?:\\b\\d{1,2}\\b))" h]
      "HH" ["(\\d{2})" h]
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]
-     "Z" ["(\\+|\\-\\d{2}:\\d{2})" (constantly nil)]
+     "Z" ["((?:\\+|\\-\\d{2}:\\d{2})|Z+)" (constantly nil)]
      ;"T" ["T" #(do (pr %1 %2))]
+     ;"'[^']+'" ["('[^']+')" (constantly nil)]
+     ;"'T'" (constantly nil)
      }))
 
 
@@ -88,18 +96,24 @@
     (str "(" (string/join ")|(" (reverse (sort-by count (keys date-formatters)))) ")")))
 
 (defn date-parse-pattern [formatter]
+  ;(pr formatter (string/replace formatter #"'([^']+)'" "$1"))
   (re-pattern
-    (string/replace formatter date-format-pattern #(first (date-parsers %)))))
+    (string/replace (string/replace formatter #"'([^']+)'" "$1")
+                    date-format-pattern
+                    #(first (date-parsers %)))))
 
 (defn formatter
   ([fmts]
-   {:parser #(sort-by (comp parser-sort-order-pred second)
+   {:parser #(do ;(pr (date-parse-pattern fmts))
+                 (sort-by (comp parser-sort-order-pred second)
                       (partition 2
                                  (interleave
                                    (nfirst (re-seq (date-parse-pattern fmts) %))
-                                   (map first (re-seq date-format-pattern fmts)))))
+                                   (map first (re-seq date-format-pattern fmts))))))
     :formatter (fn [date]
-                 [fmts date-format-pattern #((date-formatters %) date)])}))
+                 [(string/replace fmts #"'([^']+)'" "$1")
+                  date-format-pattern
+                  #((date-formatters %) date)])}))
 
 (defn not-implemented [sym]
   #(throw (clj->js {:name :not-implemented
@@ -175,11 +189,15 @@
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
   ([{:keys [parser]} s]
-   (when-let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
+   (let [min-parts (count (string/split s #"(?:[^\w]+|'[^']+'|[TW])"))]
+     (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                   (parser s)))]
-     (reduce (fn [date [part do-parse]] (do-parse date part) date)
-             (date/UtcDateTime. 0 0 0 0 0 0 0)
-             parse-seq)))
+       ;(pr (>= (count parse-seq) min-parts) min-parts (map first parse-seq) (count parse-seq))
+       (when (>= (count parse-seq) min-parts)
+         ;(pr count (parser s))
+         (reduce (fn [date [part do-parse]] (do-parse date part) date)
+                 (date/UtcDateTime. 0 0 0 0 0 0 0)
+                 parse-seq)))))
   ([s]
    (first
      (for [f (vals formatters)
