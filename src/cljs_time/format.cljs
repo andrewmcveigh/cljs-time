@@ -1,6 +1,7 @@
 (ns cljs-time.format
   (:require
     [cljs-time.core :as time]
+    [clojure.set :refer [difference]]
     [clojure.string :as string]
     [goog.date :as date]))
 
@@ -93,6 +94,10 @@
     :formatter (fn [date]
                  [fmts date-format-pattern #((date-formatters %) date)])}))
 
+(defn not-implemented [sym]
+  #(throw (clj->js {:name :not-implemented
+                    :message (format "%s not implemented yet" (name sym))})))
+
 (def ^{:doc "Map of ISO 8601 and a single RFC 822 formatters that can be used
             for parsing and, in most cases, printing."}
   formatters
@@ -110,30 +115,30 @@
      :basic-week-date-time (formatter "xxxx'W'wwe'T'HHmmss.SSSZ")
      :basic-week-date-time-no-ms (formatter "xxxx'W'wwe'T'HHmmssZ")
      :date (formatter "yyyy-MM-dd")
-     :date-element-parser (formatter 'dateElementParser)
+     :date-element-parser (not-implemented 'dateElementParser)
      :date-hour (formatter "yyyy-MM-dd'T'HH")
      :date-hour-minute (formatter "yyyy-MM-dd'T'HH:mm")
      :date-hour-minute-second (formatter "yyyy-MM-dd'T'HH:mm:ss")
      :date-hour-minute-second-fraction (formatter "yyyy-MM-dd'T'HH:mm:ss.SSS")
      :date-hour-minute-second-ms (formatter "yyyy-MM-dd'T'HH:mm:ss.SSS")
-     :date-opt-time (formatter 'dateOptionalTimeParser)
-     :date-parser (formatter 'dateParser)
+     :date-opt-time (not-implemented 'dateOptionalTimeParser)
+     :date-parser (not-implemented 'dateParser)
      :date-time (formatter "yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
      :date-time-no-ms (formatter "yyyy-MM-dd'T'HH:mm:ssZZ")
-     :date-time-parser (formatter 'dateTimeParser)
+     :date-time-parser (not-implemented 'dateTimeParser)
      :hour (formatter "HH")
      :hour-minute (formatter "HH:mm")
      :hour-minute-second (formatter "HH:mm:ss")
      :hour-minute-second-fraction (formatter "HH:mm:ss.SSS")
      :hour-minute-second-ms (formatter "HH:mm:ss.SSS")
-     :local-date-opt-time (formatter 'localDateOptionalTimeParser)
-     :local-date (formatter 'localDateParser)
-     :local-time (formatter 'localTimeParser)
+     :local-date-opt-time (not-implemented 'localDateOptionalTimeParser)
+     :local-date (not-implemented 'localDateParser)
+     :local-time (not-implemented 'localTimeParser)
      :ordinal-date (formatter "yyyy-DDD")
      :ordinal-date-time (formatter "yyyy-DDD'T'HH:mm:ss.SSSZZ")
      :ordinal-date-time-no-ms (formatter "yyyy-DDD'T'HH:mm:ssZZ")
      :time (formatter "HH:mm:ss.SSSZZ")
-     :time-element-parser (formatter 'timeElementParser)
+     :time-element-parser (not-implemented 'timeElementParser)
      :time-no-ms (formatter "HH:mm:ssZZ")
      :time-parser (formatter 'timeParser)
      :t-time (formatter "'T'HH:mm:ss.SSSZZ")
@@ -149,6 +154,15 @@
      :year-month-day (formatter "yyyy-MM-dd")
      :rfc822 (formatter "EEE, dd MMM yyyy HH:mm:ss Z")
      :mysql (formatter "yyyy-MM-dd HH:mm:ss")})
+
+
+(def ^{:private true} parsers
+  #{:date-element-parser :date-opt-time :date-parser :date-time-parser
+    :local-date-opt-time :local-date :local-time :time-element-parser
+    :time-parser})
+
+(def ^{:private true} printers
+  (difference (set (keys formatters)) parsers))
 
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
