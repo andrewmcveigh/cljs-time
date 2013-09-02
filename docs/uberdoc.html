@@ -3510,11 +3510,7 @@ net.brehaut.ClojureTools = (function (SH) {
      &quot;mm&quot; #(format &quot;%02d&quot; (m %))
      &quot;ss&quot; #(format &quot;%02d&quot; (s %))
      &quot;SSS&quot; #(format &quot;%03d&quot; (S %))
-     &quot;Z&quot; #(.getTimezoneOffsetString %)
-     ;&quot;'T'&quot; #(str &quot;T&quot;)
-     ;&quot;'W'&quot; #(str &quot;W&quot;)
-     ;&quot;'&quot; #(str )
-     }))</pre></td></tr><tr><td class="docs">
+     &quot;Z&quot; #(.getTimezoneOffsetString %)}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))
         d #(.setDate %1         (js/parseInt %2 10))
@@ -3537,21 +3533,15 @@ net.brehaut.ClojureTools = (function (SH) {
           (constantly nil)]
      &quot;EEE&quot; [(str \( (string/join \| days) \)) (constantly nil)]
      &quot;dow&quot; [(str \( (string/join \| days) \)) (constantly nil)]
-     ;&quot;h&quot; [&quot;(\\d{1,2})&quot; h]
      &quot;m&quot; [&quot;(\\d{1,2})&quot; m]
      &quot;s&quot; [&quot;(\\d{1,2})&quot; s]
      &quot;S&quot; [&quot;(\\d{1,2})&quot; S]
      &quot;hh&quot; [&quot;(\\d{2})&quot; h]
-     ;&quot;hh&quot; [&quot;((?:\\d{2})|(?:\\b\\d{1,2}\\b))&quot; h]
      &quot;HH&quot; [&quot;(\\d{2})&quot; h]
      &quot;mm&quot; [&quot;(\\d{2})&quot; m]
      &quot;ss&quot; [&quot;(\\d{2})&quot; s]
      &quot;SSS&quot; [&quot;(\\d{3})&quot; S]
-     &quot;Z&quot; [&quot;((?:\\+|\\-\\d{2}:\\d{2})|Z+)&quot; (constantly nil)]
-     ;&quot;T&quot; [&quot;T&quot; #(do (pr %1 %2))]
-     ;&quot;'[^']+'&quot; [&quot;('[^']+')&quot; (constantly nil)]
-     ;&quot;'T'&quot; (constantly nil)
-     }))</pre></td></tr><tr><td class="docs">
+     &quot;Z&quot; [&quot;((?:\\+|\\-\\d{2}:\\d{2})|Z+)&quot; (constantly nil)]}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn parser-sort-order-pred [parser]
   (.indexOf
     (into-array [&quot;yyyy&quot; &quot;yy&quot; &quot;y&quot; &quot;d&quot; &quot;dd&quot; &quot;dth&quot; &quot;M&quot; &quot;MM&quot; &quot;MMM&quot; &quot;dow&quot; &quot;h&quot; &quot;m&quot;
@@ -3561,19 +3551,17 @@ net.brehaut.ClojureTools = (function (SH) {
   (re-pattern
     (str &quot;(&quot; (string/join &quot;)|(&quot; (reverse (sort-by count (keys date-formatters)))) &quot;)&quot;)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn date-parse-pattern [formatter]
-  ;(pr formatter (string/replace formatter #&quot;'([^']+)'&quot; &quot;$1&quot;))
   (re-pattern
     (string/replace (string/replace formatter #&quot;'([^']+)'&quot; &quot;$1&quot;)
                     date-format-pattern
                     #(first (date-parsers %)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn formatter
   ([fmts]
-   {:parser #(do ;(pr (date-parse-pattern fmts))
-                 (sort-by (comp parser-sort-order-pred second)
+   {:parser #(sort-by (comp parser-sort-order-pred second)
                       (partition 2
                                  (interleave
                                    (nfirst (re-seq (date-parse-pattern fmts) %))
-                                   (map first (re-seq date-format-pattern fmts))))))
+                                   (map first (re-seq date-format-pattern fmts)))))
     :formatter (fn [date]
                  [(string/replace fmts #&quot;'([^']+)'&quot; &quot;$1&quot;)
                   date-format-pattern
@@ -3649,9 +3637,7 @@ net.brehaut.ClojureTools = (function (SH) {
    (let [min-parts (count (string/split s #&quot;(?:[^\w]+|'[^']+'|[TW])&quot;))]
      (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                   (parser s)))]
-       ;(pr (&gt;= (count parse-seq) min-parts) min-parts (map first parse-seq) (count parse-seq))
        (when (&gt;= (count parse-seq) min-parts)
-         ;(pr count (parser s))
          (reduce (fn [date [part do-parse]] (do-parse date part) date)
                  (date/UtcDateTime. 0 0 0 0 0 0 0)
                  parse-seq)))))
