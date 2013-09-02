@@ -20,7 +20,7 @@
         m      #(.getMinutes %)
         s      #(.getSeconds %)
         S      #(.getMilliseconds %)
-        ]
+        Z      #(.getTimezoneOffsetString %)]
     {"d" d
      "dd" #(format "%02d" (d %))
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
@@ -40,7 +40,8 @@
      "mm" #(format "%02d" (m %))
      "ss" #(format "%02d" (s %))
      "SSS" #(format "%03d" (S %))
-     "Z" #(.getTimezoneOffsetString %)}))
+     "Z" Z
+     "ZZ" Z}))
 
 (def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))

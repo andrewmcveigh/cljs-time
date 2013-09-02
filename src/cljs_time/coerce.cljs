@@ -9,10 +9,8 @@
   #<DateTime 1998-04-25T00:00:00.000Z>"
   (:refer-clojure :exclude [extend second])
   (:require
-    [cljs-time.core :refer []]
     [cljs-time.format :as time-fmt]
-    [goog.date :as date]
-    ))
+    [goog.date :as date]))
 
 (defprotocol ICoerce
   (to-date-time [obj] "Convert `obj` to a goog.date.DateTime instance."))
@@ -29,7 +27,7 @@
   [s]
   (first
    (for [f (vals time-fmt/formatters)
-         :let [d (try (time-fmt/parse f s) (catch Exception _ nil))]
+         :let [d (try (time-fmt/parse f s) (catch js/Error _))]
          :when d] d)))
 
 (defn from-date
@@ -80,10 +78,10 @@ using (ISODateTimeFormat/dateTime) date-time representation."
   (to-date-time [date-midnight]
     (doto date-midnight (.set date-midnight)))
 
-  js/Number
+  number
   (to-date-time [long]
     (from-long long))
 
-  js/String
+  string
   (to-date-time [string]
     (from-string string)))
