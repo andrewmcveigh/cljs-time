@@ -3028,7 +3028,7 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>com.andrewmcveigh/cljs-time -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">com.andrewmcveigh/cljs-time</h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>A clj-time inspired date library for clojurescript.</p>
+</script><title>com.andrewmcveigh/cljs-time -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">com.andrewmcveigh/cljs-time</h1><h2 class="project-version">0.1.1-SNAPSHOT</h2><br /><p>A clj-time inspired date library for clojurescript.</p>
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">com.cemerick/clojurescript.test</td><td class="dotted"><hr /></td><td class="dep-version">0.0.4</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#cljs-time.macros">cljs-time.macros</a></li><li><a href="#cljs-time.coerce">cljs-time.coerce</a></li><li><a href="#cljs-time.core">cljs-time.core</a></li><li><a href="#cljs-time.format">cljs-time.format</a></li><li><a href="#cljs-time.predicates">cljs-time.predicates</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.macros" name="cljs-time.macros"><h1 class="project-name">cljs-time.macros</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns cljs-time.macros)</pre></td></tr><tr><td class="docs"><p>Like clojure.core/do except evalautes the expression at the given date-time</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro do-at
@@ -3583,6 +3583,52 @@ true
 </td><td class="codes"><pre class="brush: clojure">(def days
   [&quot;Sunday&quot; &quot;Monday&quot; &quot;Tuesday&quot; &quot;Wednesday&quot; &quot;Thursday&quot; &quot;Friday&quot; &quot;Saturday&quot;])</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def date-formatters
+  ^{:doc
+    &quot;**Note: not all formatters have been implemented yet.**
+  The pattern syntax is mostly compatible with java.text.SimpleDateFormat -
+  time zone names cannot be parsed and a few more symbols are supported. All
+  ASCII letters are reserved as pattern letters, which are defined as follows:
+    Symbol  Meaning                      Presentation  Examples
+    ------  -------                      ------------  -------
+    G       era                          text          AD
+    C       century of era (&gt;=0)         number        20
+    Y       year of era (&gt;=0)            year          1996
+    x       weekyear                     year          1996
+    w       week of weekyear             number        27
+    e       day of week                  number        2
+    E       day of week                  text          Tuesday; Tue
+    y       year                         year          1996
+    D       day of year                  number        189
+    M       month of year                month         July; Jul; 07
+    d       day of month                 number        10
+    a       halfday of day               text          PM
+    K       hour of halfday (0~11)       number        0
+    h       clockhour of halfday (1~12)  number        12
+    H       hour of day (0~23)           number        0
+    k       clockhour of day (1~24)      number        24
+    m       minute of hour               number        30
+    s       second of minute             number        55
+    S       fraction of second           number        978
+    z       time zone                    text          Pacific Standard Time; PST
+    Z       time zone offset/id          zone          -0800; -08:00; America/Los_Angeles
+    '       escape for text              delimiter
+    ''      single quote                 literal       '
+  The count of pattern letters determine the format.
+  Text: If the number of pattern letters is 4 or more, the full form is used;
+  otherwise a short or abbreviated form is used if available.
+  Number: The minimum number of digits. Shorter numbers are zero-padded to this
+  amount.
+  Year: Numeric presentation for year and weekyear fields are handled
+  specially. For example, if the count of 'y' is 2, the year will be displayed
+  as the zero-based year of the century, which is two digits.
+  Month: 3 or over, use text, otherwise use number.
+  Zone: 'Z' outputs offset without a colon, 'ZZ' outputs the offset with a
+  colon, 'ZZZ' or more outputs the zone id.
+  Zone names: Time zone names ('z') cannot be parsed.
+  Any characters in the pattern that are not in the ranges of ['a'..'z'] and
+  ['A'..'Z'] will be treated as quoted text. For instance, characters like ':',
+  '.', ' ', '#' and '?' will appear in the resulting time text even they are
+  not embraced within single quotes.&quot;}
   (let [d      #(.getDate %)
         M #(inc (.getMonth %))
         y      #(.getYear %)
