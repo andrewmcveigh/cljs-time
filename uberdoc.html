@@ -3034,14 +3034,77 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defmacro do-at
   [base-date-time &amp; body]
   `(cljs-time.core/do-at* ~base-date-time
-    (fn [] ~@body)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.coerce" name="cljs-time.coerce"><h1 class="project-name">cljs-time.coerce</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+    (fn [] ~@body)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.coerce" name="cljs-time.coerce"><h1 class="project-name">cljs-time.coerce</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Utilites to coerce Joda DateTime instances to and from various other types.
+  For example, to convert a Joda DateTime to and from a Java long:</p>
+
+<p>  => (to-long (date-time 1998 4 25))
+  893462400000</p>
+
+<p>  => (from-long 893462400000)
+  #&lt;19980425T000000></p>
 </td><td class="codes"><pre class="brush: clojure">(ns cljs-time.coerce
+  (:refer-clojure :exclude [extend second])
   (:require
+    [cljs-time.format :as time-fmt]
     [goog.date :as date]))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn to-date [d]
-  (js/Date. (.getTime d)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn from-date [date]
-  (doto (date/UtcDateTime.) (.setTime (.getTime date))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.core" name="cljs-time.core"><h1 class="project-name">cljs-time.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>The core namespace for date-time operations in the cljs-time library.</p>
+</td><td class="codes"><pre class="brush: clojure">(defprotocol ICoerce
+  (to-date-time [obj] &quot;Convert `obj` to a goog.date.DateTime instance.&quot;))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime instance in the UTC time zone corresponding to the given
+  number of milliseconds after the Unix epoch.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn from-long
+  [millis]
+  (doto (date/UtcDateTime.) (.setTime millis)))</pre></td></tr><tr><td class="docs"><p>Returns DateTime instance from string using formatters in clj-time.format,
+  returning first which parses</p>
+</td><td class="codes"><pre class="brush: clojure">(defn from-string
+  [s]
+  (first
+   (for [f (vals time-fmt/formatters)
+         :let [d (try (time-fmt/parse f s) (catch js/Error _))]
+         :when d] d)))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime instance in the UTC time zone corresponding to the given
+Java Date object.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn from-date
+  [date]
+  (from-long (.getTime date)))</pre></td></tr><tr><td class="docs"><p>Convert <code>obj</code> to the number of milliseconds after the Unix epoch.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn to-long
+  [obj]
+  (if-let [dt (to-date-time obj)]
+    (.getTime dt)))</pre></td></tr><tr><td class="docs"><p>Convert <code>obj</code> to Unix epoch.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn to-epoch
+  [obj]
+  (let [millis (to-long obj)]
+    (and millis (/ millis 1000))))</pre></td></tr><tr><td class="docs"><p>Convert <code>obj</code> to a JavaScript Date instance.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn to-date
+  [obj]
+  (if-let [dt (to-date-time obj)]
+    (js/Date. (.getTime dt))))</pre></td></tr><tr><td class="docs"><p>Returns a string representation of obj in UTC time-zone
+using (ISODateTimeFormat/dateTime) date-time representation.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn to-string
+  [obj]
+  (if-let [dt (to-date-time obj)]
+    (time-fmt/unparse (:date-time time-fmt/formatters) dt)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(extend-protocol ICoerce
+  nil
+  (to-date-time [_]
+    nil)
+
+  js/Date
+  (to-date-time [date]
+    (from-date date))
+
+  goog.date.DateTime
+  (to-date-time [date-time]
+    date-time)
+
+  goog.date.Date
+  (to-date-time [date-midnight]
+    (doto date-midnight (.set date-midnight)))
+
+  number
+  (to-date-time [long]
+    (from-long long))
+
+  string
+  (to-date-time [string]
+    (from-string string)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.core" name="cljs-time.core"><h1 class="project-name">cljs-time.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>The core namespace for date-time operations in the cljs-time library.</p>
 
 <p>  Create a DateTime instance with date-time (or a LocalDateTime instance with local-date-time),
   specifying the year, month, day, hour, minute, second, and millisecond:</p>
@@ -3490,7 +3553,7 @@ net.brehaut.ClojureTools = (function (SH) {
         m      #(.getMinutes %)
         s      #(.getSeconds %)
         S      #(.getMilliseconds %)
-        ]
+        Z      #(.getTimezoneOffsetString %)]
     {&quot;d&quot; d
      &quot;dd&quot; #(format &quot;%02d&quot; (d %))
      &quot;dth&quot; #(let [d (d %)] (str d (case d 1 &quot;st&quot; 2 &quot;nd&quot; 3 &quot;rd&quot; &quot;th&quot;)))
@@ -3510,7 +3573,8 @@ net.brehaut.ClojureTools = (function (SH) {
      &quot;mm&quot; #(format &quot;%02d&quot; (m %))
      &quot;ss&quot; #(format &quot;%02d&quot; (s %))
      &quot;SSS&quot; #(format &quot;%03d&quot; (S %))
-     &quot;Z&quot; #(.getTimezoneOffsetString %)}))</pre></td></tr><tr><td class="docs">
+     &quot;Z&quot; Z
+     &quot;ZZ&quot; Z}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))
         d #(.setDate %1         (js/parseInt %2 10))
@@ -3681,11 +3745,11 @@ form determined by the given formatter.</p>
       :cljs-time.core/period m
       :cljs-time.core/interval (time/-&gt;period m))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.predicates" name="cljs-time.predicates"><h1 class="project-name">cljs-time.predicates</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Predicate functions to ask basic questions about a date</p>
 
-<p>Was it Monday?
-(monday? (clj-time.core/date-time 1999 9 9))</p>
+<p>  Was it Monday?
+  (monday? (clj-time.core/date-time 1999 9 9))</p>
 
-<p>Is it January?
-(january? (clj-time.core/date-time 2011 1 1))</p>
+<p>  Is it January?
+  (january? (clj-time.core/date-time 2011 1 1))</p>
 </td><td class="codes"><pre class="brush: clojure">(ns cljs-time.predicates
   (:require [cljs-time.core :as time]))</pre></td></tr><tr><td class="docs"><p>days of the week</p>
 </td><td class="codes"><pre class="brush: clojure">(defn monday? [date-time]
