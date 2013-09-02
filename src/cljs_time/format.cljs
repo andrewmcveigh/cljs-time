@@ -40,11 +40,7 @@
      "mm" #(format "%02d" (m %))
      "ss" #(format "%02d" (s %))
      "SSS" #(format "%03d" (S %))
-     "Z" #(.getTimezoneOffsetString %)
-     ;"'T'" #(str "T")
-     ;"'W'" #(str "W")
-     ;"'" #(str "")
-     }))
+     "Z" #(.getTimezoneOffsetString %)}))
 
 (def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))
@@ -68,21 +64,15 @@
           (constantly nil)]
      "EEE" [(str \( (string/join \| days) \)) (constantly nil)]
      "dow" [(str \( (string/join \| days) \)) (constantly nil)]
-     ;"h" ["(\\d{1,2})" h]
      "m" ["(\\d{1,2})" m]
      "s" ["(\\d{1,2})" s]
      "S" ["(\\d{1,2})" S]
      "hh" ["(\\d{2})" h]
-     ;"hh" ["((?:\\d{2})|(?:\\b\\d{1,2}\\b))" h]
      "HH" ["(\\d{2})" h]
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]
-     "Z" ["((?:\\+|\\-\\d{2}:\\d{2})|Z+)" (constantly nil)]
-     ;"T" ["T" #(do (pr %1 %2))]
-     ;"'[^']+'" ["('[^']+')" (constantly nil)]
-     ;"'T'" (constantly nil)
-     }))
+     "Z" ["((?:\\+|\\-\\d{2}:\\d{2})|Z+)" (constantly nil)]}))
 
 
 (defn parser-sort-order-pred [parser]
@@ -96,7 +86,6 @@
     (str "(" (string/join ")|(" (reverse (sort-by count (keys date-formatters)))) ")")))
 
 (defn date-parse-pattern [formatter]
-  ;(pr formatter (string/replace formatter #"'([^']+)'" "$1"))
   (re-pattern
     (string/replace (string/replace formatter #"'([^']+)'" "$1")
                     date-format-pattern
@@ -104,12 +93,11 @@
 
 (defn formatter
   ([fmts]
-   {:parser #(do ;(pr (date-parse-pattern fmts))
-                 (sort-by (comp parser-sort-order-pred second)
+   {:parser #(sort-by (comp parser-sort-order-pred second)
                       (partition 2
                                  (interleave
                                    (nfirst (re-seq (date-parse-pattern fmts) %))
-                                   (map first (re-seq date-format-pattern fmts))))))
+                                   (map first (re-seq date-format-pattern fmts)))))
     :formatter (fn [date]
                  [(string/replace fmts #"'([^']+)'" "$1")
                   date-format-pattern
@@ -192,9 +180,7 @@
    (let [min-parts (count (string/split s #"(?:[^\w]+|'[^']+'|[TW])"))]
      (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                   (parser s)))]
-       ;(pr (>= (count parse-seq) min-parts) min-parts (map first parse-seq) (count parse-seq))
        (when (>= (count parse-seq) min-parts)
-         ;(pr count (parser s))
          (reduce (fn [date [part do-parse]] (do-parse date part) date)
                  (date/UtcDateTime. 0 0 0 0 0 0 0)
                  parse-seq)))))

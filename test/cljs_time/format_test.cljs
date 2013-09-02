@@ -124,12 +124,7 @@
 ;(is (= (local-date-time 2010 3 11)
 ;(parse-local fmt "20100311")))))
 
-;(let [fmt (formatters :basic-date-time)]
-;(pr (parse fmt "20100311T174920.881Z")))
-;(pr (parse "2010-10-11T00:00:00"))
-
 (deftest test-parse
-  ;(pr (parse (formatter "yyyy-MM-dd'T'HH:mm:ss") "2010-10-11T00:00:00"))
   (is (= (date-time 2010 10 11)
          (parse "2010-10-11T00:00:00")))
   (let [fmt (formatters :date)]
@@ -205,7 +200,6 @@
 ;(is (= (date-time 2075 1 1)
 ;(parse fmt "75")))))
 
-;(pr (parse (formatter utc "YYYY-MM-dd HH:mm" "YYYY/MM/dd@HH:mm" "YYYYMMddHHmm") "2012-02-01 22:15"))
 ;(deftest test-multi-parser
 ;(let [fmt (formatter utc "YYYY-MM-dd HH:mm" "YYYY/MM/dd@HH:mm" "YYYYMMddHHmm")]
 ;(is (= "2012-02-01 22:15"
