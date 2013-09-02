@@ -480,7 +480,6 @@
                              (map leap-year?
                                   (range start-year (+ start-year years)))))
         start-month  (month start)
-        ;end-month (last-month start end)
         days-in-months (total-days-in-whole-months interval)
         months (count days-in-months)
         days-to-remove (+ (* 365 years) leap-years (reduce + days-in-months))
