@@ -216,24 +216,26 @@ form determined by the given formatter."
                           It will contain the following keys: :years, :months,
                           :days, :hours, :minutes and :seconds."))
 
-(defn- to-map [years months days hours minutes seconds]
+(defn- to-map [years months days hours minutes seconds millis]
   {:years years
    :months months
    :days days
    :hours hours
    :minutes minutes
-   :seconds seconds})
+   :seconds seconds
+   :millis millis})
 
 (extend-protocol Mappable
   goog.date.UtcDateTime
   (instant->map [dt]
     (to-map
       (.getYear dt)
-      (.getMonth dt)
+      (inc (.getMonth dt))
       (.getDate dt)
       (.getHours dt)
       (.getMinutes dt)
-      (.getSeconds dt))))
+      (.getSeconds dt)
+      (.getMilliseconds dt))))
 
 (extend-protocol Mappable
   ObjMap

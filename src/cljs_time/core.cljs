@@ -114,7 +114,7 @@
           "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
 
 
-(def utc (goog.i18n.TimeZone/createTimeZone 
+(def utc (goog.i18n.TimeZone/createTimeZone
            (clj->js {:id "UTC"
                      :std_offset 0
                      :names ["UTC"]
@@ -380,12 +380,25 @@
   [in]
   (int (/ (in-days in) 7)))
 
+(defn month-range [{:keys [start end]}]
+  (take-while #(before? % end) (map #(plus start (months (inc %))) (range))))
+
+(defn total-days-in-whole-months [interval]
+  (map #(.getNumberOfDaysInMonth %) (month-range interval)))
+
 (defn in-months
-  "Returns the number of standard months in the given Interval."
-  [{:keys [start end]}]
-  (let [start-month (month start)
-        start-month (if (= 1 (day start)) start-month (inc start-month))]
-    (+ (* 12 (- (year end) (year start))) (- (month end) start-month))))
+  "Returns the number of months in the given Interval.
+
+  For example, the interval 2nd Jan 2012 midnight to 2nd Feb 2012 midnight,
+  returns 1 month.
+
+  Likewise, 29th Dec 2011 midnight to 29th Feb 2012 midnight returns 2 months.
+
+  But also, 31st Dec 2011 midnight to 29th Feb 2012 midnight returns 2 months.
+
+  And, 28th Dec 2012 midnight to 28th Feb 2013 midnight returns 2 months."
+  [{:keys [start end] :as interval}]
+  (count (total-days-in-whole-months interval)))
 
 (defn in-years
   "Returns the number of standard years in the given Interval."
@@ -399,40 +412,6 @@
                          (date-time (year start) em ed)) 1
                  :else-is-same-date 0)]
     (- (year end) (year start) d1)))
-
-(defmulti ->period meta)
-
-(defmethod ->period {:type ::interval} [{:keys [start end] :as interval}]
-  (let [years (in-years interval)
-        months (- (in-months interval) (* 12 years))
-        start-year (year start)
-        leap-years (count
-                     (remove false?
-                             (map leap-year?
-                                  (range start-year (+ start-year years)))))
-        start-month  (let [start-month (month start)]
-                       (if (= 1 (day start)) start-month (inc start-month)))
-        days-in-months (reduce +
-                               (map #(.getNumberOfDaysInMonth (date-time start-year %))
-                                    (range start-month (+ start-month months))))
-        days-to-remove (+ (* 365 years) (dec leap-years) days-in-months)
-        days (- (in-days interval) days-to-remove)
-        hours-to-remove (* 24 (+ days days-to-remove))
-        hours (- (in-hours interval) hours-to-remove)
-        minutes-to-remove (* 60 (+ hours hours-to-remove))
-        minutes (- (in-minutes interval) minutes-to-remove)
-        seconds-to-remove (* 60 (+ minutes minutes-to-remove))
-        seconds (- (in-seconds interval) seconds-to-remove)]
-    (period :years years
-            :months months
-            :days days
-            :hours hours
-            :minutes minutes
-            :seconds seconds
-            :millis (- (in-millis interval)
-                       (* 1000 (+ seconds seconds-to-remove))))))
-
-;(pr (->period (interval (date-time 2012) (date-time 2013 3 2 23 6 3 2))))
 
 (defn within?
   "With 2 arguments: Returns true if the given Interval contains the given
@@ -490,6 +469,36 @@
    (first-day-of-the-month (year dt) (month dt)))
   ([year month]
    (-> (date-time year month 1))))
+
+(defmulti ->period meta)
+
+(defmethod ->period {:type ::interval} [{:keys [start end] :as interval}]
+  (let [years (in-years interval)
+        start-year (year start)
+        leap-years (count
+                     (remove false?
+                             (map leap-year?
+                                  (range start-year (+ start-year years)))))
+        start-month  (month start)
+        ;end-month (last-month start end)
+        days-in-months (total-days-in-whole-months interval)
+        months (count days-in-months)
+        days-to-remove (+ (* 365 years) leap-years (reduce + days-in-months))
+        days (- (in-days interval) days-to-remove)
+        hours-to-remove (* 24 (+ days days-to-remove))
+        hours (- (in-hours interval) hours-to-remove)
+        minutes-to-remove (* 60 (+ hours hours-to-remove))
+        minutes (- (in-minutes interval) minutes-to-remove)
+        seconds-to-remove (* 60 (+ minutes minutes-to-remove))
+        seconds (- (in-seconds interval) seconds-to-remove)]
+    (period :years years
+            :months months
+            :days days
+            :hours hours
+            :minutes minutes
+            :seconds seconds
+            :millis (- (in-millis interval)
+                       (* 1000 (+ seconds seconds-to-remove))))))
 
 (defn today-at
   ([hours minutes seconds millis]
