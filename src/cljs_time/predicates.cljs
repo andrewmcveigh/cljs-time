@@ -1,11 +1,11 @@
 (ns cljs-time.predicates
   "Predicate functions to ask basic questions about a date
 
-Was it Monday?
-(monday? (clj-time.core/date-time 1999 9 9))
+  Was it Monday?
+  (monday? (clj-time.core/date-time 1999 9 9))
 
-Is it January?
-(january? (clj-time.core/date-time 2011 1 1))"
+  Is it January?
+  (january? (clj-time.core/date-time 2011 1 1))"
   (:require [cljs-time.core :as time]))
 
 ;; days of the week

@@ -66,12 +66,12 @@ available.
 
 ## Usage
 
-### clj-time.core
+### cljs-time.core
 
-The main namespace for date-time operations in the `clj-time` library is `clj-time.core`.
+The main namespace for date-time operations in the `cljs-time` library is `cljs-time.core`.
 
 ``` clj
-=> (use 'clj-time.core)
+=> (use 'cljs-time.core)
 ```
 
 Create a DateTime instance with date-time, specifying the year, month, day, hour, minute, second, and millisecond:
@@ -154,12 +154,12 @@ The `in-seconds` and `in-minutes` functions can be used to describe intervals in
 17280
 ```
 
-### clj-time.format
+### cljs-time.format
 
-If you need to parse or print date-times, use `clj-time.format`:
+If you need to parse or print date-times, use `cljs-time.format`:
 
 ``` clj
-=> (use 'clj-time.format)
+=> (use 'cljs-time.format)
 ```
 
 Printing and printing are controlled by formatters. You can either use one of the built in ISO8601 formatters or define your own, e.g.:
@@ -199,7 +199,7 @@ Once you have a formatter, parsing and printing are strait-forward:
 <!--"2012-02-01"-->
 <!--```-->
 
-`clj-time.core/today-at` returns a moment in time at the given hour, minute and second
+`cljs-time.core/today-at` returns a moment in time at the given hour, minute and second
 on the current date:
 
 ``` clojure
@@ -210,12 +210,12 @@ on the current date:
 ```
 
 
-### clj-time.coerce
+### cljs-time.coerce
 
-The namespace `clj-time.coerce` contains utility functions for coercing Google Closure `DateTime` instances to and from various other types:
+The namespace `cljs-time.coerce` contains utility functions for coercing Google Closure `DateTime` instances to and from various other types:
 
 ``` clj
-=> (use 'clj-time.coerce)
+=> (use 'cljs-time.coerce)
 ```
 
 For example, to convert a Joda `DateTime` to and from a Java `long`:
@@ -235,62 +235,60 @@ And by the magic of protocols you can pass in an isoformat string and get the un
 1375315200000
 ```
 
-There are also conversions to and from `java.util.Date` (`to-date` and
-`from-date`), `java.sql.Date` (`to-sql-date` and `from-sql-date`),
-`java.sql.Timestamp` (`to-sql-time` and `from-sql-time`) and several other types.
+<!--### cljs-time.local-->
 
-### clj-time.local
+<!--**Note: this namespace has not been implemented yet!**-->
 
-**Note: this namespace has not been implemented yet!**
+<!--The namespace `cljs-time.local` contains functions for working with local time without having to shift to/from utc,-->
+<!--the preferred time zone of cljs-time.core.-->
 
-The namespace `clj-time.local` contains functions for working with local time without having to shift to/from utc,
-the preferred time zone of clj-time.core.
+<!--Get the current local time with-->
 
-Get the current local time with
+<!--``` clj-->
+<!--=> (local-now)-->
+<!--```-->
 
-``` clj
-=> (local-now)
-```
+<!--Get a local date-time instance retaining the time fields with-->
 
-Get a local date-time instance retaining the time fields with
+<!--``` clj-->
+<!--=> (to-local-date-time obj)-->
+<!--```-->
 
-``` clj
-=> (to-local-date-time obj)
-```
+<!--The following all return 1986-10-14 04:03:27.246 with the local time zone.-->
 
-The following all return 1986-10-14 04:03:27.246 with the local time zone.
+<!--``` clj-->
+<!--(to-local-date-time (cljs-time.core/date-time 1986 10 14 4 3 27 246))-->
+<!--(to-local-date-time "1986-10-14T04:03:27.246")-->
+<!--(to-local-date-time "1986-10-14T04:03:27.246Z")-->
+<!--```-->
 
-``` clj
-(to-local-date-time (clj-time.core/date-time 1986 10 14 4 3 27 246))
-(to-local-date-time "1986-10-14T04:03:27.246")
-(to-local-date-time "1986-10-14T04:03:27.246Z")
-```
+<!--The dynamic var \*local-formatters\* contains a map of local formatters for parsing and printing. It is initialized-->
+<!--with all the formatters in cljs-time.format localized.-->
 
-The dynamic var \*local-formatters\* contains a map of local formatters for parsing and printing. It is initialized
-with all the formatters in clj-time.format localized.
+<!--to-local-date-time for strings uses \*local-formatters\* to parse.-->
 
-to-local-date-time for strings uses \*local-formatters\* to parse.
+<!--Format an obj using a formatter in \*local-formatters\* corresponding to the format-key passed in with-->
 
-Format an obj using a formatter in \*local-formatters\* corresponding to the format-key passed in with
-
-``` clj
-=> (format-local-time (local-now) :basic-date-time)
-```
+<!--``` clj-->
+<!--=> (format-local-time (local-now) :basic-date-time)-->
+<!--```-->
 
 
-### clj-time.periodic
+<!--### cljs-time.periodic-->
 
-`clj-time.periodic/periodic-seq` returns an infinite sequence of instants
-separated by a time period starting with the given point in time:
+<!--**Note: this namespace has not been implemented yet!**-->
 
-``` clojure
-(use 'clj-time.periodic)
-(use 'clj.time.core)
+<!--`cljs-time.periodic/periodic-seq` returns an infinite sequence of instants-->
+<!--separated by a time period starting with the given point in time:-->
 
-;; returns 10 instants starting with current time separated
-;; by 12 hours
-(take 10 (periodic-seq (now) (hours 12)))
-```
+<!--``` clojure-->
+<!--(use 'cljs-time.periodic)-->
+<!--(use 'clj.time.core)-->
+
+<!--;; returns 10 instants starting with current time separated-->
+<!--;; by 12 hours-->
+<!--(take 10 (periodic-seq (now) (hours 12)))-->
+<!--```-->
 
 
 ## Development
@@ -303,7 +301,7 @@ Running the tests:
 
 ## Documentation
 
-The complete [API documentation](http://clj-time.github.io/andrewmcveigh/cljs-time/uberdoc.html)
+The complete [API documentation](http://andrewmcveigh.github.io/cljs-time/uberdoc.html)
 is also available (marginalia generated).
 
 ## License

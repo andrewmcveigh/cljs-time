@@ -6,7 +6,7 @@
   893462400000
 
   => (from-long 893462400000)
-  #<DateTime 1998-04-25T00:00:00.000Z>"
+  #<19980425T000000>"
   (:refer-clojure :exclude [extend second])
   (:require
     [cljs-time.format :as time-fmt]
