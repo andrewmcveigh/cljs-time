@@ -17,7 +17,7 @@ objects will be preferred.
 
 ## Artifacts
 
-`cljs-time` artifacts are [released to Clojars](https://clojars.org/andrewmcveigh/cljs-time).
+`cljs-time` artifacts are [released to Clojars](https://clojars.org/com.andrewmcveigh/cljs-time).
 
 If you are using Maven, add the following repository definition to your `pom.xml`:
 
