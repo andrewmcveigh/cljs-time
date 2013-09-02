@@ -3037,11 +3037,12 @@ net.brehaut.ClojureTools = (function (SH) {
     (fn [] ~@body)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.coerce" name="cljs-time.coerce"><h1 class="project-name">cljs-time.coerce</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Utilites to coerce Joda DateTime instances to and from various other types.
   For example, to convert a Joda DateTime to and from a Java long:</p>
 
-<p>  => (to-long (date-time 1998 4 25))
-  893462400000</p>
+<pre><code>=&gt; (to-long (date-time 1998 4 25))
+893462400000
 
-<p>  => (from-long 893462400000)
-  #&lt;19980425T000000></p>
+=&gt; (from-long 893462400000)
+#&lt;19980425T000000&gt;
+</code></pre>
 </td><td class="codes"><pre class="brush: clojure">(ns cljs-time.coerce
   (:refer-clojure :exclude [extend second])
   (:require
@@ -3057,10 +3058,10 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn from-string
   [s]
   (first
-   (for [f (vals time-fmt/formatters)
-         :let [d (try (time-fmt/parse f s) (catch js/Error _))]
-         :when d] d)))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime instance in the UTC time zone corresponding to the given
-Java Date object.</p>
+    (for [f (vals time-fmt/formatters)
+          :let [d (try (time-fmt/parse f s) (catch js/Error _))]
+          :when d] d)))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime instance in the UTC time zone corresponding to the given
+  Java Date object.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn from-date
   [date]
   (from-long (.getTime date)))</pre></td></tr><tr><td class="docs"><p>Convert <code>obj</code> to the number of milliseconds after the Unix epoch.</p>
@@ -3076,7 +3077,7 @@ Java Date object.</p>
   [obj]
   (if-let [dt (to-date-time obj)]
     (js/Date. (.getTime dt))))</pre></td></tr><tr><td class="docs"><p>Returns a string representation of obj in UTC time-zone
-using (ISODateTimeFormat/dateTime) date-time representation.</p>
+  using (ISODateTimeFormat/dateTime) date-time representation.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn to-string
   [obj]
   (if-let [dt (to-date-time obj)]
@@ -3109,43 +3110,48 @@ using (ISODateTimeFormat/dateTime) date-time representation.</p>
 <p>  Create a DateTime instance with date-time (or a LocalDateTime instance with local-date-time),
   specifying the year, month, day, hour, minute, second, and millisecond:</p>
 
-<p>  <code>=&gt; (date-time 1986 10 14 4 3 27 456)</code>
-  <code>#&lt;DateTime 1986-10-14T04:03:27.456Z&gt;</code></p>
+<pre><code>=&gt; (date-time 1986 10 14 4 3 27 456)
+#&lt;DateTime 1986-10-14T04:03:27.456Z&gt;
 
-<p>  <code>=&gt; (local-date-time 1986 10 14 4 3 27 456)</code>
-  <code>#&lt;LocalDateTime 1986-10-14T04:03:27.456&gt;</code></p>
+=&gt; (local-date-time 1986 10 14 4 3 27 456)
+#&lt;LocalDateTime 1986-10-14T04:03:27.456&gt;
+</code></pre>
 
 <p>  Less-significant fields can be omitted:</p>
 
-<p>  <code>=&gt; (date-time 1986 10 14)</code>
-  <code>#&lt;DateTime 1986-10-14T00:00:00.000Z&gt;</code></p>
+<pre><code>=&gt; (date-time 1986 10 14)
+#&lt;DateTime 1986-10-14T00:00:00.000Z&gt;
 
-<p>  <code>=&gt; (local-date-time 1986 10 14)</code>
-  <code>#&lt;LocalDateTime 1986-10-14T00:00:00.000&gt;</code></p>
+=&gt; (local-date-time 1986 10 14)
+#&lt;LocalDateTime 1986-10-14T00:00:00.000&gt;
+</code></pre>
 
 <p>  Get the current time with (now) and the start of the Unix epoch with (epoch).</p>
 
 <p>  Once you have a date-time, use accessors like hour and second to access the
   corresponding fields:</p>
 
-<p>  <code>=&gt; (hour (date-time 1986 10 14 22))</code>
-  <code>22</code></p>
+<pre><code>=&gt; (hour (date-time 1986 10 14 22))
+22
 
-<p>  <code>=&gt; (hour (local-date-time 1986 10 14 22))</code>
-  <code>22</code></p>
+=&gt; (hour (local-date-time 1986 10 14 22))
+22
+</code></pre>
 
 <p>  The date-time constructor always returns times in the UTC time zone. If you
   want a time with the specified fields in a different time zone, use
   from-time-zone:</p>
 
-<p>  <code>=&gt; (from-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))</code>
-  <code>#&lt;DateTime 1986-10-22T00:00:00.000-02:00&gt;</code></p>
+<pre><code>=&gt; (from-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
+#&lt;DateTime 1986-10-22T00:00:00.000-02:00&gt;
+</code></pre>
 
 <p>  If on the other hand you want a given absolute instant in time in a
   different time zone, use to-time-zone:</p>
 
-<p>  <code>=&gt; (to-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))</code>
-  <code>#&lt;DateTime 1986-10-21T22:00:00.000-02:00&gt;</code></p>
+<pre><code>=&gt; (to-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
+#&lt;DateTime 1986-10-21T22:00:00.000-02:00&gt;
+</code></pre>
 
 <p>  In addition to time-zone-for-offset, you can use the time-zone-for-id and
   default-time-zone functions and the utc Var to constgruct or get DateTimeZone
@@ -3154,33 +3160,37 @@ using (ISODateTimeFormat/dateTime) date-time representation.</p>
 <p>  The functions after? and before? determine the relative position of two
   DateTime instances:</p>
 
-<p>  <code>=&gt; (after? (date-time 1986 10) (date-time 1986 9))</code>
-  <code>true</code></p>
+<pre><code>=&gt; (after? (date-time 1986 10) (date-time 1986 9))
+true
 
-<p>  <code>=&gt; (after? (local-date-time 1986 10) (local-date-time 1986 9))</code>
-  <code>true</code></p>
+=&gt; (after? (local-date-time 1986 10) (local-date-time 1986 9))
+true
+</code></pre>
 
 <p>  Often you will want to find a date some amount of time from a given date. For
   example, to find the time 1 month and 3 weeks from a given date-time:</p>
 
-<p>  <code>=&gt; (plus (date-time 1986 10 14) (months 1) (weeks 3))</code>
-  <code>#&lt;DateTime 1986-12-05T00:00:00.000Z&gt;</code></p>
+<pre><code>=&gt; (plus (date-time 1986 10 14) (months 1) (weeks 3))
+#&lt;DateTime 1986-12-05T00:00:00.000Z&gt;
 
-<p>  <code>=&gt; (plus (local-date-time 1986 10 14) (months 1) (weeks 3))</code>
-  <code>#&lt;LocalDateTime 1986-12-05T00:00:00.000Z&gt;</code></p>
+=&gt; (plus (local-date-time 1986 10 14) (months 1) (weeks 3))
+#&lt;LocalDateTime 1986-12-05T00:00:00.000Z&gt;
+</code></pre>
 
 <p>  An Interval is used to represent the span of time between two DateTime
   instances. Construct one using interval, then query them using within?,
   overlaps?, and abuts?</p>
 
-<p>  <code>=&gt; (within? (interval (date-time 1986) (date-time 1990)) (date-time 1987))</code>
-  <code>true</code></p>
+<pre><code>=&gt; (within? (interval (date-time 1986) (date-time 1990)) (date-time 1987))
+true
+</code></pre>
 
 <p>  To find the amount of time encompased by an interval, use in-seconds and
   in-minutes:</p>
 
-<p>  <code>=&gt; (in-minutes (interval (date-time 1986 10 2) (date-time 1986 10 14)))</code>
-  <code>17280</code></p>
+<pre><code>=&gt; (in-minutes (interval (date-time 1986 10 2) (date-time 1986 10 14)))
+17280
+</code></pre>
 
 <p>  Note that all functions in this namespace work with Joda objects or ints. If
   you need to print or parse date-times, see cljs-time.format. If you need to
@@ -3532,7 +3542,35 @@ using (ISODateTimeFormat/dateTime) date-time representation.</p>
    (today-at hours minutes 0)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn do-at* [base-date-time body-fn]
   (binding [*sys-time* base-date-time]
-    (body-fn)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.format" name="cljs-time.format"><h1 class="project-name">cljs-time.format</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+    (body-fn)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.format" name="cljs-time.format"><h1 class="project-name">cljs-time.format</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Utilities for parsing and unparsing DateTimes as Strings.</p>
+
+<p>  Parsing and printing are controlled by formatters. You can either use one
+  of the built in ISO 8601 and a single RFC 822 formatters or define your own, e.g.:</p>
+
+<pre><code>(def built-in-formatter (formatters :basic-date-time))
+(def custom-formatter (formatter "yyyyMMdd"))
+</code></pre>
+
+<p>  To see a list of available built-in formatters and an example of a date-time
+  printed in their format:</p>
+
+<pre><code>(show-formatters)
+</code></pre>
+
+<p>  Once you have a formatter, parsing and printing are strait-forward:</p>
+
+<pre><code>=&gt; (parse custom-formatter "20100311")
+#&lt;DateTime 2010-03-11T00:00:00.000Z&gt;
+
+=&gt; (unparse custom-formatter (date-time 2010 10 3))
+"20101003"
+</code></pre>
+
+<p>  By default the parse function always returns a DateTime instance with a UTC
+  time zone, and the unparse function always represents a given DateTime
+  instance in UTC. A formatter can be modified to different timezones, locales,
+  etc with the functions with-zone, with-locale, with-chronology, and
+  with-pivot-year.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns cljs-time.format
   (:require
     [cljs-time.core :as time]

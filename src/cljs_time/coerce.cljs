@@ -2,11 +2,11 @@
   "Utilites to coerce Joda DateTime instances to and from various other types.
   For example, to convert a Joda DateTime to and from a Java long:
 
-  => (to-long (date-time 1998 4 25))
-  893462400000
+    => (to-long (date-time 1998 4 25))
+    893462400000
 
-  => (from-long 893462400000)
-  #<19980425T000000>"
+    => (from-long 893462400000)
+    #<19980425T000000>"
   (:refer-clojure :exclude [extend second])
   (:require
     [cljs-time.format :as time-fmt]
@@ -26,13 +26,13 @@
   returning first which parses"
   [s]
   (first
-   (for [f (vals time-fmt/formatters)
-         :let [d (try (time-fmt/parse f s) (catch js/Error _))]
-         :when d] d)))
+    (for [f (vals time-fmt/formatters)
+          :let [d (try (time-fmt/parse f s) (catch js/Error _))]
+          :when d] d)))
 
 (defn from-date
   "Returns a DateTime instance in the UTC time zone corresponding to the given
-Java Date object."
+  Java Date object."
   [date]
   (from-long (.getTime date)))
 
@@ -56,7 +56,7 @@ Java Date object."
 
 (defn to-string
   "Returns a string representation of obj in UTC time-zone
-using (ISODateTimeFormat/dateTime) date-time representation."
+  using (ISODateTimeFormat/dateTime) date-time representation."
   [obj]
   (if-let [dt (to-date-time obj)]
     (time-fmt/unparse (:date-time time-fmt/formatters) dt)))

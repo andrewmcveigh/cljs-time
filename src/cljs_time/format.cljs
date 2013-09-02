@@ -1,4 +1,30 @@
 (ns cljs-time.format
+  "Utilities for parsing and unparsing DateTimes as Strings.
+
+  Parsing and printing are controlled by formatters. You can either use one
+  of the built in ISO 8601 and a single RFC 822 formatters or define your own, e.g.:
+
+    (def built-in-formatter (formatters :basic-date-time))
+    (def custom-formatter (formatter \"yyyyMMdd\"))
+
+  To see a list of available built-in formatters and an example of a date-time
+  printed in their format:
+
+    (show-formatters)
+
+  Once you have a formatter, parsing and printing are strait-forward:
+
+    => (parse custom-formatter \"20100311\")
+    #<DateTime 2010-03-11T00:00:00.000Z>
+
+    => (unparse custom-formatter (date-time 2010 10 3))
+    \"20101003\"
+
+  By default the parse function always returns a DateTime instance with a UTC
+  time zone, and the unparse function always represents a given DateTime
+  instance in UTC. A formatter can be modified to different timezones, locales,
+  etc with the functions with-zone, with-locale, with-chronology, and
+  with-pivot-year."
   (:require
     [cljs-time.core :as time]
     [clojure.set :refer [difference]]
