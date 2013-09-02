@@ -44,7 +44,4 @@
       ["phantomjs" "resources/runner.js" "target/cljs/simple.js"]
       "phantom-advanced"
       ["phantomjs" "resources/runner.js" "target/cljs/advanced.js"]}}}}
-  :aliases {"test-all" ["with-profile" "prod" "test"]}
-  :deploy-repositories
-  [["snapshots" {:url "https://clojars.org/repo/" :creds :gpg}]
-   ["releases" {:url "https://clojars.org/repo/" :creds :gpg}]])
+  :aliases {"test-all" ["with-profile" "prod" "test"]})
