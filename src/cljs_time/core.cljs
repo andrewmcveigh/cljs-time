@@ -210,9 +210,10 @@
 
 (defn date-midnight
   "Constructs and returns a new DateMidnight in UTC.
+
   Specify the year, month of year, day of month. Note that month and day are
-  1-indexed. Any number of least-significant components can be ommited, in which case
-  they will default to 1."
+  1-indexed. Any number of least-significant components can be ommited, in
+  which case they will default to 1."
   ([year]
    (date-midnight year 1 1))
   ([year month]
