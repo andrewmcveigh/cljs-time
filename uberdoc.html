@@ -3029,13 +3029,14 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>com.andrewmcveigh/cljs-time -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">com.andrewmcveigh/cljs-time</h1><h2 class="project-version">0.1.1-SNAPSHOT</h2><br /><p>A clj-time inspired date library for clojurescript.</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">com.cemerick/clojurescript.test</td><td class="dotted"><hr /></td><td class="dep-version">0.0.4</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#cljs-time.macros">cljs-time.macros</a></li><li><a href="#cljs-time.coerce">cljs-time.coerce</a></li><li><a href="#cljs-time.core">cljs-time.core</a></li><li><a href="#cljs-time.format">cljs-time.format</a></li><li><a href="#cljs-time.predicates">cljs-time.predicates</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.macros" name="cljs-time.macros"><h1 class="project-name">cljs-time.macros</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns cljs-time.macros)</pre></td></tr><tr><td class="docs"><p>Like clojure.core/do except evalautes the expression at the given date-time</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">com.cemerick/clojurescript.test</td><td class="dotted"><hr /></td><td class="dep-version">0.0.4</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#cljs-time.macros">cljs-time.macros</a></li><li><a href="#cljs-time.coerce">cljs-time.coerce</a></li><li><a href="#cljs-time.core">cljs-time.core</a></li><li><a href="#cljs-time.format">cljs-time.format</a></li><li><a href="#cljs-time.predicates">cljs-time.predicates</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.macros" name="cljs-time.macros"><h1 class="project-name">cljs-time.macros</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>Supporting macros</h3>
+</td><td class="codes"><pre class="brush: clojure">(ns cljs-time.macros )</pre></td></tr><tr><td class="docs"><p>Like clojure.core/do except evalautes the expression at the given date-time</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro do-at
   [base-date-time &amp; body]
   `(cljs-time.core/do-at* ~base-date-time
-    (fn [] ~@body)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.coerce" name="cljs-time.coerce"><h1 class="project-name">cljs-time.coerce</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Utilites to coerce Joda DateTime instances to and from various other types.
-  For example, to convert a Joda DateTime to and from a Java long:</p>
+    (fn [] ~@body)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.coerce" name="cljs-time.coerce"><h1 class="project-name">cljs-time.coerce</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>Utilites to coerce Joda DateTime instances to and from various other types.</h3>
+
+<p>  For example, to convert a Joda DateTime to and from a Java long:</p>
 
 <pre><code>=&gt; (to-long (date-time 1998 4 25))
 893462400000
@@ -3105,7 +3106,7 @@ net.brehaut.ClojureTools = (function (SH) {
 
   string
   (to-date-time [string]
-    (from-string string)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.core" name="cljs-time.core"><h1 class="project-name">cljs-time.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>The core namespace for date-time operations in the cljs-time library.</p>
+    (from-string string)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.core" name="cljs-time.core"><h1 class="project-name">cljs-time.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>The core namespace for date-time operations in the cljs-time library.</h3>
 
 <p>  Create a DateTime instance with date-time (or a LocalDateTime instance with local-date-time),
   specifying the year, month, day, hour, minute, second, and millisecond:</p>
@@ -3542,7 +3543,7 @@ true
    (today-at hours minutes 0)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn do-at* [base-date-time body-fn]
   (binding [*sys-time* base-date-time]
-    (body-fn)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.format" name="cljs-time.format"><h1 class="project-name">cljs-time.format</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Utilities for parsing and unparsing DateTimes as Strings.</p>
+    (body-fn)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.format" name="cljs-time.format"><h1 class="project-name">cljs-time.format</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>Utilities for parsing and unparsing DateTimes as Strings.</h3>
 
 <p>  Parsing and printing are controlled by formatters. You can either use one
   of the built in ISO 8601 and a single RFC 822 formatters or define your own, e.g.:</p>
@@ -3622,22 +3623,22 @@ Z       time zone offset/id          zone          -0800; -08:00; America/Los_An
 
 <p>  The count of pattern letters determine the format.</p>
 
-<p>  Text: If the number of pattern letters is 4 or more, the full form is used;
+<p>  <strong>Text:</strong> If the number of pattern letters is 4 or more, the full form is used;
   otherwise a short or abbreviated form is used if available.</p>
 
-<p>  Number: The minimum number of digits. Shorter numbers are zero-padded to this
+<p>  <strong>Number:</strong> The minimum number of digits. Shorter numbers are zero-padded to this
   amount.</p>
 
-<p>  Year: Numeric presentation for year and weekyear fields are handled
+<p>  <strong>Year:</strong> Numeric presentation for year and weekyear fields are handled
   specially. For example, if the count of 'y' is 2, the year will be displayed
   as the zero-based year of the century, which is two digits.</p>
 
-<p>  Month: 3 or over, use text, otherwise use number.</p>
+<p>  <strong>Month:</strong> 3 or over, use text, otherwise use number.</p>
 
-<p>  Zone: 'Z' outputs offset without a colon, 'ZZ' outputs the offset with a
+<p>  <strong>Zone:</strong> 'Z' outputs offset without a colon, 'ZZ' outputs the offset with a
   colon, 'ZZZ' or more outputs the zone id.</p>
 
-<p>  Zone names: Time zone names ('z') cannot be parsed.</p>
+<p>  <strong>Zone names:</strong> Time zone names ('z') cannot be parsed.</p>
 
 <p>  Any characters in the pattern that are not in the ranges of ['a'..'z'] and
   ['A'..'Z'] will be treated as quoted text. For instance, characters like ':',
@@ -3842,7 +3843,7 @@ form determined by the given formatter.</p>
   (instant-&gt;map [m]
     (case (:type (meta m))
       :cljs-time.core/period m
-      :cljs-time.core/interval (time/-&gt;period m))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.predicates" name="cljs-time.predicates"><h1 class="project-name">cljs-time.predicates</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Predicate functions to ask basic questions about a date</p>
+      :cljs-time.core/interval (time/-&gt;period m))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.predicates" name="cljs-time.predicates"><h1 class="project-name">cljs-time.predicates</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>Predicate functions to ask basic questions about a date.</h3>
 
 <p>  Was it Monday?
   (monday? (clj-time.core/date-time 1999 9 9))</p>
