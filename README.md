@@ -1,4 +1,4 @@
-# cljs-time
+# cljs-time [![Build Status](https://travis-ci.org/andrewmcveigh/cljs-time.png?branch=master)](https://travis-ci.org/andrewmcveigh/cljs-time)
 
 A date and time library for ClojureScript, immitating the clj-time library.
 
