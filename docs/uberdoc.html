@@ -3109,43 +3109,43 @@ using (ISODateTimeFormat/dateTime) date-time representation.</p>
 <p>  Create a DateTime instance with date-time (or a LocalDateTime instance with local-date-time),
   specifying the year, month, day, hour, minute, second, and millisecond:</p>
 
-<p>  => (date-time 1986 10 14 4 3 27 456)
-  #&lt;DateTime 1986-10-14T04:03:27.456Z></p>
+<p>  <code>=&gt; (date-time 1986 10 14 4 3 27 456)</code>
+  <code>#&lt;DateTime 1986-10-14T04:03:27.456Z&gt;</code></p>
 
-<p>  => (local-date-time 1986 10 14 4 3 27 456)
-  #&lt;LocalDateTime 1986-10-14T04:03:27.456></p>
+<p>  <code>=&gt; (local-date-time 1986 10 14 4 3 27 456)</code>
+  <code>#&lt;LocalDateTime 1986-10-14T04:03:27.456&gt;</code></p>
 
 <p>  Less-significant fields can be omitted:</p>
 
-<p>  => (date-time 1986 10 14)
-  #&lt;DateTime 1986-10-14T00:00:00.000Z></p>
+<p>  <code>=&gt; (date-time 1986 10 14)</code>
+  <code>#&lt;DateTime 1986-10-14T00:00:00.000Z&gt;</code></p>
 
-<p>  => (local-date-time 1986 10 14)
-  #&lt;LocalDateTime 1986-10-14T00:00:00.000></p>
+<p>  <code>=&gt; (local-date-time 1986 10 14)</code>
+  <code>#&lt;LocalDateTime 1986-10-14T00:00:00.000&gt;</code></p>
 
 <p>  Get the current time with (now) and the start of the Unix epoch with (epoch).</p>
 
 <p>  Once you have a date-time, use accessors like hour and second to access the
   corresponding fields:</p>
 
-<p>  => (hour (date-time 1986 10 14 22))
-  22</p>
+<p>  <code>=&gt; (hour (date-time 1986 10 14 22))</code>
+  <code>22</code></p>
 
-<p>  => (hour (local-date-time 1986 10 14 22))
-  22</p>
+<p>  <code>=&gt; (hour (local-date-time 1986 10 14 22))</code>
+  <code>22</code></p>
 
 <p>  The date-time constructor always returns times in the UTC time zone. If you
   want a time with the specified fields in a different time zone, use
   from-time-zone:</p>
 
-<p>  => (from-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-  #&lt;DateTime 1986-10-22T00:00:00.000-02:00></p>
+<p>  <code>=&gt; (from-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))</code>
+  <code>#&lt;DateTime 1986-10-22T00:00:00.000-02:00&gt;</code></p>
 
 <p>  If on the other hand you want a given absolute instant in time in a
   different time zone, use to-time-zone:</p>
 
-<p>  => (to-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-  #&lt;DateTime 1986-10-21T22:00:00.000-02:00></p>
+<p>  <code>=&gt; (to-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))</code>
+  <code>#&lt;DateTime 1986-10-21T22:00:00.000-02:00&gt;</code></p>
 
 <p>  In addition to time-zone-for-offset, you can use the time-zone-for-id and
   default-time-zone functions and the utc Var to constgruct or get DateTimeZone
@@ -3154,34 +3154,33 @@ using (ISODateTimeFormat/dateTime) date-time representation.</p>
 <p>  The functions after? and before? determine the relative position of two
   DateTime instances:</p>
 
-<p>  => (after? (date-time 1986 10) (date-time 1986 9))
-  true</p>
+<p>  <code>=&gt; (after? (date-time 1986 10) (date-time 1986 9))</code>
+  <code>true</code></p>
 
-<p>  => (after? (local-date-time 1986 10) (local-date-time 1986 9))
-  true</p>
+<p>  <code>=&gt; (after? (local-date-time 1986 10) (local-date-time 1986 9))</code>
+  <code>true</code></p>
 
 <p>  Often you will want to find a date some amount of time from a given date. For
   example, to find the time 1 month and 3 weeks from a given date-time:</p>
 
-<p>  => (plus (date-time 1986 10 14) (months 1) (weeks 3))
-  #&lt;DateTime 1986-12-05T00:00:00.000Z></p>
+<p>  <code>=&gt; (plus (date-time 1986 10 14) (months 1) (weeks 3))</code>
+  <code>#&lt;DateTime 1986-12-05T00:00:00.000Z&gt;</code></p>
 
-<p>  => (plus (local-date-time 1986 10 14) (months 1) (weeks 3))
-  #&lt;LocalDateTime 1986-12-05T00:00:00.000Z></p>
+<p>  <code>=&gt; (plus (local-date-time 1986 10 14) (months 1) (weeks 3))</code>
+  <code>#&lt;LocalDateTime 1986-12-05T00:00:00.000Z&gt;</code></p>
 
 <p>  An Interval is used to represent the span of time between two DateTime
   instances. Construct one using interval, then query them using within?,
   overlaps?, and abuts?</p>
 
-<p>  => (within? (interval (date-time 1986) (date-time 1990))
-  (date-time 1987))
-  true</p>
+<p>  <code>=&gt; (within? (interval (date-time 1986) (date-time 1990)) (date-time 1987))</code>
+  <code>true</code></p>
 
 <p>  To find the amount of time encompased by an interval, use in-seconds and
   in-minutes:</p>
 
-<p>  => (in-minutes (interval (date-time 1986 10 2) (date-time 1986 10 14)))
-  17280</p>
+<p>  <code>=&gt; (in-minutes (interval (date-time 1986 10 2) (date-time 1986 10 14)))</code>
+  <code>17280</code></p>
 
 <p>  Note that all functions in this namespace work with Joda objects or ints. If
   you need to print or parse date-times, see cljs-time.format. If you need to
