@@ -1,12 +1,12 @@
 (ns cljs-time.format-test
   (:refer-clojure :exclude [=])
   (:require-macros
-    [cljs-test.macros :refer [is is= deftest]])
+    [cemerick.cljs.test :refer [is deftest]])
   (:require
+    [cemerick.cljs.test :as t]
     [cljs-time.coerce :refer [from-date to-date]]
     [cljs-time.core :as time :refer [= date-time interval utc within?]]
-    [cljs-time.format :as format :refer [formatter formatters instant->map parse unparse]]
-    [cljs-test.core :as test]))
+    [cljs-time.format :as format :refer [formatter formatters instant->map parse unparse]]))
 
 (deftest parse-test
   (let [date (format/parse (formatter "dd/MM/yyyy") "12/08/1938")]

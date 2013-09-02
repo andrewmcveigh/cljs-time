@@ -1,9 +1,10 @@
 (ns cljs-time.core-test
   (:refer-clojure :exclude [= extend second])
   (:require-macros
-    [cljs-test.macros :refer [is is= deftest]]
+    [cemerick.cljs.test :refer [is deftest]]
     [cljs-time.macros :refer [do-at]])
   (:require
+    [cemerick.cljs.test :as t]
     [cljs-time.core :refer
      [= date-time epoch year month day date-midnight today-at-midnight hour
       minute second milli abuts? interval overlaps? last-day-of-the-month
@@ -234,10 +235,10 @@
          (extend (interval (date-time 1986) (date-time 1987)) (years 1)))))
 
 (deftest leap-year-interval-in
-  (is= 1 (in-years (interval (date-time 2012 2 29 12 5 4)
-                             (date-time 2013 2 28 22 2 6))))
-  (is= 1 (in-years (interval (date-time 2011 2 28 12 5 4)
-                             (date-time 2012 2 29 22 2 6)))))
+  (is (= 1 (in-years (interval (date-time 2012 2 29 12 5 4)
+                               (date-time 2013 2 28 22 2 6)))))
+  (is (= 1 (in-years (interval (date-time 2011 2 28 12 5 4)
+                               (date-time 2012 2 29 22 2 6))))))
 
 (deftest test-interval-in
   (let [p (interval (date-time 1986 10 14 12 5 4) (date-time 1986 11 3  22 2 6))]
