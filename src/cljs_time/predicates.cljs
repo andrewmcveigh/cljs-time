@@ -1,5 +1,5 @@
 (ns cljs-time.predicates
-  "Predicate functions to ask basic questions about a date
+  "### Predicate functions to ask basic questions about a date.
 
   Was it Monday?
   (monday? (clj-time.core/date-time 1999 9 9))

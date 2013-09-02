@@ -11,3 +11,4 @@ pom.xml
 .lein-env
 .lein*
 .DS_Store
+pom.xml*

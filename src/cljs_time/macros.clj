@@ -1,4 +1,4 @@
-(ns cljs-time.macros)
+(ns cljs-time.macros "### Supporting macros")
 
 (defmacro do-at
   "Like clojure.core/do except evalautes the expression at the given date-time"

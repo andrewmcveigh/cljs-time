@@ -1,5 +1,6 @@
 (ns cljs-time.coerce
-  "Utilites to coerce Joda DateTime instances to and from various other types.
+  "### Utilites to coerce Joda DateTime instances to and from various other types.
+
   For example, to convert a Joda DateTime to and from a Java long:
 
     => (to-long (date-time 1998 4 25))

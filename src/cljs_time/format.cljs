@@ -1,5 +1,5 @@
 (ns cljs-time.format
-  "Utilities for parsing and unparsing DateTimes as Strings.
+  "### Utilities for parsing and unparsing DateTimes as Strings.
 
   Parsing and printing are controlled by formatters. You can either use one
   of the built in ISO 8601 and a single RFC 822 formatters or define your own, e.g.:
@@ -38,7 +38,68 @@
 (def days
   ["Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday"])
 
-(def date-formatters
+(def ^{:doc "**Note: not all formatters have been implemented yet.**
+
+  The pattern syntax is mostly compatible with java.text.SimpleDateFormat -
+  time zone names cannot be parsed and a few more symbols are supported. All
+  ASCII letters are reserved as pattern letters, which are defined as follows:
+
+    Symbol  Meaning                      Presentation  Examples
+    ------  -------                      ------------  -------
+    G       era                          text          AD
+    C       century of era (>=0)         number        20
+    Y       year of era (>=0)            year          1996
+
+    x       weekyear                     year          1996
+    w       week of weekyear             number        27
+    e       day of week                  number        2
+    E       day of week                  text          Tuesday; Tue
+
+    y       year                         year          1996
+    D       day of year                  number        189
+    M       month of year                month         July; Jul; 07
+    d       day of month                 number        10
+
+    a       halfday of day               text          PM
+    K       hour of halfday (0~11)       number        0
+    h       clockhour of halfday (1~12)  number        12
+
+    H       hour of day (0~23)           number        0
+    k       clockhour of day (1~24)      number        24
+    m       minute of hour               number        30
+    s       second of minute             number        55
+    S       fraction of second           number        978
+
+    z       time zone                    text          Pacific Standard Time; PST
+    Z       time zone offset/id          zone          -0800; -08:00; America/Los_Angeles
+
+    '       escape for text              delimiter
+    ''      single quote                 literal       '
+
+  The count of pattern letters determine the format.
+
+  **Text:** If the number of pattern letters is 4 or more, the full form is used;
+  otherwise a short or abbreviated form is used if available.
+
+  **Number:** The minimum number of digits. Shorter numbers are zero-padded to this
+  amount.
+
+  **Year:** Numeric presentation for year and weekyear fields are handled
+  specially. For example, if the count of 'y' is 2, the year will be displayed
+  as the zero-based year of the century, which is two digits.
+
+  **Month:** 3 or over, use text, otherwise use number.
+
+  **Zone:** 'Z' outputs offset without a colon, 'ZZ' outputs the offset with a
+  colon, 'ZZZ' or more outputs the zone id.
+
+  **Zone names:** Time zone names ('z') cannot be parsed.
+
+  Any characters in the pattern that are not in the ranges of ['a'..'z'] and
+  ['A'..'Z'] will be treated as quoted text. For instance, characters like ':',
+  '.', ' ', '#' and '?' will appear in the resulting time text even they are
+  not embraced within single quotes."}
+  date-formatters 
   (let [d      #(.getDate %)
         M #(inc (.getMonth %))
         y      #(.getYear %)

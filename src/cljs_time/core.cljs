@@ -1,5 +1,5 @@
 (ns cljs-time.core
-  "The core namespace for date-time operations in the cljs-time library.
+  "### The core namespace for date-time operations in the cljs-time library.
 
   Create a DateTime instance with date-time (or a LocalDateTime instance with local-date-time),
   specifying the year, month, day, hour, minute, second, and millisecond:
@@ -83,11 +83,7 @@
   (:refer-clojure :exclude [= extend second])
   (:require
     goog.date.UtcDateTime
-    goog.i18n.TimeZone
-    )
-  )
-
-(set! *print-fn* (fn [x] (.log js/console x)))
+    goog.i18n.TimeZone))
 
 (defn = [& args]
   (cond (every? #(instance? goog.date.UtcDateTime %) args)
