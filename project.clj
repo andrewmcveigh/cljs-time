@@ -9,34 +9,34 @@
             [lein-marginalia "0.7.1"]]
   :hooks [leiningen.cljsbuild]
   :clojurescript? true
+  :cljsbuild
+  {:builds
+   {:dev {:source-paths ["src"]
+          :compiler {:output-to "target/main.js"
+                     :optimizations :whitespace
+                     :pretty-print true}}
+    :test {:source-paths ["src" "test"]
+           :incremental? true
+           :notify-command
+           ["phantomjs" "resources/runner.js" "target/unit-test.js"]
+           :compiler {:output-to "target/unit-test.js"
+                      :optimizations :whitespace
+                      :pretty-print true}}}}
   :profiles
-  {:dev {:cljsbuild
-         {:builds
-          [{:source-paths ["src"]
-            :compiler {:output-to "target/main.js"
-                       :optimizations :whitespace
-                       :pretty-print true}}
-           {:source-paths ["src" "test"]
-            :incremental? true
-            :notify-command
-            ["phantomjs" "resources/runner.js" "target/unit-test.js"]
-            :compiler {:output-to "target/unit-test.js"
-                       :optimizations :whitespace
-                       :pretty-print true}}]}}
-   :prod
+  {:prod
    {:cljsbuild
-    {:builds [{:source-paths ["src" "test"]
-               :compiler {:output-to "target/cljs/whitespace.js"
-                          :optimizations :whitespace
-                          :pretty-print true}}
-              {:source-paths ["src" "test"]
-               :compiler {:output-to "target/cljs/simple.js"
-                          :optimizations :simple
-                          :pretty-print true}}
-              {:source-paths ["src" "test"]
-               :compiler {:output-to "target/cljs/advanced.js"
-                          :optimizations :advanced
-                          :pretty-print true}}]
+    {:builds {:whitespace {:source-paths ["src" "test"]
+                           :compiler {:output-to "target/cljs/whitespace.js"
+                                      :optimizations :whitespace
+                                      :pretty-print true}}
+              :simple {:source-paths ["src" "test"]
+                       :compiler {:output-to "target/cljs/simple.js"
+                                  :optimizations :simple
+                                  :pretty-print true}}
+              :advanced {:source-paths ["src" "test"]
+                         :compiler {:output-to "target/cljs/advanced.js"
+                                    :optimizations :advanced
+                                    :pretty-print true}}}
      :test-commands
      {"phantom-whitespace"
       ["phantomjs" "resources/runner.js" "target/cljs/whitespace.js"]
