@@ -4,9 +4,15 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :scm {:url "git@github.com:andrewmcveigh/cljs-time.git"}
-  :dependencies [[com.cemerick/clojurescript.test "0.0.4"]]
-  :plugins [[lein-cljsbuild "0.3.2"]
-            [lein-marginalia "0.7.1"]]
+  :dependencies [[org.clojure/clojure "1.5.1"]
+                 [org.clojure/clojurescript "0.0-1934"]
+                 [com.cemerick/austin "0.1.1"]
+                 [com.cemerick/clojurescript.test "0.0.4"]]
+
+  :plugins [[lein-cljsbuild "0.3.4"]
+            [lein-marginalia "0.7.1"]
+            [com.cemerick/austin "0.1.1"]]
+
   :hooks [leiningen.cljsbuild]
   :clojurescript? true
   :cljsbuild

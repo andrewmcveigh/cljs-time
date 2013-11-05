@@ -12,3 +12,6 @@ pom.xml
 .lein*
 .DS_Store
 pom.xml*
+.repl/
+out/
+.nrepl-port

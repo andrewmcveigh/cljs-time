@@ -10,7 +10,9 @@
       minute second milli abuts? interval overlaps? last-day-of-the-month
       number-of-days-in-the-month first-day-of-the-month today-at now within?
       in-years in-months in-weeks in-days in-hours in-minutes in-seconds
-      in-millis minus plus year-month day-of-week after? before?  years months
+      in-millis minus plus
+      ;year-month
+      day-of-week after? before?  years months
       weeks days hours minutes seconds millis extend start end mins-ago]]))
 
 (deftest test-now

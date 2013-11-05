@@ -29,7 +29,19 @@
     [cljs-time.core :as time]
     [clojure.set :refer [difference]]
     [clojure.string :as string]
-    [goog.date :as date]))
+    [goog.date :as date]
+    [goog.string :as gstring]
+    [goog.string.format]))
+
+(defn format
+  "Formats a string using goog.string.format."
+  [fmt & args]
+  (let [args (map (fn [x]
+                    (if (or (keyword? x) (symbol? x))
+                      (str x)
+                      x))
+                  args)]
+    (apply gstring/format fmt args)))
 
 (def months
   ["January" "February" "March" "April" "May" "June" "July" "August"
@@ -265,18 +277,19 @@
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
   ([{:keys [parser]} s]
-   (let [min-parts (count (string/split s #"(?:[^\w]+|'[^']+'|[TW])"))]
-     (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
-                                  (parser s)))]
-       (when (>= (count parse-seq) min-parts)
-         (reduce (fn [date [part do-parse]] (do-parse date part) date)
-                 (date/UtcDateTime. 0 0 0 0 0 0 0)
-                 parse-seq)))))
+     {:pre [(seq s)]}
+     (let [min-parts (count (string/split s #"(?:[^\w]+|'[^']+'|[TW])"))]
+       (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
+                                 (parser s)))]
+         (when (>= (count parse-seq) min-parts)
+           (reduce (fn [date [part do-parse]] (do-parse date part) date)
+                   (date/UtcDateTime. 0 0 0 0 0 0 0)
+                   parse-seq)))))
   ([s]
-   (first
-     (for [f (vals formatters)
-           :let [d (try (parse f s) (catch js/Error _))]
-           :when d] d))))
+     (first
+      (for [f (vals formatters)
+            :let [d (try (parse f s) (catch js/Error _))]
+            :when d] d))))
 
 (defn unparse
   "Returns a string representing the given DateTime instance in UTC and in the
@@ -313,6 +326,13 @@ form determined by the given formatter."
 
 (extend-protocol Mappable
   ObjMap
+  (instant->map [m]
+    (case (:type (meta m))
+      :cljs-time.core/period m
+      :cljs-time.core/interval (time/->period m))))
+
+(extend-protocol Mappable
+  cljs.core/PersistentArrayMap
   (instant->map [m]
     (case (:type (meta m))
       :cljs-time.core/period m
