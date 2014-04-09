@@ -129,7 +129,8 @@
      "MM" #(format "%02d" (M %))
      "yyyy" y
      "yy" #(mod (y %) 100)
-     "MMM" #(months (dec (M %)))
+     "MMM" #(string/join (take 3 (months (dec (M %)))))
+     "MMMM" #(months (dec (M %)))
      "h" h
      "m" m
      "s" s
@@ -160,6 +161,8 @@
      "yyyy" ["(\\d{4})" y]
      "MMM" [(str \( (string/join \| months) \))
             #(M %1 (str (inc (.indexOf (into-array months) %2))))]
+     "MMMM" [(str \( (string/join \| months) \))
+             #(M %1 (str (inc (.indexOf (into-array months) %2))))]
      "E" [(str \( (string/join \| (map #(string/join (take 3 %)) days)) \))
           (constantly nil)]
      "EEE" [(str \( (string/join \| days) \)) (constantly nil)]
