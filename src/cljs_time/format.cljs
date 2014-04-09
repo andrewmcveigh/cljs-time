@@ -127,10 +127,10 @@
      "EEE" #(days (.getDay %))
      "M" M
      "MM" #(format "%02d" (M %))
-     "yyyy" y
-     "yy" #(mod (y %) 100)
      "MMM" #(string/join (take 3 (months (dec (M %)))))
      "MMMM" #(months (dec (M %)))
+     "yyyy" y
+     "yy" #(mod (y %) 100)
      "h" h
      "m" m
      "s" s
@@ -180,8 +180,8 @@
 
 (defn parser-sort-order-pred [parser]
   (.indexOf
-    (into-array ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "dow" "h" "m"
-                 "s" "S" "hh" "mm" "ss" "SSS" "Z"])
+    (into-array ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h"
+                 "m" "s" "S" "hh" "mm" "ss" "SSS" "Z"])
     parser))
 
 (def date-format-pattern
