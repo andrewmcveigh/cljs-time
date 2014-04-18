@@ -119,18 +119,22 @@
         m      #(.getMinutes %)
         s      #(.getSeconds %)
         S      #(.getMilliseconds %)
-        Z      #(.getTimezoneOffsetString %)]
+        Z      #(.getTimezoneOffsetString %)
+        doy    #(.getDayOfYear %)
+        dow    #(.getDay %)]
     {"d" d
      "dd" #(format "%02d" (d %))
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
-     "dow" #(days (.getDay %))
-     "EEE" #(days (.getDay %))
+     "dow" #(days (dow %))
+     "DDD" doy
+     "EEE" #(days (dow %))
      "M" M
      "MM" #(format "%02d" (M %))
      "MMM" #(string/join (take 3 (months (dec (M %)))))
      "MMMM" #(months (dec (M %)))
      "yyyy" y
      "yy" #(mod (y %) 100)
+     "xxxx" y
      "h" h
      "m" m
      "s" s
@@ -141,7 +145,9 @@
      "ss" #(format "%02d" (s %))
      "SSS" #(format "%03d" (S %))
      "Z" Z
-     "ZZ" Z}))
+     "ZZ" Z
+     "ww" #(format "%02d" (Math/ceil (/ (doy %) 7)))
+     "e" dow}))
 
 (def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))
@@ -300,6 +306,15 @@ form determined by the given formatter."
   [{:keys [formatter]} date]
   {:pre [(not (nil? date)) (instance? date/DateTime date)]}
   (apply string/replace (formatter date)))
+
+(defn show-formatters
+  "Shows how a given DateTime, or by default the current time, would be
+formatted with each of the available printing formatters."
+  ([] (show-formatters (time/now)))
+  ([dt]
+     (doseq [p (sort printers)]
+       (let [fmt (formatters p)]
+         (print (format "%-40s%s\n" p (unparse fmt dt)))))))
 
 (defprotocol Mappable
   (instant->map [instant] "Returns a map representation of the given instant.
