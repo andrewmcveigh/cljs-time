@@ -5,10 +5,10 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :scm {:url "git@github.com:andrewmcveigh/cljs-time.git"}
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-2202"]
-                 [com.cemerick/clojurescript.test "0.0.4"]]
+                 [org.clojure/clojurescript "0.0-2202"]]
 
-  :plugins [[lein-cljsbuild "1.0.3"]
+  :plugins [[com.cemerick/clojurescript.test "0.3.0"]
+            [lein-cljsbuild "1.0.3"]
             [lein-marginalia "0.7.1"]
             [com.cemerick/austin "0.1.4"]]
 
