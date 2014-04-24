@@ -24,7 +24,11 @@
     (is (= 29   (.getDate date)))
     (is (= 1    (.getMonth date)))
     (is (= 14   (.getHours date)))
-    (is (= 26   (.getMinutes date)))))
+    (is (= 26   (.getMinutes date))))
+  (let [date (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ssZZ")
+                           "2014-04-01T14:57:00+01:00")]
+    (is (= 13 (.getHours date)))
+    (is (= 57 (.getMinutes date)))))
 
 (deftest unparse-test
   (let [date (from-date #inst "2013-08-29T00:00:00.000-00:00")]

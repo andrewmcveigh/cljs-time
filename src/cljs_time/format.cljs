@@ -149,6 +149,19 @@
      "ww" #(format "%02d" (Math/ceil (/ (doy %) 7)))
      "e" dow}))
 
+(defn timezone-adjustment [d timezone-string]
+  (let [[_ sign hh mm] (string/split timezone-string
+                                     #"Z|(?:([-+])(\d{2})(?::?(\d{2}))?)$")]
+    (when (and sign hh mm)
+      (let [sign (cond (= sign "-") time/plus
+                       (= sign "+") time/minus)
+            [hh mm] (map #(js/parseInt %) [hh mm])
+            adjusted (-> d
+                         (sign (time/hours hh))
+                         (sign (time/minutes mm)))]
+        (.setTime d (.getTime adjusted))))
+    d))
+
 (def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))
         d #(.setDate %1         (js/parseInt %2 10))
@@ -181,13 +194,13 @@
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]
-     "Z" ["((?:\\+|\\-\\d{2}:\\d{2})|Z+)" (constantly nil)]}))
-
+     "Z" ["((?:(?:\\+|\\-)\\d{2}:\\d{2})|Z+)" timezone-adjustment]
+     "ZZ" ["((?:(?:\\+|\\-)\\d{2}:\\d{2})|Z+)" timezone-adjustment]}))
 
 (defn parser-sort-order-pred [parser]
   (.indexOf
     (into-array ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h"
-                 "m" "s" "S" "hh" "mm" "ss" "SSS" "Z"])
+                 "m" "s" "S" "hh" "mm" "ss" "SSS" "Z" "ZZ"])
     parser))
 
 (def date-format-pattern
@@ -273,7 +286,6 @@
      :rfc822 (formatter "EEE, dd MMM yyyy HH:mm:ss Z")
      :mysql (formatter "yyyy-MM-dd HH:mm:ss")})
 
-
 (def ^{:private true} parsers
   #{:date-element-parser :date-opt-time :date-parser :date-time-parser
     :local-date-opt-time :local-date :local-time :time-element-parser
@@ -287,7 +299,7 @@
   given string according to the given formatter."
   ([{:keys [parser]} s]
      {:pre [(seq s)]}
-     (let [min-parts (count (string/split s #"(?:[^\w]+|'[^']+'|[TW])"))]
+     (let [min-parts (count (string/split s #"(?:[^\w:]+|'[^']+'|[TW])"))]
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                  (parser s)))]
          (when (>= (count parse-seq) min-parts)
