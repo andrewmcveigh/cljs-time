@@ -155,12 +155,15 @@
     (when (and sign hh mm)
       (let [sign (cond (= sign "-") time/plus
                        (= sign "+") time/minus)
-            [hh mm] (map #(js/parseInt %) [hh mm])
+            [hh mm] (map #(js/parseInt % 10) [hh mm])
             adjusted (-> d
                          (sign (time/hours hh))
                          (sign (time/minutes mm)))]
         (.setTime d (.getTime adjusted))))
     d))
+
+(defn abbreviate [n s]
+  (subs s 0 n))
 
 (def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))
@@ -178,13 +181,18 @@
      "y" ["(\\d{1,4})" y]
      "yy" ["(\\d{2,4})" y]
      "yyyy" ["(\\d{4})" y]
-     "MMM" [(str \( (string/join \| months) \))
-            #(M %1 (str (inc (.indexOf (into-array months) %2))))]
+     "MMM" [(str \( (string/join \| (map (partial abbreviate 3) months)) \))
+            #(let [full (first (filter (fn [m]
+                                         (re-seq (re-pattern (str "^" %2)) m))
+                                       months))]
+               (M %1 (str (inc (.indexOf (into-array months) full)))))]
      "MMMM" [(str \( (string/join \| months) \))
              #(M %1 (str (inc (.indexOf (into-array months) %2))))]
-     "E" [(str \( (string/join \| (map #(string/join (take 3 %)) days)) \))
+     "E" [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
           (constantly nil)]
-     "EEE" [(str \( (string/join \| days) \)) (constantly nil)]
+     "EEE" [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
+            (constantly nil)]
+     "EEEE" [(str \( (string/join \| days) \)) (constantly nil)]
      "dow" [(str \( (string/join \| days) \)) (constantly nil)]
      "m" ["(\\d{1,2})" m]
      "s" ["(\\d{1,2})" s]
@@ -194,8 +202,8 @@
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]
-     "Z" ["((?:(?:\\+|\\-)\\d{2}:\\d{2})|Z+)" timezone-adjustment]
-     "ZZ" ["((?:(?:\\+|\\-)\\d{2}:\\d{2})|Z+)" timezone-adjustment]}))
+     "Z" ["((?:(?:\\+|-)\\d{2}:?\\d{2})|Z+)" timezone-adjustment]
+     "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" timezone-adjustment]}))
 
 (defn parser-sort-order-pred [parser]
   (.indexOf
@@ -215,11 +223,11 @@
 
 (defn formatter
   ([fmts]
-   {:parser #(sort-by (comp parser-sort-order-pred second)
-                      (partition 2
-                                 (interleave
-                                   (nfirst (re-seq (date-parse-pattern fmts) %))
-                                   (map first (re-seq date-format-pattern fmts)))))
+     {:parser #(->> (interleave
+                     (nfirst (re-seq (date-parse-pattern fmts) %))
+                     (map first (re-seq date-format-pattern fmts)))
+                    (partition 2)
+                    (sort-by (comp parser-sort-order-pred second)))
     :formatter (fn [date]
                  [(string/replace fmts #"'([^']+)'" "$1")
                   date-format-pattern
@@ -230,7 +238,11 @@
                     :message (format "%s not implemented yet" (name sym))})))
 
 (def ^{:doc "Map of ISO 8601 and a single RFC 822 formatters that can be used
-            for parsing and, in most cases, printing."}
+for parsing and, in most cases, printing.
+
+Note: due to current implementation limitations, timezone information
+cannot be kept. Although the correct offset will be applied to UTC
+time if supplied."}
   formatters
     {:basic-date (formatter "yyyyMMdd")
      :basic-date-time (formatter "yyyyMMdd'T'HHmmss.SSSZ")
@@ -294,18 +306,24 @@
 (def ^{:private true} printers
   (difference (set (keys formatters)) parsers))
 
+(def part-splitter-regex
+  #"(?:(?!(?:\+|-)\d{2}):(?!\d{2}$))|[^\w:]+|.[TW]|'[^']+'")
+
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
   ([{:keys [parser]} s]
      {:pre [(seq s)]}
-     (let [min-parts (count (string/split s #"(?:[^\w:]+|'[^']+'|[TW])"))]
+     (let [min-parts (count (string/split s part-splitter-regex))]
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                  (parser s)))]
-         (when (>= (count parse-seq) min-parts)
+         (if (>= (count parse-seq) min-parts)
            (reduce (fn [date [part do-parse]] (do-parse date part) date)
                    (date/UtcDateTime. 0 0 0 0 0 0 0)
-                   parse-seq)))))
+                   parse-seq)
+           (throw
+            (ex-info "The parser could not match the input string."
+                     {:type :parser-no-match}))))))
   ([s]
      (first
       (for [f (vals formatters)

@@ -8,27 +8,42 @@
     [cljs-time.core :as time :refer [= date-time interval utc within?]]
     [cljs-time.format :as format :refer [formatter formatters instant->map parse unparse]]))
 
+(defn utc-int-vec [d]
+  [(time/year d) (time/month d) (time/day d)
+   (time/hour d) (time/minute d) (time/second d) (time/milli d)])
+
 (deftest parse-test
+  (try
+    (format/parse (formatter "dth MMM yyyy hh:mm") "28th August 2013 14:26")
+    (catch ExceptionInfo e (is (= :parser-no-match (:type (ex-data e))))))
   (let [date (format/parse (formatter "dd/MM/yyyy") "12/08/1938")]
     (is (= 1938 (.getYear date)))
     (is (= 12   (.getDate date)))
     (is (= 7    (.getMonth date))))
-  (let [date (format/parse (formatter "dth MMM yyyy hh:mm") "28th August 2013 14:26")]
+  (let [date (format/parse (formatter "dth MMMM yyyy hh:mm") "28th August 2013 14:26")]
     (is (= 2013 (.getYear date)))
     (is (= 28   (.getDate date)))
     (is (= 7    (.getMonth date)))
     (is (= 14   (.getHours date)))
     (is (= 26   (.getMinutes date))))
-  (let [date (format/parse (formatter "dth MMM yyyy hh:mm") "29th February 2012 14:26")]
+  (let [date (format/parse (formatter "dth MMMM yyyy hh:mm") "29th February 2012 14:26")]
     (is (= 2012 (.getYear date)))
     (is (= 29   (.getDate date)))
     (is (= 1    (.getMonth date)))
     (is (= 14   (.getHours date)))
     (is (= 26   (.getMinutes date))))
-  (let [date (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ssZZ")
-                           "2014-04-01T14:57:00+01:00")]
-    (is (= 13 (.getHours date)))
-    (is (= 57 (.getMinutes date)))))
+  (is (= [2014 4 1 13 57 0 0]
+         (utc-int-vec
+          (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ssZZ")
+                        "2014-04-01T14:57:00+01:00"))))
+  (is (= [2014 04 1 23 27 0 0]
+         (utc-int-vec
+          (format/parse (:basic-date-time-no-ms format/formatters)
+                        "20140401T145700-08:30"))))
+  (is (= [2002 10 2 13 0 0 0]
+         (utc-int-vec
+          (format/parse (:rfc822 formatters)
+                        "Wed, 02 Oct 2002 15:00:00 +0200")))))
 
 (deftest unparse-test
   (let [date (from-date #inst "2013-08-29T00:00:00.000-00:00")]
