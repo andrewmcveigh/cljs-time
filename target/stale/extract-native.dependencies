@@ -1,1 +1,0 @@
-([:dependencies ([marginalia "0.7.1"] [com.cemerick/austin "0.1.1"] [org.clojure/clojure "1.5.1"] [org.clojure/clojurescript "0.0-1934"] [com.cemerick/austin "0.1.1"] [com.cemerick/clojurescript.test "0.0.4"] [org.clojure/tools.nrepl "0.2.3" :exclusions ([org.clojure/clojure])] [clojure-complete/clojure-complete "0.2.3" :exclusions ([org.clojure/clojure])])])

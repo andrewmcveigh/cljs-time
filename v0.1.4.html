@@ -3028,8 +3028,8 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>com.andrewmcveigh/cljs-time -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">com.andrewmcveigh/cljs-time</h1><h2 class="project-version">0.1.1</h2><br /><p>A clj-time inspired date library for clojurescript.</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">org.clojure/clojurescript</td><td class="dotted"><hr /></td><td class="dep-version">0.0-1934</td></tr><tr><td class="dep-name">com.cemerick/austin</td><td class="dotted"><hr /></td><td class="dep-version">0.1.1</td></tr><tr><td class="dep-name">com.cemerick/clojurescript.test</td><td class="dotted"><hr /></td><td class="dep-version">0.0.4</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#cljs-time.macros">cljs-time.macros</a></li><li><a href="#cljs-time.coerce">cljs-time.coerce</a></li><li><a href="#cljs-time.core">cljs-time.core</a></li><li><a href="#cljs-time.format">cljs-time.format</a></li><li><a href="#cljs-time.local">cljs-time.local</a></li><li><a href="#cljs-time.predicates">cljs-time.predicates</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.macros" name="cljs-time.macros"><h1 class="project-name">cljs-time.macros</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>Supporting macros</h3>
+</script><title>com.andrewmcveigh/cljs-time -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">com.andrewmcveigh/cljs-time</h1><h2 class="project-version">0.1.4</h2><br /><p>A clj-time inspired date library for clojurescript.</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">org.clojure/clojurescript</td><td class="dotted"><hr /></td><td class="dep-version">0.0-2202</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#cljs-time.macros">cljs-time.macros</a></li><li><a href="#cljs-time.coerce">cljs-time.coerce</a></li><li><a href="#cljs-time.core">cljs-time.core</a></li><li><a href="#cljs-time.format">cljs-time.format</a></li><li><a href="#cljs-time.predicates">cljs-time.predicates</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.macros" name="cljs-time.macros"><h1 class="project-name">cljs-time.macros</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>Supporting macros</h3>
 </td><td class="codes"><pre class="brush: clojure">(ns cljs-time.macros )</pre></td></tr><tr><td class="docs"><p>Like clojure.core/do except evalautes the expression at the given date-time</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro do-at
   [base-date-time &amp; body]
@@ -3662,17 +3662,22 @@ Z       time zone offset/id          zone          -0800; -08:00; America/Los_An
         m      #(.getMinutes %)
         s      #(.getSeconds %)
         S      #(.getMilliseconds %)
-        Z      #(.getTimezoneOffsetString %)]
+        Z      #(.getTimezoneOffsetString %)
+        doy    #(.getDayOfYear %)
+        dow    #(.getDay %)]
     {&quot;d&quot; d
      &quot;dd&quot; #(format &quot;%02d&quot; (d %))
      &quot;dth&quot; #(let [d (d %)] (str d (case d 1 &quot;st&quot; 2 &quot;nd&quot; 3 &quot;rd&quot; &quot;th&quot;)))
-     &quot;dow&quot; #(days (.getDay %))
-     &quot;EEE&quot; #(days (.getDay %))
+     &quot;dow&quot; #(days (dow %))
+     &quot;DDD&quot; doy
+     &quot;EEE&quot; #(days (dow %))
      &quot;M&quot; M
      &quot;MM&quot; #(format &quot;%02d&quot; (M %))
+     &quot;MMM&quot; #(string/join (take 3 (months (dec (M %)))))
+     &quot;MMMM&quot; #(months (dec (M %)))
      &quot;yyyy&quot; y
      &quot;yy&quot; #(mod (y %) 100)
-     &quot;MMM&quot; #(months (dec (M %)))
+     &quot;xxxx&quot; y
      &quot;h&quot; h
      &quot;m&quot; m
      &quot;s&quot; s
@@ -3683,7 +3688,23 @@ Z       time zone offset/id          zone          -0800; -08:00; America/Los_An
      &quot;ss&quot; #(format &quot;%02d&quot; (s %))
      &quot;SSS&quot; #(format &quot;%03d&quot; (S %))
      &quot;Z&quot; Z
-     &quot;ZZ&quot; Z}))</pre></td></tr><tr><td class="docs">
+     &quot;ZZ&quot; Z
+     &quot;ww&quot; #(format &quot;%02d&quot; (Math/ceil (/ (doy %) 7)))
+     &quot;e&quot; dow}))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn timezone-adjustment [d timezone-string]
+  (let [[_ sign hh mm] (string/split timezone-string
+                                     #&quot;Z|(?:([-+])(\d{2})(?::?(\d{2}))?)$&quot;)]
+    (when (and sign hh mm)
+      (let [sign (cond (= sign &quot;-&quot;) time/plus
+                       (= sign &quot;+&quot;) time/minus)
+            [hh mm] (map #(js/parseInt % 10) [hh mm])
+            adjusted (-&gt; d
+                         (sign (time/hours hh))
+                         (sign (time/minutes mm)))]
+        (.setTime d (.getTime adjusted))))
+    d))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn abbreviate [n s]
+  (subs s 0 n))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))
         d #(.setDate %1         (js/parseInt %2 10))
@@ -3700,11 +3721,18 @@ Z       time zone offset/id          zone          -0800; -08:00; America/Los_An
      &quot;y&quot; [&quot;(\\d{1,4})&quot; y]
      &quot;yy&quot; [&quot;(\\d{2,4})&quot; y]
      &quot;yyyy&quot; [&quot;(\\d{4})&quot; y]
-     &quot;MMM&quot; [(str \( (string/join \| months) \))
-            #(M %1 (str (inc (.indexOf (into-array months) %2))))]
-     &quot;E&quot; [(str \( (string/join \| (map #(string/join (take 3 %)) days)) \))
+     &quot;MMM&quot; [(str \( (string/join \| (map (partial abbreviate 3) months)) \))
+            #(let [full (first (filter (fn [m]
+                                         (re-seq (re-pattern (str &quot;^&quot; %2)) m))
+                                       months))]
+               (M %1 (str (inc (.indexOf (into-array months) full)))))]
+     &quot;MMMM&quot; [(str \( (string/join \| months) \))
+             #(M %1 (str (inc (.indexOf (into-array months) %2))))]
+     &quot;E&quot; [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
           (constantly nil)]
-     &quot;EEE&quot; [(str \( (string/join \| days) \)) (constantly nil)]
+     &quot;EEE&quot; [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
+            (constantly nil)]
+     &quot;EEEE&quot; [(str \( (string/join \| days) \)) (constantly nil)]
      &quot;dow&quot; [(str \( (string/join \| days) \)) (constantly nil)]
      &quot;m&quot; [&quot;(\\d{1,2})&quot; m]
      &quot;s&quot; [&quot;(\\d{1,2})&quot; s]
@@ -3714,11 +3742,12 @@ Z       time zone offset/id          zone          -0800; -08:00; America/Los_An
      &quot;mm&quot; [&quot;(\\d{2})&quot; m]
      &quot;ss&quot; [&quot;(\\d{2})&quot; s]
      &quot;SSS&quot; [&quot;(\\d{3})&quot; S]
-     &quot;Z&quot; [&quot;((?:\\+|\\-\\d{2}:\\d{2})|Z+)&quot; (constantly nil)]}))</pre></td></tr><tr><td class="docs">
+     &quot;Z&quot; [&quot;((?:(?:\\+|-)\\d{2}:?\\d{2})|Z+)&quot; timezone-adjustment]
+     &quot;ZZ&quot; [&quot;((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)&quot; timezone-adjustment]}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn parser-sort-order-pred [parser]
   (.indexOf
-    (into-array [&quot;yyyy&quot; &quot;yy&quot; &quot;y&quot; &quot;d&quot; &quot;dd&quot; &quot;dth&quot; &quot;M&quot; &quot;MM&quot; &quot;MMM&quot; &quot;dow&quot; &quot;h&quot; &quot;m&quot;
-                 &quot;s&quot; &quot;S&quot; &quot;hh&quot; &quot;mm&quot; &quot;ss&quot; &quot;SSS&quot; &quot;Z&quot;])
+    (into-array [&quot;yyyy&quot; &quot;yy&quot; &quot;y&quot; &quot;d&quot; &quot;dd&quot; &quot;dth&quot; &quot;M&quot; &quot;MM&quot; &quot;MMM&quot; &quot;MMMM&quot; &quot;dow&quot; &quot;h&quot;
+                 &quot;m&quot; &quot;s&quot; &quot;S&quot; &quot;hh&quot; &quot;mm&quot; &quot;ss&quot; &quot;SSS&quot; &quot;Z&quot; &quot;ZZ&quot;])
     parser))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def date-format-pattern
   (re-pattern
@@ -3730,11 +3759,11 @@ Z       time zone offset/id          zone          -0800; -08:00; America/Los_An
                     #(first (date-parsers %)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn formatter
   ([fmts]
-   {:parser #(sort-by (comp parser-sort-order-pred second)
-                      (partition 2
-                                 (interleave
-                                   (nfirst (re-seq (date-parse-pattern fmts) %))
-                                   (map first (re-seq date-format-pattern fmts)))))
+     {:parser #(-&gt;&gt; (interleave
+                     (nfirst (re-seq (date-parse-pattern fmts) %))
+                     (map first (re-seq date-format-pattern fmts)))
+                    (partition 2)
+                    (sort-by (comp parser-sort-order-pred second)))
     :formatter (fn [date]
                  [(string/replace fmts #&quot;'([^']+)'&quot; &quot;$1&quot;)
                   date-format-pattern
@@ -3742,7 +3771,11 @@ Z       time zone offset/id          zone          -0800; -08:00; America/Los_An
 </td><td class="codes"><pre class="brush: clojure">(defn not-implemented [sym]
   #(throw (clj-&gt;js {:name :not-implemented
                     :message (format &quot;%s not implemented yet&quot; (name sym))})))</pre></td></tr><tr><td class="docs"><p>Map of ISO 8601 and a single RFC 822 formatters that can be used
-            for parsing and, in most cases, printing.</p>
+for parsing and, in most cases, printing.</p>
+
+<p>Note: due to current implementation limitations, timezone information
+cannot be kept. Although the correct offset will be applied to UTC
+time if supplied.</p>
 </td><td class="codes"><pre class="brush: clojure">(def 
   formatters
     {:basic-date (formatter &quot;yyyyMMdd&quot;)
@@ -3803,18 +3836,23 @@ Z       time zone offset/id          zone          -0800; -08:00; America/Los_An
     :local-date-opt-time :local-date :local-time :time-element-parser
     :time-parser})</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def ^{:private true} printers
-  (difference (set (keys formatters)) parsers))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime instance in the UTC time zone obtained by parsing the
+  (difference (set (keys formatters)) parsers))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def part-splitter-regex
+  #&quot;(?:(?!(?:\+|-)\d{2}):(?!\d{2}$))|[^\w:]+|.[TW]|'[^']+'&quot;)</pre></td></tr><tr><td class="docs"><p>Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn parse
   ([{:keys [parser]} s]
      {:pre [(seq s)]}
-     (let [min-parts (count (string/split s #&quot;(?:[^\w]+|'[^']+'|[TW])&quot;))]
+     (let [min-parts (count (string/split s part-splitter-regex))]
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                  (parser s)))]
-         (when (&gt;= (count parse-seq) min-parts)
+         (if (&gt;= (count parse-seq) min-parts)
            (reduce (fn [date [part do-parse]] (do-parse date part) date)
                    (date/UtcDateTime. 0 0 0 0 0 0 0)
-                   parse-seq)))))
+                   parse-seq)
+           (throw
+            (ex-info &quot;The parser could not match the input string.&quot;
+                     {:type :parser-no-match}))))))
   ([s]
      (first
       (for [f (vals formatters)
@@ -3824,7 +3862,14 @@ form determined by the given formatter.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn unparse
   [{:keys [formatter]} date]
   {:pre [(not (nil? date)) (instance? date/DateTime date)]}
-  (apply string/replace (formatter date)))</pre></td></tr><tr><td class="docs">
+  (apply string/replace (formatter date)))</pre></td></tr><tr><td class="docs"><p>Shows how a given DateTime, or by default the current time, would be
+formatted with each of the available printing formatters.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn show-formatters
+  ([] (show-formatters (time/now)))
+  ([dt]
+     (doseq [p (sort printers)]
+       (let [fmt (formatters p)]
+         (print (format &quot;%-40s%s\n&quot; p (unparse fmt dt)))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defprotocol Mappable
   (instant-&gt;map [instant] &quot;Returns a map representation of the given instant.
                           It will contain the following keys: :years, :months,
@@ -3859,10 +3904,7 @@ form determined by the given formatter.</p>
   (instant-&gt;map [m]
     (case (:type (meta m))
       :cljs-time.core/period m
-      :cljs-time.core/interval (time/-&gt;period m))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.local" name="cljs-time.local"><h1 class="project-name">cljs-time.local</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns cljs-time.local)</pre></td></tr><tr><td class="docs"><p>(.log js/console (js/Object.getOwnPropertyNames (.-<strong>proto</strong> (goog.date.DateTime.))))</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>(prn (.getHours (goog.date.UtcDateTime.)))</p>
-</td><td class="codes"></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.predicates" name="cljs-time.predicates"><h1 class="project-name">cljs-time.predicates</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>Predicate functions to ask basic questions about a date.</h3>
+      :cljs-time.core/interval (time/-&gt;period m))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#cljs-time.predicates" name="cljs-time.predicates"><h1 class="project-name">cljs-time.predicates</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h3>Predicate functions to ask basic questions about a date.</h3>
 
 <p>  Was it Monday?
   (monday? (clj-time.core/date-time 1999 9 9))</p>
