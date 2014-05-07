@@ -169,4 +169,5 @@ Note: Currently does not account for leap seconds."
   (.indexOf #+clj coll #+cljs (into-array coll) x))
 
 (defn parse-int [s]
-  (#+clj Integer/parseInt #+cljs js/parseInt s 10))
+  (let [s (string/replace s #"^\+" "")] ; for java6
+    (#+clj Integer/parseInt #+cljs js/parseInt s 10)))
