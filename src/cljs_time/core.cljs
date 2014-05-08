@@ -82,6 +82,8 @@
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
+   [cljs-time.internal.core :refer [format split-formats]]
+   [cljs-time.tz.data :refer [zones]]
     goog.date.UtcDateTime
     goog.i18n.TimeZone))
 
@@ -95,25 +97,61 @@
   (year [this] "Return the year component of the given date/time.")
   (month [this] "Return the month component of the given date/time.")
   (day [this] "Return the day of month component of the given date/time.")
-  (day-of-week [this] "Return the day of week component of the given date/time. Monday is 1 and Sunday is 7")
-  (hour [this] "Return the hour of day component of the given date/time. A time of 12:01am will have an hour component of 0.")
+  (day-of-week [this]
+    "Return the day of week component of the given date/time. Monday
+    is 1 and Sunday is 7")
+  (hour [this]
+    "Return the hour of day component of the given date/time. A time
+    of 12:01am will have an hour component of 0.")
   (minute [this] "Return the minute of hour component of the given date/time.")
   (sec [this] "Return the second of minute component of the given date/time.")
-  (second [this] "Return the second of minute component of the given date/time.")
-  (milli [this] "Return the millisecond of second component of the given date/time.")
-  (after? [this that] "Returns true if ReadableDateTime 'this' is strictly after date/time 'that'.")
-  (before? [this that] "Returns true if ReadableDateTime 'this' is strictly before date/time 'that'.")
+  (second [this]
+    "Return the second of minute component of the given date/time.")
+  (milli [this]
+    "Return the millisecond of second component of the given date/time.")
+  (after? [this that]
+    "Returns true if ReadableDateTime 'this' is strictly after
+    date/time 'that'.")
+  (before? [this that]
+    "Returns true if ReadableDateTime 'this' is strictly before
+    date/time 'that'.")
   (plus- [this period]
-         "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
+    "Returns a new date/time corresponding to the given date/time
+    moved forwards by the given Period(s).")
   (minus- [this period]
-          "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
+    "Returns a new date/time corresponding to the given date/time
+    moved backwards by the given Period(s)."))
 
+(defn time-zone-for-offset
+  "Returns a DateTimeZone for the given offset, specified either in hours or
+hours and minutes."
+  ([hours]
+   (time-zone-for-offset hours nil))
+  ([hours minutes]
+   (let [sign (if (neg? hours) :- :+)
+         fmt (str "UTC%s%02d" (when minutes ":%02d"))
+         hours (if (neg? hours) (* -1 hours) hours)
+         tz-name (if minutes
+                   (format fmt (name sign) hours minutes)
+                   (format fmt (name sign) hours))]
+     (with-meta
+       {:id tz-name
+        :offset [sign hours (or minutes 0) 0]
+        :rules "-"
+        :names [tz-name]}
+       {:type ::time-zone}))))
 
-(def utc (goog.i18n.TimeZone/createTimeZone
-           (clj->js {:id "UTC"
-                     :std_offset 0
-                     :names ["UTC"]
-                     :transitions []})))
+(defn time-zone-for-id
+  "Returns a DateTimeZone for the given ID, which must be in long form, e.g.
+'America/Matamoros'."
+  [id]
+  (if-let [[offset rules format & until] (last (zones id))]
+    (with-meta
+      {:id id
+       :offset offset :rules rules :names (split-formats format)}
+      {:type ::time-zone})))
+
+(def utc (time-zone-for-id "Etc/UTC"))
 
 (defn leap-year? [y]
   (cond (zero? (mod y 400)) true
@@ -174,9 +212,7 @@
   (after? [this that] (> (.getTime this) (.getTime that)))
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
-  (minus- [this period] ((period-fn period) - this))
-  )
-
+  (minus- [this period] ((period-fn period) - this)))
 
 (def ^:dynamic *sys-time* nil)
 
