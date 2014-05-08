@@ -8,45 +8,36 @@
                  [org.clojure/clojurescript "0.0-2202"]]
 
   :plugins [[com.cemerick/clojurescript.test "0.3.0"]
+            [com.keminglabs/cljx "0.3.2"]
             [lein-cljsbuild "1.0.3"]
             [lein-marginalia "0.7.1"]
             [com.cemerick/austin "0.1.4"]]
 
-  :hooks [leiningen.cljsbuild]
-  :clojurescript? true
-  :cljsbuild
-  {:builds
-   {:dev {:source-paths ["src"]
-          :compiler {:output-to "target/main.js"
-                     :optimizations :whitespace
-                     :pretty-print true}}
-    :test {:source-paths ["src" "test"]
-           :incremental? true
-           :notify-command
-           ["phantomjs" "resources/runner.js" "target/unit-test.js"]
-           :compiler {:output-to "target/unit-test.js"
-                      :optimizations :whitespace
-                      :pretty-print true}}}}
+  :source-paths ["src" "target/classes"]
+  :test-paths ["test" "target/test-classes"]
+
   :profiles
-  {:prod
-   {:cljsbuild
-    {:builds {:whitespace {:source-paths ["src" "test"]
-                           :compiler {:output-to "target/cljs/whitespace.js"
-                                      :optimizations :whitespace
-                                      :pretty-print true}}
-              :simple {:source-paths ["src" "test"]
-                       :compiler {:output-to "target/cljs/simple.js"
-                                  :optimizations :simple
-                                  :pretty-print true}}
-              :advanced {:source-paths ["src" "test"]
-                         :compiler {:output-to "target/cljs/advanced.js"
-                                    :optimizations :advanced
-                                    :pretty-print true}}}
-     :test-commands
-     {"phantom-whitespace"
-      ["phantomjs" "resources/runner.js" "target/cljs/whitespace.js"]
-      "phantom-simple"
-      ["phantomjs" "resources/runner.js" "target/cljs/simple.js"]
-      "phantom-advanced"
-      ["phantomjs" "resources/runner.js" "target/cljs/advanced.js"]}}}}
-  :aliases {"test-all" ["with-profile" "prod" "test"]})
+  {:dev {:cljx
+         {:builds
+          [{:source-paths ["src"] :output-path "target/classes" :rules :clj}
+           {:source-paths ["src"] :output-path "target/classes" :rules :cljs}]}
+
+         :cljsbuild
+         {:builds
+          {:dev {:source-paths ["target/classes"]
+                 :incremental? true
+                 :compiler {:output-to "target/unit-test.js"
+                            :optimizations :whitespace
+                            :pretty-print true}}}
+          :test-commands
+          {"phantom" ["phantomjs" :runner "target/unit-test.js"]}}}}
+
+  :aliases
+  {"rebuild-tz" ["run" "-m" "cljs-time.tz.parser"]
+   "test-all" ["with-profile" "prod" "do"
+               "rebuild-tz"
+               "clean," "cljx" "once," "test," "cljsbuild" "test"]
+   "cleantest" ["with-profile" "test" "do"
+                "clean," "cljx" "once," "test," "cljsbuild" "test"]}
+
+  :repl-options {:timeout 240000})
