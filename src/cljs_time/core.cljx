@@ -84,7 +84,7 @@
   (:require
    [cljs-time.internal.core
     :refer [->time-zone bal-units #+cljs format dow days-in-month leap-year?
-            millis-since-epoch rebalance split-formats]
+            millis-since-epoch rebalance split-formats year-corrected-dim]
     :as internal.core]
    [cljs-time.tz.data :refer [zones]]))
 
@@ -209,17 +209,17 @@ hours and minutes."
         hh (mod ms 86400000)
         ms (- ms hh)
         [yy ms] (loop [year 1970 ms ms]
-                  (let [ms-year (if (neg? ms) year (dec year))
+                  (let [ms-year (if (neg? ms) (dec year) year)
                         ms-in-year (if (leap-year? ms-year)
                                      31622400000
                                      31536000000)]
                     (if (<= ms ms-in-year)
                       [year ms]
                       (recur ((if (neg? ms) dec inc) year) (- ms ms-in-year)))))
-        [dd MM] (loop [days (/ ms 86400000) month 0]
-                  (let [dim (days-in-month month)]
+        [dd MM] (loop [days (/ ms 86400000) month 1]
+                  (let [dim (year-corrected-dim yy month)]
                     (if (<= days dim)
-                      [(inc days) (inc month)]
+                      [(inc days) month]
                       (recur (- days dim) (inc month)))))]
     (rebalance
      (->DateTime yy MM dd (/ hh 3600000) (/ mm 60000) (/ ss 1000) SSS utc))))
@@ -258,8 +258,8 @@ hours and minutes."
   ([year month day hour minute second millis tz]
      (->DateTime year month day hour minute second millis tz)))
 
-(defn at-midnight [{:keys [year month day]}]
-  (date-time year month day))
+(defn at-midnight [{:keys [years months days]}]
+  (date-time years months days))
 
 (defn today-at-midnight
   "Returns a DateMidnight for today at midnight in the UTC time zone."
@@ -531,7 +531,7 @@ hours and minutes."
         seconds (- (in-seconds interval) seconds-to-remove)]
     (period :years years
             :months months
-            :days (dec days)
+            :days days
             :hours hours
             :minutes minutes
             :seconds seconds
@@ -542,10 +542,10 @@ hours and minutes."
   ([hours minutes seconds millis]
     (let [midnight (today-at-midnight)]
       (assoc midnight
-        :hour hours
-        :minute minutes
-        :second seconds
-        :millisecond millis)))
+        :hours hours
+        :minutes minutes
+        :seconds seconds
+        :millis millis)))
   ([hours minutes seconds]
    (today-at hours minutes seconds 0))
   ([hours minutes]

@@ -28,7 +28,8 @@
   (:require
     [cljs-time.core :as time]
     [cljs-time.internal.core
-     :refer [dow doy #+cljs format index-of offset-string parse-int]]
+     :refer [dow doy #+cljs format index-of offset-string parse-int
+             valid-date?]]
     [clojure.set :refer [difference]]
     [clojure.string :as string]))
 
@@ -296,14 +297,14 @@ time if supplied."}
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
   ([{:keys [parser]} s]
-     {:pre [(seq s)]}
      (let [min-parts (count (string/split s part-splitter-regex))]
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                  (parser s)))]
          (if (>= (count parse-seq) min-parts)
-           (reduce (fn [date [part do-parse]] (do-parse date part))
-                   (time/date-time 0 0 0 0 0 0 0)
-                   parse-seq)
+           (->> parse-seq
+                (reduce (fn [date [part do-parse]] (do-parse date part))
+                        (time/date-time 0 0 0 0 0 0 0))
+                (valid-date?))
            (throw
             (ex-info "The parser could not match the input string."
                      {:type :parser-no-match}))))))

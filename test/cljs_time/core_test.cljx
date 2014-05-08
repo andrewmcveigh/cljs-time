@@ -400,7 +400,6 @@
     (is (= d7 (first-day-of-the-month 2013 2)))
     (is (= d8 (first-day-of-the-month 2016 2)))))
 
-
 (deftest test-today-at
   (let [n  (now)
         y  (year n)

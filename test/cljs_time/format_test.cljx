@@ -24,16 +24,18 @@
      (time/hour d) (time/minute d) (time/second d) (time/milli d)]))
 
 (deftest parse-test
-  (try
-    (format/parse (formatter "dth MMM yyyy hh:mm") "28th August 2013 14:26")
-    (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
-           (is (= :parser-no-match (:type (ex-data e))))))
   (is
-   (nil? (try
-           (format/parse (formatter "dd/MM/yyyy") "30/02/2014")
-           (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
-                  (is (= :invalid-date (:type (ex-data e))))
-                  nil))))
+   (= :parser-no-match 
+      (try
+        (format/parse (formatter "dth MMM yyyy hh:mm") "28th August 2013 14:26")
+        (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
+               (:type (ex-data e))))))
+  (is
+   (= :invalid-date
+      (try
+        (format/parse (formatter "dd/MM/yyyy") "30/02/2014")
+        (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
+               (:type (ex-data e))))))
   (is (= [1938 8 12 0 0 0 0]
          (utc-int-vec (format/parse (formatter "dd/MM/yyyy") "12/08/1938"))))
   (is (= [2013 8 28 14 26 0 0]

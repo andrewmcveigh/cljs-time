@@ -58,6 +58,24 @@
     [(if (< sm i) (+ mul sm) sm)
      (if (< sm i) (dec lg) lg)]))
 
+(defn year-corrected-dim [year month]
+  (cond-> (days-in-month (if (= month 1) 11 (dec month)))
+          (and (leap-year? year) (= month 2)) inc))
+
+(defn valid-date?
+  [{:keys [years months days hours minutes seconds millis] :as d}]
+  (letfn [(>< [a b x] (and (>= x a) (<= x b)))]
+    (if (and years
+             (>< 1 12 months)
+             (>< 1 (year-corrected-dim years months) days)
+             (>< 0 23 hours)
+             (>< 0 59 minutes)
+             (>< 0 60 seconds)
+             (>< 0 999 millis))
+      d
+      (throw (ex-info "Date is not valid" {:type :invalid-date
+                                           :date d})))))
+
 (defn rebalance
   [{:keys [years months days hours minutes seconds millis] :as dt}]
   (let [[millis seconds] (bal-units millis seconds 1000 0)
@@ -71,22 +89,14 @@
                 (let [months (if (zero? months) 12 months)
                       prev0? (zero? (dec months))
                       m (if prev0? 12 (dec months))
-                      dim (days-in-month (dec m))
-                      dim (if (and (leap-year? years)
-                                   (= m 2))
-                            (inc dim)
-                            dim)
+                      dim (year-corrected-dim years m)
                       this-month? (<= (* -1 days) dim)]
                   (recur (if prev0? (dec years) years)
                          (if prev0? 12 (dec months))
                          (+ (if this-month? (inc days) days)
                             dim)))
                 (pos? days)
-                (let [dim (days-in-month (dec months))
-                      dim (if (and (leap-year? years)
-                                   (= months 2))
-                            (inc dim)
-                            dim)]
+                (let [dim (year-corrected-dim years months)]
                   (if (> days dim)
                     (if (= 12 months)
                       (recur (inc years) 1 (- days dim))
@@ -96,9 +106,9 @@
                 (if (zero? (dec months))
                   (let [months 12 years (dec years)]
                     [years months (days-in-month (dec months))])
-                  [years
-                   (dec months)
-                   (days-in-month (- months 2))])))
+                  (let [months (dec months)
+                        dim (year-corrected-dim years months)]
+                    [years months dim]))))
         [months years] (bal-units months years 12 1)]
     (assoc dt
       :millis millis :seconds seconds :minutes minutes :hours hours

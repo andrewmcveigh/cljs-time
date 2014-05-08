@@ -1,4 +1,4 @@
-(ns clj-time.coerce-test
+(ns cljs-time.coerce-test
   (:refer-clojure :exclude [extend second])
   #+cljs (:require-macros [cemerick.cljs.test :refer [is deftest]])
   (:require
@@ -13,7 +13,8 @@
 (deftest test-from-date
   (let [dt (from-long 893462400000)
         d  (to-date dt)]
-    (is (instance? cljs_time.core.DateTime d))
+    (is (instance? cljs_time.core.DateTime dt))
+    (is (instance? #+clj java.util.Date #+cljs js/Date d))
     (is (= dt (from-date d)))))
 
 (deftest test-from-long
