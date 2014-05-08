@@ -1,19 +1,16 @@
 # cljs-time [![Build Status](https://travis-ci.org/andrewmcveigh/cljs-time.png?branch=master)](https://travis-ci.org/andrewmcveigh/cljs-time)
 
-A date and time library for ClojureScript, immitating the
+A date and time library for Clojure and ClojureScript, immitating the
 [clj-time](https://github.com/clj-time/clj-time) library.
 
-This is my crude and naïve attempt at replicating some of the functionality in
-clj-time. This is in no way a drop-in clojurescript replacement for clj-time,
-however the goal is that over time I can hopefully replicate enough of the
-clj-time API and functionality to make this library "good enough" for other
-projects.
+Cljs-time is an attempt at replicating the functionality in clj-time.  This is
+not a drop-in clojurescript replacement for clj-time, however the goal is that
+over time enough functionality of the clj-time API can be replicated to make
+this library "good enough" for other projects.
 
-This library is currently leaning on the [Google Closure goog.date](http://docs.closure-library.googlecode.com/git/namespace_goog_date.html)
-library for basic date/time functionality. **The date objects in this library
-are mutable**, however any operations that **alter** a date object return a
-copy, leaving the referenced date object alone. In the future, immutable date
-objects will be preferred.
+The cljs-time library no longer relies on Google Closure goog.date.  It now
+uses a clojure record as a base datatype. Date/time calculations are simply
+functions.
 
 ## Artifacts
 
