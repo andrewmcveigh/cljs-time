@@ -1,9 +1,9 @@
 (ns cljs-time.predicates-test
   (:refer-clojure :exclude [extend second])
-  (:require-macros
-    [cemerick.cljs.test :refer (is deftest)])
+  #+cljs (:require-macros [cemerick.cljs.test :refer (is deftest)])
   (:require
-    [cemerick.cljs.test :as t]
+    #+cljs [cemerick.cljs.test :as t]
+    #+clj [clojure.test :refer [is deftest]]
     [cljs-time.core :refer [date-time]]
     [cljs-time.predicates :refer
      [monday? tuesday? wednesday? thursday? friday? saturday? sunday? january?

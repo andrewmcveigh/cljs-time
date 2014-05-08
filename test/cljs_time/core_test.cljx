@@ -1,19 +1,22 @@
 (ns cljs-time.core-test
   (:refer-clojure :exclude [= extend second])
-  (:require-macros
-    [cemerick.cljs.test :refer [is deftest]]
-    [cljs-time.macros :refer [do-at]])
+  #+cljs (:require-macros
+          [cemerick.cljs.test :refer [is deftest]]
+          [cljs-time.macros :refer [do-at]])
   (:require
-    [cemerick.cljs.test :as t]
-    [cljs-time.core :refer
-     [= date-time epoch year month day date-midnight today-at-midnight hour
-      minute second milli abuts? interval overlaps? last-day-of-the-month
-      number-of-days-in-the-month first-day-of-the-month today-at now within?
-      in-years in-months in-weeks in-days in-hours in-minutes in-seconds
-      in-millis minus plus
-      ;year-month
-      day-of-week after? before?  years months
-      weeks days hours minutes seconds millis extend start end mins-ago]]))
+   #+cljs [cemerick.cljs.test :as t]
+   #+clj [clojure.test :refer [is deftest]]
+   [cljs-time.core :refer
+    [= date-time epoch year month day date-midnight today-at-midnight hour
+     minute second milli abuts? interval overlaps? last-day-of-the-month
+     number-of-days-in-the-month first-day-of-the-month today-at now within?
+     in-years in-months in-weeks in-days in-hours in-minutes in-seconds
+     in-millis minus plus
+                                        ;year-month
+     millis-since-epoch
+     day-of-week after? before?  years months
+     weeks days hours minutes seconds millis extend start end mins-ago]]
+   #+clj [cljs-time.macros :refer [do-at]]))
 
 (deftest test-now
   (is (= (date-time 2010 1 1)
@@ -229,7 +232,8 @@
 
 (defn i= [& args]
   (apply = (map (fn [{:keys [start end]}]
-                  {:start (.getTime start) :end (.getTime end)})
+                  {:start (millis-since-epoch start)
+                   :end (millis-since-epoch end)})
                 args)))
 
 (deftest test-extend

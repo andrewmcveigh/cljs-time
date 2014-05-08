@@ -1,12 +1,12 @@
 (ns cljs-time.format-test
-  (:refer-clojure :exclude [=])
-  (:require-macros
-    [cemerick.cljs.test :refer [is deftest]])
+  #+cljs (:require-macros [cemerick.cljs.test :refer [is deftest]])
   (:require
-    [cemerick.cljs.test :as t]
+    #+cljs [cemerick.cljs.test :as t]
+    #+clj [clojure.test :refer [is deftest]]
     [cljs-time.coerce :refer [from-date to-date]]
-    [cljs-time.core :as time :refer [= date-time interval utc within?]]
-    [cljs-time.format :as format :refer [formatter formatters instant->map parse unparse]]))
+    [cljs-time.core :as time :refer [date-time interval utc within?]]
+    [cljs-time.format :as format
+     :refer [formatter formatters instant->map parse unparse]]))
 
 (defn utc-int-vec [d]
   [(time/year d) (time/month d) (time/day d)
@@ -16,22 +16,16 @@
   (try
     (format/parse (formatter "dth MMM yyyy hh:mm") "28th August 2013 14:26")
     (catch ExceptionInfo e (is (= :parser-no-match (:type (ex-data e))))))
-  (let [date (format/parse (formatter "dd/MM/yyyy") "12/08/1938")]
-    (is (= 1938 (.getYear date)))
-    (is (= 12   (.getDate date)))
-    (is (= 7    (.getMonth date))))
-  (let [date (format/parse (formatter "dth MMMM yyyy hh:mm") "28th August 2013 14:26")]
-    (is (= 2013 (.getYear date)))
-    (is (= 28   (.getDate date)))
-    (is (= 7    (.getMonth date)))
-    (is (= 14   (.getHours date)))
-    (is (= 26   (.getMinutes date))))
-  (let [date (format/parse (formatter "dth MMMM yyyy hh:mm") "29th February 2012 14:26")]
-    (is (= 2012 (.getYear date)))
-    (is (= 29   (.getDate date)))
-    (is (= 1    (.getMonth date)))
-    (is (= 14   (.getHours date)))
-    (is (= 26   (.getMinutes date))))
+  (is (= [1938 8 12 0 0 0 0]
+         (utc-int-vec (format/parse (formatter "dd/MM/yyyy") "12/08/1938"))))
+  (is (= [2013 8 28 14 26 0]
+         (utc-int-vec
+          (format/parse (formatter "dth MMMM yyyy hh:mm")
+                        "28th August 2013 14:26"))))
+  (is (= [2012 2 29 14 26 0]
+         (utc-int-vec
+          (format/parse (formatter "dth MMMM yyyy hh:mm")
+                        "29th February 2012 14:26"))))
   (is (= [2014 4 1 13 57 0 0]
          (utc-int-vec
           (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ssZZ")
@@ -102,36 +96,36 @@
 (deftest within?-test
 
   (is (within?
-        (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
-                  (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
-        (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)))
+        (interval (date-time 2013 0 1 0 0 0 0)
+                  (date-time 2013 1 1 0 0 0 0))
+        (date-time 2013 0 1 0 0 0 0)))
 
   (is (within?
-        (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
-                  (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
-        (goog.date.UtcDateTime. 2013 0 11 0 0 0 0)))
+        (interval (date-time 2013 0 1 0 0 0 0)
+                  (date-time 2013 1 1 0 0 0 0))
+        (date-time 2013 0 11 0 0 0 0)))
 
   (is (within?
-        (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
-                  (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
-        (time/minus (goog.date.UtcDateTime. 2013 1 1 0 0 0 0)
+        (interval (date-time 2013 0 1 0 0 0 0)
+                  (date-time 2013 1 1 0 0 0 0))
+        (time/minus (date-time 2013 1 1 0 0 0 0)
                     (time/millis 1))))
 
   (is (not
         (within?
-          (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
-                    (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
-          (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))))
+          (interval (date-time 2013 0 1 0 0 0 0)
+                    (date-time 2013 1 1 0 0 0 0))
+          (date-time 2013 1 1 0 0 0 0))))
 
   (is (not (within?
-             (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
-                       (goog.date.UtcDateTime. 2013 2 1 0 0 0 0))
-             (goog.date.UtcDateTime. 2013 2 1 0 0 0 1))))
+             (interval (date-time 2013 0 1 0 0 0 0)
+                       (date-time 2013 2 1 0 0 0 0))
+             (date-time 2013 2 1 0 0 0 1))))
 
   (is (not (within?
-             (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
-                       (goog.date.UtcDateTime. 2013 2 1 0 0 0 0))
-             (goog.date.UtcDateTime. 2012 11 31 23 59 59 999)))))
+             (interval (date-time 2013 0 1 0 0 0 0)
+                       (date-time 2013 2 1 0 0 0 0))
+             (date-time 2012 11 31 23 59 59 999)))))
 
 
 (deftest test-formatter
