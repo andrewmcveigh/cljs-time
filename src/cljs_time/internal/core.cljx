@@ -5,6 +5,7 @@
    #+cljs [goog.string :as gstring]
    #+cljs [goog.string.format]))
 
+#+cljs
 (defn format
   "Formats a string using goog.string.format."
   [fmt & args]
@@ -45,60 +46,63 @@
         :else false))
 
 (defn offset-string [{[sign hh mm ss] :offset :as timezone}]
-  (if ss
-    (format "%s%02d:%02d:%02d" (name sign) hh mm ss)
-    (format "%s%02d:%02d" (name sign) hh mm)))
+  (cond ss (format "%s%02d:%02d:%02d" (name sign) hh mm ss)
+        mm (format "%s%02d:%02d" (name sign) hh mm)
+        hh (if (zero? hh) "Z" (str (name sign) hh))))
 
 (def days-in-month [31 28 31 30 31 30 31 31 30 31 30 31])
 
-(defn rebalance [{:keys [year month day hour minute second millisecond] :as dt}]
-  (let [bal-units (fn [sm lg mul i]
-                    (let [lg (+ lg (int (/ sm mul)))
-                          sm (rem sm mul)]
-                      [(if (< sm i) (+ mul sm) sm)
-                       (if (< sm i) (dec lg) lg)]))
-        [millisecond second] (bal-units millisecond second 1000 0)
-        [second minute] (bal-units second minute 60 0)
-        [minute hour] (bal-units minute hour 60 0)
-        [hour day] (bal-units hour day 24 0)
-        [month year] (bal-units month year 12 1)
-        [year month day] (loop [year year month month day day]
-                           (cond (neg? day)
-                                 (let [month (if (zero? month) 12 month)
-                                       prev0? (zero? (dec month))
-                                       m (if prev0? 12 (dec month))
-                                       days (days-in-month (dec m))
-                                       days (if (and (leap-year? year)
-                                                     (= m 2))
-                                              (inc days)
-                                              days)
-                                       this-month? (<= (* -1 day) days)]
-                                   (recur (if prev0? (dec year) year)
-                                          (if prev0? 12 (dec month))
-                                          (+ (if this-month? (inc day) day)
-                                             days)))
-                                 (pos? day)
-                                 (let [days (days-in-month (dec month))
-                                       days (if (and (leap-year? year)
-                                                     (= month 2))
-                                              (inc days)
-                                              days)]
-                                   (if (> day days)
-                                     (if (= 12 month)
-                                       (recur (inc year) 1 (- day days))
-                                       (recur year (inc month) (- day days)))
-                                     [year month day]))
-                                 :else
-                                 (if (zero? (dec month))
-                                   (let [month 12 year (dec year)]
-                                     [year month (days-in-month month)])
-                                   [year
-                                    (dec month)
-                                    (days-in-month (- month 2))])))
-        [month year] (bal-units month year 12 1)]
+(defn bal-units [sm lg mul i]
+  (let [lg (+ lg (int (/ sm mul)))
+        sm (rem sm mul)]
+    [(if (< sm i) (+ mul sm) sm)
+     (if (< sm i) (dec lg) lg)]))
+
+(defn rebalance
+  [{:keys [years months days hours minutes seconds millis] :as dt}]
+  (let [[millis seconds] (bal-units millis seconds 1000 0)
+        [seconds minutes] (bal-units seconds minutes 60 0)
+        [minutes hours] (bal-units minutes hours 60 0)
+        [hours days] (bal-units hours days 24 0)
+        [months years] (bal-units months years 12 1)
+        [years months days]
+        (loop [years years months months days days]
+          (cond (neg? days)
+                (let [months (if (zero? months) 12 months)
+                      prev0? (zero? (dec months))
+                      m (if prev0? 12 (dec months))
+                      dim (days-in-month (dec m))
+                      dim (if (and (leap-year? years)
+                                   (= m 2))
+                            (inc dim)
+                            dim)
+                      this-month? (<= (* -1 days) dim)]
+                  (recur (if prev0? (dec years) years)
+                         (if prev0? 12 (dec months))
+                         (+ (if this-month? (inc days) days)
+                            dim)))
+                (pos? days)
+                (let [dim (days-in-month (dec months))
+                      dim (if (and (leap-year? years)
+                                   (= months 2))
+                            (inc dim)
+                            dim)]
+                  (if (> days dim)
+                    (if (= 12 months)
+                      (recur (inc years) 1 (- days dim))
+                      (recur years (inc months) (- days dim)))
+                    [years months days]))
+                (zero? days)
+                (if (zero? (dec months))
+                  (let [months 12 years (dec years)]
+                    [years months (days-in-month (dec months))])
+                  [years
+                   (dec months)
+                   (days-in-month (- months 2))])))
+        [months years] (bal-units months years 12 1)]
     (assoc dt
-      :millisecond millisecond :second second :minute minute :hour hour
-      :day day :month month :year year)))
+      :millis millis :seconds seconds :minutes minutes :hours hours
+      :days days :months months :years years)))
 
 (defn dow
   "Calculates day of week accurately for any Gregorian date.
@@ -123,30 +127,36 @@ Translated from algorithm in C by Tomohiko Sakamoto 1993."
   "Calulates the number of milliseconds since the Unix epoch.
 A negative result indicates the number of milliseconds before the epoch.
 Note: Currently does not account for leap seconds."
-  [{:keys [year month day hour minute second millisecond]
-    {[sign hh mm ss] :offset} :timezone}]
-  (let [years (- year 1970)
-        before-1970? (< year 1970)
-        year-range (if before-1970? (range year 1970) (range 1970 year))
+  [{:keys [years months days hours minutes seconds millis]
+    {[sign hh mm ss] :offset} :time-zone}]
+  (let [year-diff (- years 1970)
+        before-1970? (< years 1970)
+        year-range (if before-1970? (range years 1970) (range 1970 years))
         leap-years (count (remove false? (map leap-year? year-range)))
         leap-years (if before-1970?
                      (* -1
-                        (if (and (> month 2) (> day 28) (leap-year? year))
+                        (if (and (> months 2) (> days 28) (leap-year? years))
                           (dec leap-years)
                           leap-years))
                      leap-years)
         days (apply +
-                    (* years 365)
+                    (* year-diff 365)
                     leap-years
-                    (dec day)
-                    (map (comp days-in-month dec) (range 1 month)))
+                    (dec days)
+                    (map (comp days-in-month dec) (range 1 months)))
         offset (* (condp = sign :- 1 :+ -1)
                   (+ (* 1000 (or ss 0))
                      (* 60000 (or mm 0))
                      (* 3600000 (or hh 0))))]
-    (+ millisecond
-       (* 1000 second)
-       (* 60000 minute)
-       (* 3600000 hour)
+    (+ millis
+       (* 1000 seconds)
+       (* 60000 minutes)
+       (* 3600000 hours)
        (* 86400000 days)
        offset)))
+
+(defn index-of [coll x]
+  (.indexOf #+clj coll #+cljs (into-array coll) x))
+
+(defn parse-int [s]
+  (#+clj Integer/parseInt #+cljs js/parseInt s 10))

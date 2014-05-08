@@ -1,19 +1,19 @@
 (ns cljs-time.core-test
-  (:refer-clojure :exclude [= extend second])
+  (:refer-clojure :exclude [extend second])
   #+cljs (:require-macros
           [cemerick.cljs.test :refer [is deftest]]
           [cljs-time.macros :refer [do-at]])
   (:require
    #+cljs [cemerick.cljs.test :as t]
    #+clj [clojure.test :refer [is deftest]]
+   [cljs-time.internal.core :refer [millis-since-epoch]]
    [cljs-time.core :refer
-    [= date-time epoch year month day date-midnight today-at-midnight hour
+    [date-time epoch year month day date-midnight today-at-midnight hour
      minute second milli abuts? interval overlaps? last-day-of-the-month
      number-of-days-in-the-month first-day-of-the-month today-at now within?
      in-years in-months in-weeks in-days in-hours in-minutes in-seconds
      in-millis minus plus
                                         ;year-month
-     millis-since-epoch
      day-of-week after? before?  years months
      weeks days hours minutes seconds millis extend start end mins-ago]]
    #+clj [cljs-time.macros :refer [do-at]]))

@@ -70,9 +70,17 @@
   (to-date-time [_]
     nil)
 
-  #+clj java.util.Date. #+cljs js/Date
+  cljs_time.core.DateTime
+  (to-date-time [date] date)
+
+  #+clj java.util.Date #+cljs js/Date
   (to-date-time [date]
     (from-date date))
+
+  ;; #+cljs js/Object
+  ;; #+cljs
+  ;; (to-date-time [date]
+  ;;   (from-date date))
 
   ;; goog.date.DateTime
   ;; (to-date-time [date-time]
@@ -82,10 +90,10 @@
   ;; (to-date-time [date-midnight]
   ;;   (doto date-midnight (.set date-midnight)))
 
-  number
+  #+clj Number #+cljs number
   (to-date-time [long]
     (from-long long))
 
-  string
+  #+clj String #+cljs string
   (to-date-time [string]
     (from-string string)))

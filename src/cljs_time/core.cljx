@@ -83,7 +83,7 @@
   (:refer-clojure :exclude [extend second])
   (:require
    [cljs-time.internal.core
-    :refer [->time-zone #+cljs format dow days-in-month leap-year?
+    :refer [->time-zone bal-units #+cljs format dow days-in-month leap-year?
             millis-since-epoch rebalance split-formats]
     :as internal.core]
    [cljs-time.tz.data :refer [zones]]))
@@ -151,38 +151,47 @@ hours and minutes."
 (def periods
   (let [fixed-time-fn (fn [f set-fn op date value]
                         (set-fn date (op (f date) value)))]
-    {:millis (partial fixed-time-fn milli #(assoc %1 :millisecond %2))
-     :seconds (partial fixed-time-fn second #(assoc %1 :second %2))
-     :minutes (partial fixed-time-fn minute #(assoc %1 :minute %2))
-     :hours (partial fixed-time-fn hour #(assoc %1 :hour %2))
-     :days (partial fixed-time-fn day #(assoc %1 :day %2))
-     :weeks (fn [op date value] (assoc date :day (op (day date) (* 7 value))))
-     :months (partial fixed-time-fn month #(assoc %1 :month %2))
+    {:millis (partial fixed-time-fn milli #(assoc %1 :millis %2))
+     :seconds (partial fixed-time-fn second #(assoc %1 :seconds %2))
+     :minutes (partial fixed-time-fn minute #(assoc %1 :minutes %2))
+     :hours (partial fixed-time-fn hour #(assoc %1 :hours %2))
+     :days (partial fixed-time-fn day #(assoc %1 :days %2))
+     :weeks (fn [op date value] (assoc date :days (op (day date) (* 7 value))))
+     :months (fn [op date value]
+               (let [date (fixed-time-fn month
+                                         #(assoc %1 :months %2)
+                                         op date value)
+                     [months years] (bal-units (month date) (year date) 12 1)
+                     dim (days-in-month (dec months))]
+                 (assoc (if (> (day date) dim) (assoc date :days dim) date)
+                   :months months
+                   :years years)))
      :years (fn [op date value]
               (let [day (day date)]
                 (assoc date 
-                  :day (if (and (leap-year? (year date))
-                                (= 2 (month date))
-                                (= 29 day))
-                         28
-                         day)
-                  :year (op (year date) value))))}))
+                  :days (if (and (leap-year? (year date))
+                                 (= 2 (month date))
+                                 (= 29 day))
+                          28
+                          day)
+                  :years (op (year date) value))))}))
 
 (defn period-fn [p]
   (fn [operator date]
     (rebalance
      (reduce #((periods (key %2)) operator %1 (val %2)) date p))))
 
-(defrecord DateTime [year month day hour minute second millisecond timezone]
+(defrecord DateTime
+    [years months days hours minutes seconds millis time-zone]
   DateTimeProtocol
-  (year [_] year)
-  (month [_] month)
-  (day [_] day)
-  (day-of-week [_] (dow year month day))
-  (hour [_] hour)
-  (minute [_] minute)
-  (second [_] second)
-  (milli [_] millisecond)
+  (year [_] years)
+  (month [_] months)
+  (day [_] days)
+  (day-of-week [_] (dow years months days))
+  (hour [_] hours)
+  (minute [_] minutes)
+  (second [_] seconds)
+  (milli [_] millis)
   (after? [this that] (> (millis-since-epoch this) (millis-since-epoch that)))
   (before? [this that] (< (millis-since-epoch this) (millis-since-epoch that)))
   (plus- [this period] ((period-fn period) + this))
@@ -362,7 +371,7 @@ hours and minutes."
   "Returns an interval representing the span between the two given ReadableDateTimes.
   Note that intervals are closed on the left and open on the right."
   [start end]
-  {:pre [(< (.getTime start) (.getTime end))]}
+  {:pre [(< (millis-since-epoch start) (millis-since-epoch end))]}
   (with-meta {:start start :end end} {:type ::interval}))
 
 (defn start
@@ -456,7 +465,6 @@ hours and minutes."
    (within? start end date))
   ([start end date]
    (or (= start date)
-       ;(= end date)
        (and (before? start date) (after? end date)))))
 
 (defn overlaps?
@@ -483,9 +491,11 @@ hours and minutes."
 
 (defn last-day-of-the-month
   ([dt]
-   (last-day-of-the-month (year dt) (month dt)))
+     (last-day-of-the-month (year dt) (month dt)))
   ([year month]
-   (minus (date-time year (inc month) 1) (days 1))))
+     (-> (date-time year month 1)
+         (plus (months 1))
+         (minus (days 1)))))
 
 (defn number-of-days-in-the-month
   ([dt]
@@ -508,7 +518,7 @@ hours and minutes."
                      (remove false?
                              (map leap-year?
                                   (range start-year (+ start-year years)))))
-        start-month  (month start)
+        start-month (month start)
         days-in-months (total-days-in-whole-months interval)
         months (count days-in-months)
         days-to-remove (+ (* 365 years) leap-years (reduce + days-in-months))
@@ -521,7 +531,7 @@ hours and minutes."
         seconds (- (in-seconds interval) seconds-to-remove)]
     (period :years years
             :months months
-            :days days
+            :days (dec days)
             :hours hours
             :minutes minutes
             :seconds seconds

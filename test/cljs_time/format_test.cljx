@@ -6,23 +6,41 @@
     [cljs-time.coerce :refer [from-date to-date]]
     [cljs-time.core :as time :refer [date-time interval utc within?]]
     [cljs-time.format :as format
-     :refer [formatter formatters instant->map parse unparse]]))
+     :refer [formatter formatters instant->map parse unparse]]
+    [cljs-time.internal.core :refer [parse-int]]))
+
+(defn ->utc [{{[sign hh mm ss] :offset} :time-zone :as dt}]
+  (let [sign (cond (= sign :-) time/plus
+                   (= sign :+) time/minus)
+        [hh mm ss] (map #(or % 0) [hh mm ss])]
+    (-> dt
+        (sign (time/hours hh))
+        (sign (time/minutes mm))
+        (sign (time/seconds ss)))))
 
 (defn utc-int-vec [d]
-  [(time/year d) (time/month d) (time/day d)
-   (time/hour d) (time/minute d) (time/second d) (time/milli d)])
+  (let [d (->utc d)]
+    [(time/year d) (time/month d) (time/day d)
+     (time/hour d) (time/minute d) (time/second d) (time/milli d)]))
 
 (deftest parse-test
   (try
     (format/parse (formatter "dth MMM yyyy hh:mm") "28th August 2013 14:26")
-    (catch ExceptionInfo e (is (= :parser-no-match (:type (ex-data e))))))
+    (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
+           (is (= :parser-no-match (:type (ex-data e))))))
+  (is
+   (nil? (try
+           (format/parse (formatter "dd/MM/yyyy") "30/02/2014")
+           (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
+                  (is (= :invalid-date (:type (ex-data e))))
+                  nil))))
   (is (= [1938 8 12 0 0 0 0]
          (utc-int-vec (format/parse (formatter "dd/MM/yyyy") "12/08/1938"))))
-  (is (= [2013 8 28 14 26 0]
+  (is (= [2013 8 28 14 26 0 0]
          (utc-int-vec
           (format/parse (formatter "dth MMMM yyyy hh:mm")
                         "28th August 2013 14:26"))))
-  (is (= [2012 2 29 14 26 0]
+  (is (= [2012 2 29 14 26 0 0]
          (utc-int-vec
           (format/parse (formatter "dth MMMM yyyy hh:mm")
                         "29th February 2012 14:26"))))
@@ -49,7 +67,7 @@
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
          (format/parse (formatter "dd/MM/yyyy") "30/09/2013")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 6))
-         (format/parse (formatter "dd/MM/yyyy") "30/02/2014")))
+         (format/parse (formatter "dd/MM/yyyy") "28/02/2014")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 8))
          (format/parse (formatter "dd/MM/yyyy") "30/12/2012")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
@@ -96,36 +114,36 @@
 (deftest within?-test
 
   (is (within?
-        (interval (date-time 2013 0 1 0 0 0 0)
-                  (date-time 2013 1 1 0 0 0 0))
-        (date-time 2013 0 1 0 0 0 0)))
+        (interval (date-time 2013 1 1 0 0 0 0)
+                  (date-time 2013 2 1 0 0 0 0))
+        (date-time 2013 1 1 0 0 0 0)))
 
   (is (within?
-        (interval (date-time 2013 0 1 0 0 0 0)
-                  (date-time 2013 1 1 0 0 0 0))
-        (date-time 2013 0 11 0 0 0 0)))
+        (interval (date-time 2013 1 1 0 0 0 0)
+                  (date-time 2013 2 1 0 0 0 0))
+        (date-time 2013 1 11 0 0 0 0)))
 
   (is (within?
-        (interval (date-time 2013 0 1 0 0 0 0)
-                  (date-time 2013 1 1 0 0 0 0))
-        (time/minus (date-time 2013 1 1 0 0 0 0)
+        (interval (date-time 2013 1 1 0 0 0 0)
+                  (date-time 2013 2 1 0 0 0 0))
+        (time/minus (date-time 2013 2 1 0 0 0 0)
                     (time/millis 1))))
 
   (is (not
         (within?
-          (interval (date-time 2013 0 1 0 0 0 0)
-                    (date-time 2013 1 1 0 0 0 0))
-          (date-time 2013 1 1 0 0 0 0))))
+          (interval (date-time 2013 1 1 0 0 0 0)
+                    (date-time 2013 2 1 0 0 0 0))
+          (date-time 2013 2 1 0 0 0 0))))
 
   (is (not (within?
-             (interval (date-time 2013 0 1 0 0 0 0)
-                       (date-time 2013 2 1 0 0 0 0))
-             (date-time 2013 2 1 0 0 0 1))))
+             (interval (date-time 2013 1 1 0 0 0 0)
+                       (date-time 2013 3 1 0 0 0 0))
+             (date-time 2013 3 1 0 0 0 1))))
 
   (is (not (within?
-             (interval (date-time 2013 0 1 0 0 0 0)
-                       (date-time 2013 2 1 0 0 0 0))
-             (date-time 2012 11 31 23 59 59 999)))))
+             (interval (date-time 2013 1 1 0 0 0 0)
+                       (date-time 2013 3 1 0 0 0 0))
+             (date-time 2012 12 31 23 59 59 999)))))
 
 
 (deftest test-formatter

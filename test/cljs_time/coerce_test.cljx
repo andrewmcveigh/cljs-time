@@ -31,16 +31,19 @@
   ;(is (= (to-date-time (local-date 2013 03 20))
          ;(date-time 2013 03 20))))
 
+(defn ->date [l]
+  (#+clj java.util.Date. #+cljs js/Date. l))
+
 (deftest test-to-date
   (is (nil? (to-date nil)))
   (is (nil? (to-date "")))
   (is (nil? (to-date "x")))
-  (is (= (from-millis-since-epoch 893462400000) (to-date (date-time 1998 4 25))))
-  (is (= (from-millis-since-epoch 893462400000) (to-date (date-midnight 1998 4 25))))
-  (is (= (from-millis-since-epoch 893462400000) (to-date (from-millis-since-epoch 893462400000))))
-  (is (= (from-millis-since-epoch (long 0)) (to-date 0)))
-  (is (= (from-millis-since-epoch 893462400000) (to-date 893462400000)))
-  (is (= (from-millis-since-epoch 893462400000) (to-date "1998-04-25T00:00:00.000Z"))))
+  (is (= (->date 893462400000) (to-date (date-time 1998 4 25))))
+  (is (= (->date 893462400000) (to-date (date-midnight 1998 4 25))))
+  (is (= (->date 893462400000) (to-date (from-millis-since-epoch 893462400000))))
+  (is (= (->date (long 0)) (to-date 0)))
+  (is (= (->date 893462400000) (to-date 893462400000)))
+  (is (= (->date 893462400000) (to-date "1998-04-25T00:00:00.000Z"))))
 
 (deftest test-to-date-time
   (is (nil? (to-date-time nil)))

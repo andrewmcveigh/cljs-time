@@ -28,7 +28,7 @@
   (:require
     [cljs-time.core :as time]
     [cljs-time.internal.core
-     :refer [#+cljs format dow doy offset-string]]
+     :refer [dow doy #+cljs format index-of offset-string parse-int]]
     [clojure.set :refer [difference]]
     [clojure.string :as string]))
 
@@ -108,7 +108,7 @@
         m #(time/minute %)
         s #(time/second %)
         S #(time/milli %)
-        Z #(offset-string (:timezone %))]
+        Z #(offset-string (:time-zone %))]
     {"d" d
      "dd" #(format "%02d" (d %))
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
@@ -136,34 +136,27 @@
      "ww" #(format "%02d" (Math/ceil (/ (doy %) 7)))
      "e" dow}))
 
-(defn parse-int [s]
-  (#+clj Integer/parseInt #+cljs js/parseInt s 10))
-
 (defn timezone-adjustment [d timezone-string]
-  (let [[_ sign hh mm] (string/split timezone-string
-                                     #"Z|(?:([-+])(\d{2})(?::?(\d{2}))?)$")]
-    [(when (and sign hh mm)
-       (let [sign (cond (= sign "-") time/plus
-                        (= sign "+") time/minus)
-             [hh mm] (map parse-int [hh mm])
-             adjusted (-> d
-                          (sign (time/hours hh))
-                          (sign (time/minutes mm)))]
-         (time/time-zone-for-offset hh mm)))
-     d]))
+  (let [[[_ zz hh mm]]
+        (re-seq #"(ZZ?)|(?:([+\-]?\d{2})(?::?(\d{2}))?)$" timezone-string)]
+    (cond (#{"Z" "ZZ"} zz) d
+          (and hh mm)
+          (let [[hh mm] (map parse-int [hh mm])]
+            (assoc d :time-zone (time/time-zone-for-offset hh mm))))))
 
 (defn abbreviate [n s]
   (subs s 0 n))
 
 (def date-parsers
   (let [assoc-fn (fn [kw] #(assoc %1 kw (parse-int %2)))
-        y (assoc-fn :year)
-        d (assoc-fn :day)
-        M (assoc-fn :month)
-        h (assoc-fn :hour)
-        m (assoc-fn :minute)
-        s (assoc-fn :second)
-        S (assoc-fn :millisecond)]
+        y (assoc-fn :years)
+        d (assoc-fn :days)
+        M (assoc-fn :months)
+        h (assoc-fn :hours)
+        m (assoc-fn :minutes)
+        s (assoc-fn :seconds)
+        S (assoc-fn :millis)
+        skip (fn [x & args] x)]
     {"d" ["(\\d{1,2})" d]
      "dd" ["(\\d{2})" d]
      "dth" ["(\\d{1,2})(?:st|nd|rd|th)" d]
@@ -176,15 +169,15 @@
             #(let [full (first (filter (fn [m]
                                          (re-seq (re-pattern (str "^" %2)) m))
                                        months))]
-               (M %1 (str (inc (.indexOf (into-array months) full)))))]
+               (M %1 (str (inc (index-of months full)))))]
      "MMMM" [(str \( (string/join \| months) \))
-             #(M %1 (str (inc (.indexOf (into-array months) %2))))]
+             #(M %1 (str (inc (index-of months %2))))]
      "E" [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
-          (constantly nil)]
+          skip]
      "EEE" [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
-            (constantly nil)]
-     "EEEE" [(str \( (string/join \| days) \)) (constantly nil)]
-     "dow" [(str \( (string/join \| days) \)) (constantly nil)]
+            skip]
+     "EEEE" [(str \( (string/join \| days) \)) skip]
+     "dow" [(str \( (string/join \| days) \)) skip]
      "m" ["(\\d{1,2})" m]
      "s" ["(\\d{1,2})" s]
      "S" ["(\\d{1,2})" S]
@@ -197,10 +190,9 @@
      "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" timezone-adjustment]}))
 
 (defn parser-sort-order-pred [parser]
-  (.indexOf
-    (into-array ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h"
-                 "m" "s" "S" "hh" "mm" "ss" "SSS" "Z" "ZZ"])
-    parser))
+  (index-of ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h"
+             "m" "s" "S" "hh" "mm" "ss" "SSS" "ZZ" "Z"]
+            parser))
 
 (def date-format-pattern
   (re-pattern
@@ -210,7 +202,7 @@
   (re-pattern
     (string/replace (string/replace formatter #"'([^']+)'" "$1")
                     date-format-pattern
-                    #(first (date-parsers %)))))
+                    #(first (date-parsers #+clj (first %) #+cljs %)))))
 
 (defn formatter
   ([fmts]
@@ -222,7 +214,7 @@
     :formatter (fn [date]
                  [(string/replace fmts #"'([^']+)'" "$1")
                   date-format-pattern
-                  #((date-formatters %) date)])}))
+                  #(str ((date-formatters #+clj (first %) #+cljs %) date))])}))
 
 (defn not-implemented [sym]
   #(throw (ex-info (format "%s not implemented yet" (name sym))
@@ -309,7 +301,7 @@ time if supplied."}
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                  (parser s)))]
          (if (>= (count parse-seq) min-parts)
-           (reduce (fn [date [part do-parse]] (do-parse date part) date)
+           (reduce (fn [date [part do-parse]] (do-parse date part))
                    (time/date-time 0 0 0 0 0 0 0)
                    parse-seq)
            (throw
@@ -351,18 +343,19 @@ formatted with each of the available printing formatters."
    :seconds seconds
    :millis millis})
 
-(extend-protocol Mappable
-  goog.date.UtcDateTime
-  (instant->map [dt]
-    (to-map
-      (.getYear dt)
-      (inc (.getMonth dt))
-      (.getDate dt)
-      (.getHours dt)
-      (.getMinutes dt)
-      (.getSeconds dt)
-      (.getMilliseconds dt))))
+;; (extend-protocol Mappable
+;;   goog.date.UtcDateTime
+;;   (instant->map [dt]
+;;     (to-map
+;;       (.getYear dt)
+;;       (inc (.getMonth dt))
+;;       (.getDate dt)
+;;       (.getHours dt)
+;;       (.getMinutes dt)
+;;       (.getSeconds dt)
+;;       (.getMilliseconds dt))))
 
+#+cljs
 (extend-protocol Mappable
   ObjMap
   (instant->map [m]
@@ -371,8 +364,12 @@ formatted with each of the available printing formatters."
       :cljs-time.core/interval (time/->period m))))
 
 (extend-protocol Mappable
-  cljs.core/PersistentArrayMap
+  #+clj clojure.lang.IPersistentMap #+cljs cljs.core.PersistentArrayMap
   (instant->map [m]
     (case (:type (meta m))
       :cljs-time.core/period m
       :cljs-time.core/interval (time/->period m))))
+
+(extend-protocol Mappable
+  cljs_time.core.DateTime
+  (instant->map [m] (dissoc m :time-zone)))
