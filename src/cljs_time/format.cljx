@@ -27,21 +27,10 @@
   with-pivot-year."
   (:require
     [cljs-time.core :as time]
+    [cljs-time.internal.core
+     :refer [#+cljs format dow doy offset-string]]
     [clojure.set :refer [difference]]
-    [clojure.string :as string]
-    [goog.date :as date]
-    [goog.string :as gstring]
-    [goog.string.format]))
-
-(defn format
-  "Formats a string using goog.string.format."
-  [fmt & args]
-  (let [args (map (fn [x]
-                    (if (or (keyword? x) (symbol? x))
-                      (str x)
-                      x))
-                  args)]
-    (apply gstring/format fmt args)))
+    [clojure.string :as string]))
 
 (def months
   ["January" "February" "March" "April" "May" "June" "July" "August"
@@ -112,22 +101,20 @@
   '.', ' ', '#' and '?' will appear in the resulting time text even they are
   not embraced within single quotes."}
   date-formatters 
-  (let [d      #(.getDate %)
-        M #(inc (.getMonth %))
-        y      #(.getYear %)
-        h      #(.getHours %)
-        m      #(.getMinutes %)
-        s      #(.getSeconds %)
-        S      #(.getMilliseconds %)
-        Z      #(.getTimezoneOffsetString %)
-        doy    #(.getDayOfYear %)
-        dow    #(.getDay %)]
+  (let [d #(time/day %)
+        M #(time/month %)
+        y #(time/year %)
+        h #(time/hour %)
+        m #(time/minute %)
+        s #(time/second %)
+        S #(time/milli %)
+        Z #(offset-string (:timezone %))]
     {"d" d
      "dd" #(format "%02d" (d %))
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
-     "dow" #(days (dow %))
+     "dow" #(days (time/day-of-week %))
      "DDD" doy
-     "EEE" #(days (dow %))
+     "EEE" #(days (time/day-of-week %))
      "M" M
      "MM" #(format "%02d" (M %))
      "MMM" #(string/join (take 3 (months (dec (M %)))))
@@ -149,33 +136,34 @@
      "ww" #(format "%02d" (Math/ceil (/ (doy %) 7)))
      "e" dow}))
 
+(defn parse-int [s]
+  (#+clj Integer/parseInt #+cljs js/parseInt s 10))
+
 (defn timezone-adjustment [d timezone-string]
   (let [[_ sign hh mm] (string/split timezone-string
                                      #"Z|(?:([-+])(\d{2})(?::?(\d{2}))?)$")]
     [(when (and sign hh mm)
        (let [sign (cond (= sign "-") time/plus
                         (= sign "+") time/minus)
-             [hh mm] (map #(js/parseInt % 10) [hh mm])
+             [hh mm] (map parse-int [hh mm])
              adjusted (-> d
                           (sign (time/hours hh))
                           (sign (time/minutes mm)))]
-         (.setTime d (.getTime adjusted))
          (time/time-zone-for-offset hh mm)))
-     d])) 
-
-(prn (timezone-adjustment (time/now) "+02:00"))
+     d]))
 
 (defn abbreviate [n s]
   (subs s 0 n))
 
 (def date-parsers
-  (let [y #(.setYear %1         (js/parseInt %2 10))
-        d #(.setDate %1         (js/parseInt %2 10))
-        M #(.setMonth %1   (dec (js/parseInt %2 10)))
-        h #(.setHours %1        (js/parseInt %2 10))
-        m #(.setMinutes %1      (js/parseInt %2 10))
-        s #(.setSeconds %1      (js/parseInt %2 10))
-        S #(.setMilliseconds %1 (js/parseInt %2 10))]
+  (let [assoc-fn (fn [kw] #(assoc %1 kw (parse-int %2)))
+        y (assoc-fn :year)
+        d (assoc-fn :day)
+        M (assoc-fn :month)
+        h (assoc-fn :hour)
+        m (assoc-fn :minute)
+        s (assoc-fn :second)
+        S (assoc-fn :millisecond)]
     {"d" ["(\\d{1,2})" d]
      "dd" ["(\\d{2})" d]
      "dth" ["(\\d{1,2})(?:st|nd|rd|th)" d]
@@ -237,8 +225,8 @@
                   #((date-formatters %) date)])}))
 
 (defn not-implemented [sym]
-  #(throw (clj->js {:name :not-implemented
-                    :message (format "%s not implemented yet" (name sym))})))
+  #(throw (ex-info (format "%s not implemented yet" (name sym))
+                   {:type :not-implemented})))
 
 (def ^{:doc "Map of ISO 8601 and a single RFC 822 formatters that can be used
 for parsing and, in most cases, printing.
@@ -322,7 +310,7 @@ time if supplied."}
                                  (parser s)))]
          (if (>= (count parse-seq) min-parts)
            (reduce (fn [date [part do-parse]] (do-parse date part) date)
-                   (date/UtcDateTime. 0 0 0 0 0 0 0)
+                   (time/date-time 0 0 0 0 0 0 0)
                    parse-seq)
            (throw
             (ex-info "The parser could not match the input string."
@@ -330,14 +318,14 @@ time if supplied."}
   ([s]
      (first
       (for [f (vals formatters)
-            :let [d (try (parse f s) (catch js/Error _))]
+            :let [d (try (parse f s) (catch #+clj Exception #+cljs js/Error _))]
             :when d] d))))
 
 (defn unparse
   "Returns a string representing the given DateTime instance in UTC and in the
 form determined by the given formatter."
   [{:keys [formatter]} date]
-  {:pre [(not (nil? date)) (instance? date/DateTime date)]}
+  {:pre [(not (nil? date)) (instance? cljs_time.core.DateTime date)]}
   (apply string/replace (formatter date)))
 
 (defn show-formatters
