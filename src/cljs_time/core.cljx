@@ -83,8 +83,9 @@
   (:refer-clojure :exclude [extend second])
   (:require
    [cljs-time.internal.core
-    :refer [->time-zone #+cljs format leap-year? millis-since-epoch
-            from-millis-since-epoch period-fn split-formats]
+    :refer [->time-zone #+cljs format days-in-month leap-year?
+            millis-since-epoch from-millis-since-epoch period-fn
+            split-formats]
     :as internal.core]
    [cljs-time.tz.data :refer [zones]]))
 
@@ -175,13 +176,34 @@ hours and minutes."
     #+cljs (from-millis-since-epoch (js/Date.now))
     #+clj (from-millis-since-epoch (.getTime (java.util.Date.)))))
 
-(defn at-midnight [datetime]
-  (let [datetime (.clone datetime)]
-    (doto datetime
-      (.setHours 0)
-      (.setMinutes 0)
-      (.setSeconds 0)
-      (.setMilliseconds 0))))
+(defn date-time
+  "Constructs and returns a new DateTime in UTC.
+
+  Specify the year, month of year, day of month, hour of day, minute if hour,
+  second of minute, and millisecond of second. Note that month and day are
+  1-indexed while hour, second, minute, and millis are 0-indexed.
+
+  Any number of least-significant components can be ommited, in which case
+  they will default to 1 or 0 as appropriate."
+  ([year]
+     (date-time year 1 1 0 0 0 0))
+  ([year month]
+     (date-time year month 1 0 0 0 0))
+  ([year month day]
+     (date-time year month day 0 0 0 0))
+  ([year month day hour]
+     (date-time year month day hour 0 0 0))
+  ([year month day hour minute]
+     (date-time year month day hour minute 0 0))
+  ([year month day hour minute second]
+     (date-time year month day hour minute second 0))
+  ([year month day hour minute second millis]
+     (date-time year dec month day hour minute second millis utc))
+  ([year month day hour minute second millis tz]
+     (date-time year dec month day hour minute second millis tz)))
+
+(defn at-midnight [{:keys [year month day]}]
+  (date-time year month day))
 
 (defn today-at-midnight
   "Returns a DateMidnight for today at midnight in the UTC time zone."
@@ -191,7 +213,7 @@ hours and minutes."
 (defn epoch
   "Returns a DateTime for the begining of the Unix epoch in the UTC time zone."
   []
-  (doto (goog.date.UtcDateTime.) (.setTime 0)))
+  (from-millis-since-epoch 0))
 
 (defn date-midnight
   "Constructs and returns a new DateMidnight in UTC.
@@ -204,31 +226,7 @@ hours and minutes."
   ([year month]
    (date-midnight year month 1))
   ([year month day]
-   (goog.date.UtcDateTime. year (dec month) day)))
-
-(defn date-time
-  "Constructs and returns a new DateTime in UTC.
-
-  Specify the year, month of year, day of month, hour of day, minute if hour,
-  second of minute, and millisecond of second. Note that month and day are
-  1-indexed while hour, second, minute, and millis are 0-indexed.
-
-  Any number of least-significant components can be ommited, in which case
-  they will default to 1 or 0 as appropriate."
-  ([year]
-   (date-time year 1 1 0 0 0 0))
-  ([year month]
-   (date-time year month 1 0 0 0 0))
-  ([year month day]
-   (date-time year month day 0 0 0 0))
-  ([year month day hour]
-   (date-time year month day hour 0 0 0))
-  ([year month day hour minute]
-   (date-time year month day hour minute 0 0))
-  ([year month day hour minute second]
-   (date-time year month day hour minute second 0))
-  ([year month day hour minute second millis]
-   (goog.date.UtcDateTime. year (dec month) day hour minute second millis)))
+   (date-time year month day)))
 
 (defn period
   ([period value]
@@ -339,7 +337,7 @@ hours and minutes."
 (defn in-millis
   "Returns the number of milliseconds in the given Interval."
   [{:keys [start end]}]
-  (- (.getTime end) (.getTime start)))
+  (- (millis-since-epoch end) (millis-since-epoch start)))
 
 (defn in-seconds
   "Returns the number of standard seconds in the given Interval."
@@ -370,7 +368,7 @@ hours and minutes."
   (take-while #(before? % end) (map #(plus start (months (inc %))) (range))))
 
 (defn total-days-in-whole-months [interval]
-  (map #(.getNumberOfDaysInMonth %) (month-range interval)))
+  (map #(days-in-month (dec (month %))) (month-range interval)))
 
 (defn in-months
   "Returns the number of months in the given Interval.
@@ -424,9 +422,7 @@ hours and minutes."
    (overlaps? start-a end-a start-b end-b))
   ([start-a end-a start-b end-b]
    (or (and (before? start-b end-a) (after? end-b start-a))
-       (and (after? end-b start-a) (before? start-b end-a))
-       ;(or (= start-a end-b) (= start-b end-a))
-       )))
+       (and (after? end-b start-a) (before? start-b end-a)))))
 
 (defn abuts?
   "Returns true if Interval a abuts b, i.e. then end of a is exactly the
@@ -448,7 +444,7 @@ hours and minutes."
   ([dt]
    (number-of-days-in-the-month (year dt) (month dt)))
   ([year month]
-   (.getDate (last-day-of-the-month year month))))
+   (day (last-day-of-the-month year month))))
 
 (defn first-day-of-the-month
   ([dt]
@@ -487,15 +483,12 @@ hours and minutes."
 
 (defn today-at
   ([hours minutes seconds millis]
-   (let [midnight (goog.date.Date.)]
-     (doto (goog.date.UtcDateTime. 0)
-       (.setYear (.getYear midnight))
-       (.setMonth (.getMonth midnight))
-       (.setDate (.getDate midnight))
-       (.setHours hours)
-       (.setMinutes minutes)
-       (.setSeconds seconds)
-       (.setMilliseconds millis))))
+    (let [midnight (today-at-midnight)]
+      (assoc midnight
+        :hour hours
+        :minute minutes
+        :second seconds
+        :millisecond millis)))
   ([hours minutes seconds]
    (today-at hours minutes seconds 0))
   ([hours minutes]
