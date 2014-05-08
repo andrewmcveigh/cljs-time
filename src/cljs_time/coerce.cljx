@@ -10,17 +10,18 @@
     #<19980425T000000>"
   (:refer-clojure :exclude [extend second])
   (:require
-    [cljs-time.format :as time-fmt]
-    [goog.date :as date]))
+   [cljs-time.core :as time]
+   [cljs-time.internal.core :refer [millis-since-epoch]]
+   [cljs-time.format :as time-fmt]))
 
 (defprotocol ICoerce
-  (to-date-time [obj] "Convert `obj` to a goog.date.DateTime instance."))
+  (to-date-time [obj] "Convert `obj` to a cljs_time.core.DateTime instance."))
 
 (defn from-long
   "Returns a DateTime instance in the UTC time zone corresponding to the given
   number of milliseconds after the Unix epoch."
   [millis]
-  (doto (date/UtcDateTime.) (.setTime millis)))
+  (time/from-millis-since-epoch millis))
 
 (defn from-string
   "Returns DateTime instance from string using formatters in clj-time.format,
@@ -28,7 +29,9 @@
   [s]
   (first
     (for [f (vals time-fmt/formatters)
-          :let [d (try (time-fmt/parse f s) (catch js/Error _))]
+          :let [d (try
+                    (time-fmt/parse f s)
+                    (catch #+clj Exception #+cljs js/Error _))]
           :when d] d)))
 
 (defn from-date
@@ -41,7 +44,7 @@
   "Convert `obj` to the number of milliseconds after the Unix epoch."
   [obj]
   (if-let [dt (to-date-time obj)]
-    (.getTime dt)))
+    (millis-since-epoch dt)))
 
 (defn to-epoch
   "Convert `obj` to Unix epoch."
@@ -50,10 +53,10 @@
     (and millis (/ millis 1000))))
 
 (defn to-date
-  "Convert `obj` to a JavaScript Date instance."
+  "Convert `obj` to a Java/JavaScript Date instance."
   [obj]
   (if-let [dt (to-date-time obj)]
-    (js/Date. (.getTime dt))))
+    (#+clj java.util.Date. #+cljs js/Date. (millis-since-epoch dt))))
 
 (defn to-string
   "Returns a string representation of obj in UTC time-zone
@@ -67,17 +70,17 @@
   (to-date-time [_]
     nil)
 
-  js/Date
+  #+clj java.util.Date. #+cljs js/Date
   (to-date-time [date]
     (from-date date))
 
-  goog.date.DateTime
-  (to-date-time [date-time]
-    date-time)
+  ;; goog.date.DateTime
+  ;; (to-date-time [date-time]
+  ;;   date-time)
 
-  goog.date.Date
-  (to-date-time [date-midnight]
-    (doto date-midnight (.set date-midnight)))
+  ;; goog.date.Date
+  ;; (to-date-time [date-midnight]
+  ;;   (doto date-midnight (.set date-midnight)))
 
   number
   (to-date-time [long]
