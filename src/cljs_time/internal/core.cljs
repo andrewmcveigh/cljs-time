@@ -44,7 +44,7 @@
         (zero? (mod y 4)) true
         :else false))
 
-(def days-in-months [31 28 31 30 31 30 31 31 30 31 30 31])
+(def days-in-month [31 28 31 30 31 30 31 31 30 31 30 31])
 
 (defn rebalance [{:keys [year month day hour minute second millisecond] :as dt}]
   (let [bal-units (fn [sm lg mul i]
@@ -62,7 +62,7 @@
                                  (let [month (if (zero? month) 12 month)
                                        prev0? (zero? (dec month))
                                        m (if prev0? 12 (dec month))
-                                       days (days-in-months (dec m))
+                                       days (days-in-month (dec m))
                                        days (if (and (leap-year? year)
                                                      (= m 2))
                                               (inc days)
@@ -73,7 +73,7 @@
                                           (+ (if this-month? (inc day) day)
                                              days)))
                                  (pos? day)
-                                 (let [days (days-in-months (dec month))
+                                 (let [days (days-in-month (dec month))
                                        days (if (and (leap-year? year)
                                                      (= month 2))
                                               (inc days)
@@ -86,10 +86,10 @@
                                  :else
                                  (if (zero? (dec month))
                                    (let [month 12 year (dec year)]
-                                     [year month (days-in-months month)])
+                                     [year month (days-in-month month)])
                                    [year
                                     (dec month)
-                                    (days-in-months (- month 2))])))
+                                    (days-in-month (- month 2))])))
         [month year] (bal-units month year 12 1)]
     (assoc dt
       :millisecond millisecond :second second :minute minute :hour hour
@@ -155,7 +155,7 @@ Note: Currently does not account for leap seconds."
                     (* years 365)
                     leap-years
                     (dec day)
-                    (map (comp days-in-months dec) (range 1 month)))
+                    (map (comp days-in-month dec) (range 1 month)))
         offset (* (condp = sign :- 1 :+ -1)
                   (+ (* 1000 (or ss 0))
                      (* 60000 (or mm 0))
@@ -190,9 +190,9 @@ Note: Currently does not account for leap seconds."
                       [year ms]
                       (recur ((if (neg? ms) dec inc) year) (- ms ms-in-year)))))
         [dd MM] (loop [days (/ ms 86400000) month 0]
-                  (let [dim (days-in-months month)]
+                  (let [dim (days-in-month month)]
                     (if (<= days dim)
-                      [days (inc month)]
+                      [(inc days) (inc month)]
                       (recur (- days dim) (inc month)))))]
     (rebalance
      (->DateTime yy MM dd (/ hh 3600000) (/ mm 60000) (/ ss 1000) SSS utc))))
