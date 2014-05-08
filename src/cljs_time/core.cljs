@@ -80,12 +80,13 @@
   Note that all functions in this namespace work with Joda objects or ints. If
   you need to print or parse date-times, see cljs-time.format. If you need to
   ceorce date-times to or from other types, see cljs-time.coerce."
-  (:refer-clojure :exclude [= extend second])
+  (:refer-clojure :exclude [extend second])
   (:require
-   [cljs-time.internal.core :refer [format split-formats]]
-   [cljs-time.tz.data :refer [zones]]
-    goog.date.UtcDateTime
-    goog.i18n.TimeZone))
+   [cljs-time.internal.core
+    :refer [->time-zone #+cljs format leap-year? millis-since-epoch
+            from-millis-since-epoch period-fn split-formats]
+    :as internal.core]
+   [cljs-time.tz.data :refer [zones]]))
 
 (defn = [& args]
   (cond (every? #(instance? goog.date.UtcDateTime %) args)
@@ -145,72 +146,22 @@ hours and minutes."
   "Returns a DateTimeZone for the given ID, which must be in long form, e.g.
 'America/Matamoros'."
   [id]
-  (if-let [[offset rules format & until] (last (zones id))]
-    (with-meta
-      {:id id
-       :offset offset :rules rules :names (split-formats format)}
-      {:type ::time-zone})))
+  (->time-zone (last (zones id)) id))
 
-(def utc (time-zone-for-id "Etc/UTC"))
+(def utc internal.core/utc)
 
-(defn leap-year? [y]
-  (cond (zero? (mod y 400)) true
-        (zero? (mod y 100)) false
-        (zero? (mod y 4)) true
-        :else false))
-
-(def periods
-  (let [fixed-time-fn (fn [f set-fn op date value]
-                        (let [date (.clone date)]
-                          (set-fn date (op (f date) value))
-                          date))]
-    {:millis (partial fixed-time-fn milli #(.setMilliseconds %1 %2))
-     :seconds (partial fixed-time-fn second #(.setSeconds %1 %2))
-     :minutes (partial fixed-time-fn minute #(.setMinutes %1 %2))
-     :hours (partial fixed-time-fn hour #(.setHours %1 %2))
-     :days (partial fixed-time-fn day #(.setDate %1 %2))
-     :weeks (fn [op date value]
-              (let [date (.clone date)]
-                (.setDate date (op (day date) (* 7 value)))
-                date))
-     :months (fn [op date value]
-               (let [date (.clone date)
-                     m (op (month date) value)
-                     y (year date)
-                     y (cond (> m 12) (+ y 1)
-                             (< m 1) (- y 1)
-                             :else y)
-                     m (cond (> m 12) (mod m 12)
-                             (< m 1) (+ m 12)
-                             :else m)]
-                 (.setMonth date (dec m))
-                 (.setYear date y)
-                 date))
-     :years (fn [op date value]
-              (let [date (.clone date)]
-                (if (and (leap-year? (year date))
-                         (= 2 (month date))
-                         (= 29 (day date)))
-                  (.setDate date 28))
-                (.setYear date (op (year date) value))
-                date))}))
-
-(defn period-fn [p]
-  (fn [operator date]
-    (reduce #((periods (key %2)) operator %1 (val %2)) date p)))
-
-(extend-protocol DateTimeProtocol
-  goog.date.UtcDateTime
-  (year [this] (.getYear this))
-  (month [this] (inc (.getMonth this)))
-  (day [this] (.getDate this))
-  (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
-  (hour [this] (.getHours this))
-  (minute [this] (.getMinutes this))
-  (second [this] (.getSeconds this))
-  (milli [this] (.getMilliseconds this))
-  (after? [this that] (> (.getTime this) (.getTime that)))
-  (before? [this that] (< (.getTime this) (.getTime that)))
+(defrecord DateTime [year month day hour minute second millisecond timezone]
+  DateTimeProtocol
+  (year [_] year)
+  (month [_] month)
+  (day [_] day)
+  (day-of-week [_] (dow year month day))
+  (hour [_] hour)
+  (minute [_] minute)
+  (second [_] second)
+  (milli [_] millisecond)
+  (after? [this that] (> (millis-since-epoch this) (millis-since-epoch that)))
+  (before? [this that] (< (millis-since-epoch this) (millis-since-epoch that)))
   (plus- [this period] ((period-fn period) + this))
   (minus- [this period] ((period-fn period) - this)))
 
@@ -219,7 +170,10 @@ hours and minutes."
 (defn now
   "Returns a DateTime for the current instant in the UTC time zone."
   []
-  (if *sys-time* *sys-time* (goog.date.UtcDateTime.)))
+  (if *sys-time*
+    *sys-time*
+    #+cljs (from-millis-since-epoch (js/Date.now))
+    #+clj (from-millis-since-epoch (.getTime (java.util.Date.)))))
 
 (defn at-midnight [datetime]
   (let [datetime (.clone datetime)]

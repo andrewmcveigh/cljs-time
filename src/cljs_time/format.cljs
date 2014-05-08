@@ -152,15 +152,18 @@
 (defn timezone-adjustment [d timezone-string]
   (let [[_ sign hh mm] (string/split timezone-string
                                      #"Z|(?:([-+])(\d{2})(?::?(\d{2}))?)$")]
-    (when (and sign hh mm)
-      (let [sign (cond (= sign "-") time/plus
-                       (= sign "+") time/minus)
-            [hh mm] (map #(js/parseInt % 10) [hh mm])
-            adjusted (-> d
-                         (sign (time/hours hh))
-                         (sign (time/minutes mm)))]
-        (.setTime d (.getTime adjusted))))
-    d))
+    [(when (and sign hh mm)
+       (let [sign (cond (= sign "-") time/plus
+                        (= sign "+") time/minus)
+             [hh mm] (map #(js/parseInt % 10) [hh mm])
+             adjusted (-> d
+                          (sign (time/hours hh))
+                          (sign (time/minutes mm)))]
+         (.setTime d (.getTime adjusted))
+         (time/time-zone-for-offset hh mm)))
+     d])) 
+
+(prn (timezone-adjustment (time/now) "+02:00"))
 
 (defn abbreviate [n s]
   (subs s 0 n))
