@@ -83,16 +83,10 @@
   (:refer-clojure :exclude [extend second])
   (:require
    [cljs-time.internal.core
-    :refer [->time-zone #+cljs format days-in-month leap-year?
-            millis-since-epoch from-millis-since-epoch period-fn
-            split-formats]
+    :refer [->time-zone #+cljs format dow days-in-month leap-year?
+            millis-since-epoch rebalance split-formats]
     :as internal.core]
    [cljs-time.tz.data :refer [zones]]))
-
-(defn = [& args]
-  (cond (every? #(instance? goog.date.UtcDateTime %) args)
-        (apply cljs.core/= (map #(.getTime %) args))
-        :default (apply cljs.core/= args)))
 
 (defprotocol DateTimeProtocol
   "Interface for various date time functions"
@@ -149,7 +143,35 @@ hours and minutes."
   [id]
   (->time-zone (last (zones id)) id))
 
-(def utc internal.core/utc)
+(def utc
+  (with-meta
+    {:id "Etc/UTC" :offset [:+ 0] :rules "-" :names ["UTC"]}
+    {:type ::time-zone}))
+
+(def periods
+  (let [fixed-time-fn (fn [f set-fn op date value]
+                        (set-fn date (op (f date) value)))]
+    {:millis (partial fixed-time-fn milli #(assoc %1 :millisecond %2))
+     :seconds (partial fixed-time-fn second #(assoc %1 :second %2))
+     :minutes (partial fixed-time-fn minute #(assoc %1 :minute %2))
+     :hours (partial fixed-time-fn hour #(assoc %1 :hour %2))
+     :days (partial fixed-time-fn day #(assoc %1 :day %2))
+     :weeks (fn [op date value] (assoc date :day (op (day date) (* 7 value))))
+     :months (partial fixed-time-fn month #(assoc %1 :month %2))
+     :years (fn [op date value]
+              (let [day (day date)]
+                (assoc date 
+                  :day (if (and (leap-year? (year date))
+                                (= 2 (month date))
+                                (= 29 day))
+                         28
+                         day)
+                  :year (op (year date) value))))}))
+
+(defn period-fn [p]
+  (fn [operator date]
+    (rebalance
+     (reduce #((periods (key %2)) operator %1 (val %2)) date p))))
 
 (defrecord DateTime [year month day hour minute second millisecond timezone]
   DateTimeProtocol
@@ -167,6 +189,31 @@ hours and minutes."
   (minus- [this period] ((period-fn period) - this)))
 
 (def ^:dynamic *sys-time* nil)
+
+(defn from-millis-since-epoch [ms]
+  (let [SSS (mod ms 1000)
+        ms (- ms SSS)
+        ss (mod ms 60000)
+        ms (- ms ss)
+        mm (mod ms 3600000)
+        ms (- ms mm)
+        hh (mod ms 86400000)
+        ms (- ms hh)
+        [yy ms] (loop [year 1970 ms ms]
+                  (let [ms-year (if (neg? ms) year (dec year))
+                        ms-in-year (if (leap-year? ms-year)
+                                     31622400000
+                                     31536000000)]
+                    (if (<= ms ms-in-year)
+                      [year ms]
+                      (recur ((if (neg? ms) dec inc) year) (- ms ms-in-year)))))
+        [dd MM] (loop [days (/ ms 86400000) month 0]
+                  (let [dim (days-in-month month)]
+                    (if (<= days dim)
+                      [(inc days) (inc month)]
+                      (recur (- days dim) (inc month)))))]
+    (rebalance
+     (->DateTime yy MM dd (/ hh 3600000) (/ mm 60000) (/ ss 1000) SSS utc))))
 
 (defn now
   "Returns a DateTime for the current instant in the UTC time zone."
@@ -198,9 +245,9 @@ hours and minutes."
   ([year month day hour minute second]
      (date-time year month day hour minute second 0))
   ([year month day hour minute second millis]
-     (date-time year dec month day hour minute second millis utc))
+     (date-time year month day hour minute second millis utc))
   ([year month day hour minute second millis tz]
-     (date-time year dec month day hour minute second millis tz)))
+     (->DateTime year month day hour minute second millis tz)))
 
 (defn at-midnight [{:keys [year month day]}]
   (date-time year month day))
