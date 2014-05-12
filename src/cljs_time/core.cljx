@@ -143,6 +143,9 @@ hours and minutes."
   [id]
   (->time-zone (last (zones id)) id))
 
+(defn default-time-zone []
+  (time-zone-for-offset (int (/ (.getTimezoneOffset (js/Date.)) 60))))
+
 (def utc
   (with-meta
     {:id "Etc/UTC" :offset [:+ 0] :rules "-" :names ["UTC"]}
