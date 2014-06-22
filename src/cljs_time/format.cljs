@@ -50,6 +50,9 @@
 (def days
   ["Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday"])
 
+(defn abbreviate [n s]
+  (subs s 0 n))
+
 (def ^{:doc "**Note: not all formatters have been implemented yet.**
 
   The pattern syntax is mostly compatible with java.text.SimpleDateFormat -
@@ -111,7 +114,7 @@
   ['A'..'Z'] will be treated as quoted text. For instance, characters like ':',
   '.', ' ', '#' and '?' will appear in the resulting time text even they are
   not embraced within single quotes."}
-  date-formatters 
+  date-formatters
   (let [d      #(.getDate %)
         M #(inc (.getMonth %))
         y      #(.getYear %)
@@ -127,10 +130,11 @@
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
      "dow" #(days (dow %))
      "DDD" doy
-     "EEE" #(days (dow %))
+     "EEE" #(abbreviate 3 (days (dow %)))
+     "EEEE" #(days (dow %))
      "M" M
      "MM" #(format "%02d" (M %))
-     "MMM" #(string/join (take 3 (months (dec (M %)))))
+     "MMM" #(abbreviate 3 (months (dec (M %))))
      "MMMM" #(months (dec (M %)))
      "yyyy" y
      "yy" #(mod (y %) 100)
@@ -161,9 +165,6 @@
                          (sign (time/minutes mm)))]
         (.setTime d (.getTime adjusted))))
     d))
-
-(defn abbreviate [n s]
-  (subs s 0 n))
 
 (def date-parsers
   (let [y #(.setYear %1         (js/parseInt %2 10))
