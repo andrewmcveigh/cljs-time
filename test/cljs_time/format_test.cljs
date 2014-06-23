@@ -14,19 +14,19 @@
 
 (deftest parse-test
   (try
-    (format/parse (formatter "dth MMM yyyy hh:mm") "28th August 2013 14:26")
+    (format/parse (formatter "dth MMM yyyy HH:mm") "28th August 2013 14:26")
     (catch ExceptionInfo e (is (= :parser-no-match (:type (ex-data e))))))
   (let [date (format/parse (formatter "dd/MM/yyyy") "12/08/1938")]
     (is (= 1938 (.getYear date)))
     (is (= 12   (.getDate date)))
     (is (= 7    (.getMonth date))))
-  (let [date (format/parse (formatter "dth MMMM yyyy hh:mm") "28th August 2013 14:26")]
+  (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "28th August 2013 14:26")]
     (is (= 2013 (.getYear date)))
     (is (= 28   (.getDate date)))
     (is (= 7    (.getMonth date)))
     (is (= 14   (.getHours date)))
     (is (= 26   (.getMinutes date))))
-  (let [date (format/parse (formatter "dth MMMM yyyy hh:mm") "29th February 2012 14:26")]
+  (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "29th February 2012 14:26")]
     (is (= 2012 (.getYear date)))
     (is (= 29   (.getDate date)))
     (is (= 1    (.getMonth date)))
@@ -49,7 +49,7 @@
   (let [date (from-date #inst "2013-08-29T00:00:00.000-00:00")]
     (is (= "Thursday 29th Aug 2013" (format/unparse (formatter "dow dth MMM yyyy") date)))
     (is (= "Thursday 29th August 2013" (format/unparse (formatter "dow dth MMMM yyyy") date)))
-    (is (= "29/08/2013 00:00:00.000Z" (format/unparse (formatter "dd/MM/yyyy hh:mm:ss.SSSZ") date)))))
+    (is (= "29/08/2013 00:00:00.000Z" (format/unparse (formatter "dd/MM/yyyy HH:mm:ss.SSSZ") date)))))
 
 (deftest arithmetic-test
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
@@ -61,43 +61,43 @@
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
          (format/parse (formatter "dd/MM/yyyy") "30/07/2013")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/millis 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "30/08/2013 00:00:00.001")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "30/08/2013 00:00:00.001")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/millis 1000))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "30/08/2013 00:00:01.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "30/08/2013 00:00:01.000")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/millis 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "29/08/2013 23:59:59.999")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "29/08/2013 23:59:59.999")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/seconds 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "30/08/2013 00:00:01.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "30/08/2013 00:00:01.000")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/seconds 61))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "30/08/2013 00:01:01.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "30/08/2013 00:01:01.000")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/seconds 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "29/08/2013 23:59:59.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "29/08/2013 23:59:59.000")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/minutes 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "30/08/2013 00:01:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "30/08/2013 00:01:00.000")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/minutes 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "29/08/2013 23:59:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "29/08/2013 23:59:00.000")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/hours 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "30/08/2013 01:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "30/08/2013 01:00:00.000")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/hours 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "29/08/2013 23:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "29/08/2013 23:00:00.000")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "31/08/2013") (time/days 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "01/09/2013 00:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "01/09/2013 00:00:00.000")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "01/08/2013") (time/days 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "31/07/2013 00:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "31/07/2013 00:00:00.000")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/days 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "29/08/2013 00:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "29/08/2013 00:00:00.000")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "31/08/2013") (time/weeks 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "07/09/2013 00:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "07/09/2013 00:00:00.000")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/weeks 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "23/08/2013 00:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "23/08/2013 00:00:00.000")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "31/08/2013") (time/years 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "31/08/2014 00:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "31/08/2014 00:00:00.000")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "31/08/2013") (time/years 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "31/08/2012 00:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "31/08/2012 00:00:00.000")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "29/02/2012") (time/years 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "28/02/2013 00:00:00.000")))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "28/02/2013 00:00:00.000")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "29/02/2012") (time/years 1))
-         (format/parse (formatter "dd/MM/yyyy hh:mm:ss.SSS") "28/02/2011 00:00:00.000"))))
+         (format/parse (formatter "dd/MM/yyyy HH:mm:ss.SSS") "28/02/2011 00:00:00.000"))))
 
 (deftest within?-test
 
@@ -207,7 +207,7 @@
 ;(unparse-local-date fmt (local-date-time 2010 3 11 00 00 00 000))))))
 
 ;(deftest test-formatter-modifiers
-;(let [fmt (formatter "YYYY-MM-dd hh:mm z" (time-zone-for-id "America/Chicago"))]
+;(let [fmt (formatter "YYYY-MM-dd HH:mm z" (time-zone-for-id "America/Chicago"))]
 ;(is (= "2010-03-11 11:49 CST"
 ;(unparse fmt (date-time 2010 3 11 17 49 20 881)))))
 ;(let [fmt (with-zone (formatters :basic-date-time) (time-zone-for-id "America/Chicago"))]
@@ -237,6 +237,27 @@
   (is (= (date-time 2013 1 1 0 0 0) (parse "2013-01-01 00:00:00")))
   (is (= (date-time 1991 1 13 11 30 45) (parse "1991-1-13 11:30:45")))
   (is (= (date-time 2013 8 3 12 11 13) (parse "2013-08-03 12:11:13"))))
+
+(deftest test-hour-meridiem-formatter
+  (let [f1 (formatter "h:mma")
+        f2 (formatter "H:mm")
+        morning (date-time 0 0 0  7 40 10 123)
+        evening (date-time 0 0 0 16 19 49 877)
+        midnight (date-time 0 0 0 0 0 0 0)
+        noon (date-time 0 0 0 12 0 0 0)]
+    (is (= "12:00am" (unparse f1 midnight)))
+    (is (= "12:00pm" (unparse f1 noon)))
+    (is (= "7:40am" (unparse f1 morning)))
+    (is (= "4:19pm" (unparse f1 evening)))
+    (is (= "7:40"   (unparse f2 morning)))
+    (is (= "16:19"  (unparse f2 evening)))
+
+    (is (= "12:00am" (unparse f1 (parse f1 "12:00am"))))
+    (is (= "12:00pm" (unparse f1 (parse f1 "12:00pm"))))
+    (is (= "7:40am"  (unparse f1 (parse f1 "7:40am"))))
+    (is (= "4:19pm"  (unparse f1 (parse f1 "4:19pm"))))
+    (is (= "7:40"    (unparse f2 (parse f2 "7:40"))))
+    (is (= "16:19"   (unparse f2 (parse f2 "16:19"))))))
 
 (deftest test-instant->map-from-interval
   (let [it (interval (date-time 1986 9 2 0 0 2)  (date-time 1986 11 30 2 5 12))]
