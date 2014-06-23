@@ -118,7 +118,11 @@
   (let [d      #(.getDate %)
         M #(inc (.getMonth %))
         y      #(.getYear %)
-        h      #(.getHours %)
+        h      #(let [hr (mod (.getHours %) 12)]
+                  (if (zero? hr) 12 hr))
+        a      #(if (< (.getHours %) 12) "am" "pm")
+        A      #(if (< (.getHours %) 12) "AM" "PM")
+        H      #(.getHours %)
         m      #(.getMinutes %)
         s      #(.getSeconds %)
         S      #(.getMilliseconds %)
@@ -139,12 +143,15 @@
      "yyyy" y
      "yy" #(mod (y %) 100)
      "xxxx" y
+     "a" a
+     "A" A
      "h" h
+     "H" H
      "m" m
      "s" s
      "S" S
      "hh" #(format "%02d" (h %))
-     "HH" #(format "%02d" (h %))
+     "HH" #(format "%02d" (H %))
      "mm" #(format "%02d" (m %))
      "ss" #(format "%02d" (s %))
      "SSS" #(format "%03d" (S %))
@@ -170,7 +177,10 @@
   (let [y #(.setYear %1         (js/parseInt %2 10))
         d #(.setDate %1         (js/parseInt %2 10))
         M #(.setMonth %1   (dec (js/parseInt %2 10)))
-        h #(.setHours %1        (js/parseInt %2 10))
+        h #(.setHours %1   (mod (js/parseInt %2 10) 12))
+        a #(when (#{"pm" "p"} (string/lower-case %2))
+             (.setHours %1 (+ (.getHours %1) 12)))
+        H #(.setHours %1        (js/parseInt %2 10))
         m #(.setMinutes %1      (js/parseInt %2 10))
         s #(.setSeconds %1      (js/parseInt %2 10))
         S #(.setMilliseconds %1 (js/parseInt %2 10))]
@@ -195,13 +205,15 @@
             (constantly nil)]
      "EEEE" [(str \( (string/join \| days) \)) (constantly nil)]
      "dow" [(str \( (string/join \| days) \)) (constantly nil)]
+     "a" ["(am|pm|a|p|AM|PM|A|P)" a]
+     "A" ["(am|pm|a|p|AM|PM|A|P)" a]
      "m" ["(\\d{1,2})" m]
      "s" ["(\\d{1,2})" s]
      "S" ["(\\d{1,2})" S]
      "h" ["(\\d{1,2})" h]
-     "H" ["(\\d{1,2})" h]
+     "H" ["(\\d{1,2})" H]
      "hh" ["(\\d{2})" h]
-     "HH" ["(\\d{2})" h]
+     "HH" ["(\\d{2})" H]
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]
@@ -210,8 +222,8 @@
 
 (defn parser-sort-order-pred [parser]
   (.indexOf
-    (into-array ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h"
-                 "m" "s" "S" "hh" "mm" "ss" "SSS" "Z" "ZZ"])
+    (into-array ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h" "H"
+                 "m" "s" "S" "hh" "HH" "mm" "ss" "a" "SSS" "Z" "ZZ"])
     parser))
 
 (def date-format-pattern
