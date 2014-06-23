@@ -40,6 +40,9 @@
 (def days
   ["Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday"])
 
+(defn abbreviate [n s]
+  (subs s 0 n))
+
 (def ^{:doc "**Note: not all formatters have been implemented yet.**
 
   The pattern syntax is mostly compatible with java.text.SimpleDateFormat -
@@ -101,7 +104,7 @@
   ['A'..'Z'] will be treated as quoted text. For instance, characters like ':',
   '.', ' ', '#' and '?' will appear in the resulting time text even they are
   not embraced within single quotes."}
-  date-formatters 
+  date-formatters
   (let [d #(time/day %)
         M #(time/month %)
         y #(time/year %)
@@ -115,10 +118,11 @@
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
      "dow" #(days (time/day-of-week %))
      "DDD" doy
-     "EEE" #(days (time/day-of-week %))
+     "EEE" #(abbreviate 3 (days (time/day-of-week %)))
+     "EEEE" #(days (time/day-of-week %))
      "M" M
      "MM" #(format "%02d" (M %))
-     "MMM" #(string/join (take 3 (months (dec (M %)))))
+     "MMM" #(abbreviate 3 (months (dec (M %))))
      "MMMM" #(months (dec (M %)))
      "yyyy" y
      "yy" #(mod (y %) 100)
@@ -144,9 +148,6 @@
           (and hh mm)
           (let [[hh mm] (map parse-int [hh mm])]
             (assoc d :time-zone (time/time-zone-for-offset hh mm))))))
-
-(defn abbreviate [n s]
-  (subs s 0 n))
 
 (def date-parsers
   (let [assoc-fn (fn [kw] #(assoc %1 kw (parse-int %2)))
