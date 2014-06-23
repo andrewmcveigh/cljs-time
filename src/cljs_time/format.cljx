@@ -162,9 +162,11 @@
         d (assoc-fn :days)
         M (assoc-fn :months)
         h #(assoc %1 :hours (mod (parse-int %2) 12))
-        a (fn [date x]
-            (update-in date [:hours] #(when (#{"pm" "p"} (string/lower-case x))
-                                        (+ 12 %))))
+        a (fn [{:keys [hours] :as date} x]
+            (if (#{"pm" "p"} (string/lower-case x))
+              (assoc date :hours (let [hours (+ 12 hours)]
+                                   (if (= hours 24) 0 hours)))
+              date))
         H (assoc-fn :hours)
         m (assoc-fn :minutes)
         s (assoc-fn :seconds)
