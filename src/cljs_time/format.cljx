@@ -161,7 +161,11 @@
         y (assoc-fn :years)
         d (assoc-fn :days)
         M (assoc-fn :months)
-        h (assoc-fn :hours)
+        h #(assoc %1 :hours (mod (parse-int %2) 12))
+        a (fn [date x]
+            (update-in date [:hours] #(when (#{"pm" "p"} (string/lower-case x))
+                                        (+ 12 %))))
+        H (assoc-fn :hours)
         m (assoc-fn :minutes)
         s (assoc-fn :seconds)
         S (assoc-fn :millis)
@@ -187,13 +191,15 @@
             skip]
      "EEEE" [(str \( (string/join \| days) \)) skip]
      "dow" [(str \( (string/join \| days) \)) skip]
+     "a" ["(am|pm|a|p|AM|PM|A|P)" a]
+     "A" ["(am|pm|a|p|AM|PM|A|P)" a]
      "m" ["(\\d{1,2})" m]
      "s" ["(\\d{1,2})" s]
      "S" ["(\\d{1,2})" S]
      "h" ["(\\d{1,2})" h]
-     "H" ["(\\d{1,2})" h]
+     "H" ["(\\d{1,2})" H]
      "hh" ["(\\d{2})" h]
-     "HH" ["(\\d{2})" h]
+     "HH" ["(\\d{2})" H]
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]
@@ -201,8 +207,8 @@
      "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" timezone-adjustment]}))
 
 (defn parser-sort-order-pred [parser]
-  (index-of ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h"
-             "m" "s" "S" "hh" "mm" "ss" "SSS" "ZZ" "Z"]
+  (index-of ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h" "H"
+             "m" "s" "S" "hh" "HH" "mm" "ss" "a" "SSS" "ZZ" "Z"]
             parser))
 
 (def date-format-pattern
