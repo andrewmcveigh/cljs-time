@@ -108,7 +108,11 @@
   (let [d #(time/day %)
         M #(time/month %)
         y #(time/year %)
-        h #(time/hour %)
+        h #(let [hr (mod (time/hour %) 12)]
+             (if (zero? hr) 12 hr))
+        a #(if (< (time/hour %) 12) "am" "pm")
+        A #(if (< (time/hour %) 12) "AM" "PM")
+        H #(time/hour %)
         m #(time/minute %)
         s #(time/second %)
         S #(time/milli %)
@@ -127,12 +131,15 @@
      "yyyy" y
      "yy" #(mod (y %) 100)
      "xxxx" y
+     "a" a
+     "A" A
      "h" h
+     "H" H
      "m" m
      "s" s
      "S" S
      "hh" #(format "%02d" (h %))
-     "HH" #(format "%02d" (h %))
+     "HH" #(format "%02d" (H %))
      "mm" #(format "%02d" (m %))
      "ss" #(format "%02d" (s %))
      "SSS" #(format "%03d" (S %))
