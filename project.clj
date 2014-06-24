@@ -16,6 +16,8 @@
   :source-paths ["src" "target/classes"]
   :test-paths ["test" "target/test-classes"]
 
+  :jvm-opts ["-Djava.awt.headless=true"]
+
   :profiles
   {:dev {:cljx
          {:builds

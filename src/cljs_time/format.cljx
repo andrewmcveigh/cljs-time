@@ -316,16 +316,19 @@ time if supplied."}
   given string according to the given formatter."
   ([{:keys [parser]} s]
      (let [min-parts (count (string/split s part-splitter-regex))]
-       (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
-                                 (parser s)))]
+       (if-let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
+                                    (parser s)))]
          (if (>= (count parse-seq) min-parts)
            (->> parse-seq
                 (reduce (fn [date [part do-parse]] (do-parse date part))
-                        (time/date-time 0 0 0 0 0 0 0))
+                        (time/date-time 0 1 1 0 0 0 0))
                 (valid-date?))
            (throw
             (ex-info "The parser could not match the input string."
-                     {:type :parser-no-match}))))))
+                     {:type :parser-no-match})))
+         (throw
+          (ex-info "The parser could not match the input string."
+                   {:type :parser-no-match})))))
   ([s]
      (first
       (for [f (vals formatters)
