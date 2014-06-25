@@ -26,6 +26,7 @@
   etc with the functions with-zone, with-locale, with-chronology, and
   with-pivot-year."
   (:require
+    [cljs-time.internal.core :refer [valid-date?]]
     [cljs-time.core :as time]
     [clojure.set :refer [difference]]
     [clojure.string :as string]
@@ -174,16 +175,28 @@
     d))
 
 (def date-parsers
-  (let [y #(.setYear %1         (js/parseInt %2 10))
-        d #(.setDate %1         (js/parseInt %2 10))
-        M #(.setMonth %1   (dec (js/parseInt %2 10)))
-        h #(.setHours %1   (mod (js/parseInt %2 10) 12))
-        a #(when (#{"pm" "p"} (string/lower-case %2))
-             (.setHours %1 (+ (.getHours %1) 12)))
-        H #(.setHours %1        (js/parseInt %2 10))
-        m #(.setMinutes %1      (js/parseInt %2 10))
-        s #(.setSeconds %1      (js/parseInt %2 10))
-        S #(.setMilliseconds %1 (js/parseInt %2 10))]
+  (let [parse-int #(js/parseInt % 10)
+        assoc-fn (fn [kw] #(assoc %1 kw (parse-int %2)))
+        y (assoc-fn :years)
+        d (assoc-fn :days)
+        M #(assoc %1 :months (dec (parse-int %2)))
+        h #(assoc %1 :hours (mod (parse-int %2) 12))
+        a (fn [{:keys [hours] :as date} x]
+            (if (#{"pm" "p"} (string/lower-case x))
+              (assoc date :hours (let [hours (+ 12 hours)]
+                                   (if (= hours 24) 0 hours)))
+              date))
+        H (assoc-fn :hours)
+        m (assoc-fn :minutes)
+        s (assoc-fn :seconds)
+        S (assoc-fn :millis)
+        MMM #(let [full (first (filter (fn [m]
+                                         (re-seq (re-pattern (str "^" %2)) m))
+                                       months))]
+               (M %1 (str (inc (.indexOf (into-array months) full)))))
+        MMMM #(M %1 (str (inc (.indexOf (into-array months) %2))))
+        skip (fn [x & args] x)
+        tz #(assoc %1 :time-zone %2)]
     {"d" ["(\\d{1,2})" d]
      "dd" ["(\\d{2})" d]
      "dth" ["(\\d{1,2})(?:st|nd|rd|th)" d]
@@ -192,19 +205,12 @@
      "y" ["(\\d{1,4})" y]
      "yy" ["(\\d{2,4})" y]
      "yyyy" ["(\\d{4})" y]
-     "MMM" [(str \( (string/join \| (map (partial abbreviate 3) months)) \))
-            #(let [full (first (filter (fn [m]
-                                         (re-seq (re-pattern (str "^" %2)) m))
-                                       months))]
-               (M %1 (str (inc (.indexOf (into-array months) full)))))]
-     "MMMM" [(str \( (string/join \| months) \))
-             #(M %1 (str (inc (.indexOf (into-array months) %2))))]
-     "E" [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
-          (constantly nil)]
-     "EEE" [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
-            (constantly nil)]
-     "EEEE" [(str \( (string/join \| days) \)) (constantly nil)]
-     "dow" [(str \( (string/join \| days) \)) (constantly nil)]
+     "MMM" [(str \( (string/join \| (map (partial abbreviate 3) months)) \)) MMM]
+     "MMMM" [(str \( (string/join \| months) \)) MMMM]
+     "E" [(str \( (string/join \| (map (partial abbreviate 3) days)) \)) skip]
+     "EEE" [(str \( (string/join \| (map (partial abbreviate 3) days)) \)) skip]
+     "EEEE" [(str \( (string/join \| days) \)) skip]
+     "dow" [(str \( (string/join \| days) \)) skip]
      "a" ["(am|pm|a|p|AM|PM|A|P)" a]
      "A" ["(am|pm|a|p|AM|PM|A|P)" a]
      "m" ["(\\d{1,2})" m]
@@ -217,8 +223,19 @@
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]
-     "Z" ["((?:(?:\\+|-)\\d{2}:?\\d{2})|Z+)" timezone-adjustment]
-     "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" timezone-adjustment]}))
+     "Z" ["((?:(?:\\+|-)\\d{2}:?\\d{2})|Z+)" tz]
+     "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" tz]}))
+
+(def date-setters
+  {:years #(.setYear %1 %2)
+   :months #(.setMonth %1 %2)
+   :days #(.setDate %1 %2)
+   :hours #(.setHours %1 %2)
+   :minutes #(.setMinutes %1 %2)
+   :seconds #(.setSeconds %1 %2)
+   :millis #(.setMilliseconds %1 %2)
+   :time-zone timezone-adjustment})
+
 
 (defn parser-sort-order-pred [parser]
   (.indexOf
@@ -333,9 +350,14 @@ time if supplied."}
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                  (parser s)))]
          (if (>= (count parse-seq) min-parts)
-           (reduce (fn [date [part do-parse]] (do-parse date part) date)
-                   (date/UtcDateTime. 0 0 0 0 0 0 0)
-                   parse-seq)
+           (let [d (date/UtcDateTime. 0 0 0 0 0 0 0)]
+             (->> parse-seq
+                  (reduce (fn [date [part do-parse]] (do-parse date part))
+                          {:years 0 :months 0 :days 1
+                           :hours 0 :minutes 0 :seconds 0 :millis 0})
+                  valid-date?
+                  (merge-with #(%1 d %2) date-setters))
+             d)
            (throw
             (ex-info "The parser could not match the input string."
                      {:type :parser-no-match}))))))

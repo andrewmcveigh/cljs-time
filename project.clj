@@ -12,6 +12,7 @@
             [lein-marginalia "0.7.1"]
             [com.cemerick/austin "0.1.4"]]
 
+  :jvm-opts ["-Djava.awt.headless=true"]
   :hooks [leiningen.cljsbuild]
   :clojurescript? true
   :cljsbuild

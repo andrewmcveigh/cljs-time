@@ -16,6 +16,16 @@
   (try
     (format/parse (formatter "dth MMM yyyy HH:mm") "28th August 2013 14:26")
     (catch ExceptionInfo e (is (= :parser-no-match (:type (ex-data e))))))
+  (is
+   (= :invalid-date
+      (try
+        (format/parse (formatter "dd/MM/yyyy") "31/04/2013")
+        (catch ExceptionInfo e (:type (ex-data e))))))
+  (is
+   (= :invalid-date
+      (try
+        (format/parse (formatter "dd/MM/yyyy") "32/04/2013")
+        (catch ExceptionInfo e (:type (ex-data e))))))
   (let [date (format/parse (formatter "dd/MM/yyyy") "12/08/1938")]
     (is (= 1938 (.getYear date)))
     (is (= 12   (.getDate date)))
@@ -55,7 +65,7 @@
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
          (format/parse (formatter "dd/MM/yyyy") "30/09/2013")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 6))
-         (format/parse (formatter "dd/MM/yyyy") "30/02/2014")))
+         (format/parse (formatter "dd/MM/yyyy") "02/03/2014")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 8))
          (format/parse (formatter "dd/MM/yyyy") "30/12/2012")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
