@@ -1,2 +1,8 @@
 .repl/
 target/
+.lein-failures
+.lein-repl-history
+out/
+pom.*
+.nrepl-port
+**~
