@@ -36,6 +36,18 @@
         (format/parse (formatter "dd/MM/yyyy") "30/02/2014")
         (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
                (:type (ex-data e))))))
+  (is
+   (= :invalid-date
+      (try
+        (format/parse (formatter "dd/MM/yyyy") "31/04/2013")
+        (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
+               (:type (ex-data e))))))
+  (is
+   (= :invalid-date
+      (try
+        (format/parse (formatter "dd/MM/yyyy") "32/04/2013")
+        (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
+               (:type (ex-data e))))))
   (is (= [1938 8 12 0 0 0 0]
          (utc-int-vec (format/parse (formatter "dd/MM/yyyy") "12/08/1938"))))
   (is (= [2013 8 28 14 26 0 0]
