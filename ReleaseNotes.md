@@ -1,3 +1,9 @@
+## 0.1.5
+
+ - Separate parse from goog.date and check for valid date
+
+- Add meridiem support to both parser and formatter
+
 ## v0.1.4
 
  - Bugfixes: Timezone parsing, text length consistency

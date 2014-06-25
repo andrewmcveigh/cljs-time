@@ -33,7 +33,7 @@ If you are using Maven, add the following repository definition to your `pom.xml
 With Leiningen:
 
 ``` clj
-[com.andrewmcveigh/cljs-time "0.1.4"]
+[com.andrewmcveigh/cljs-time "0.1.5"]
 ```
 
 With Maven:
@@ -42,7 +42,7 @@ With Maven:
 <dependency>
   <groupId>com.andrewmcveigh</groupId>
   <artifactId>cljs-time</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.5</version>
 </dependency>
 ```
 
@@ -51,7 +51,7 @@ With Maven:
 Please open issues against the
 [cljs-time repo on Github](https://github.com/andrewmcveigh/cljs-time/issues).
 
-**Note: version 0.1.4 follows the API of clj-time 0.6.0.**
+**Note: version 0.1.5 follows the API of clj-time 0.6.0.**
 
 ## API
 
