@@ -344,7 +344,7 @@ time if supplied."}
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
-  ([{:keys [parser]} s]
+  ([{:keys [parser] :as formatter} s on-fail]
      {:pre [(seq s)]}
      (let [min-parts (count (string/split s part-splitter-regex))]
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
@@ -358,9 +358,12 @@ time if supplied."}
                   valid-date?
                   (merge-with #(%1 d %2) date-setters))
              d)
-           (throw
-            (ex-info "The parser could not match the input string."
-                     {:type :parser-no-match}))))))
+           (on-fail)))))
+  ([formatter s]
+   (parse formatter s
+          #(throw
+             (ex-info "The parser could not match the input string."
+                      {:type :parser-no-match}))))
   ([s]
      (first
       (for [f (vals formatters)
