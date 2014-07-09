@@ -109,6 +109,15 @@
           "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
 
 
+(defn date? [x]
+  (satisfies? DateTimeProtocol x))
+
+(defn interval? [x]
+  (= ::interval (:type (meta x))))
+
+(defn period? [x]
+  (= ::period (:type (meta x))))
+
 (def utc (goog.i18n.TimeZone/createTimeZone
            (clj->js {:id "UTC"
                      :std_offset 0
