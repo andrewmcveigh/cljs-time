@@ -26,3 +26,6 @@
         d
         (throw (ex-info "Date is not valid" {:type :invalid-date
                                              :date d}))))))
+
+(defn index-of [coll x]
+  (first (keep-indexed #(when (= %2 x) %1) coll)))
