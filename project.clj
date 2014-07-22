@@ -1,4 +1,4 @@
-(defproject com.andrewmcveigh/cljs-time "0.1.6-SNAPSHOT"
+(defproject com.andrewmcveigh/cljs-time "0.1.6"
   :description "A clj-time inspired date library for clojurescript."
   :url "https://github.com/andrewmcveigh/cljs-time"
   :license {:name "Eclipse Public License"
