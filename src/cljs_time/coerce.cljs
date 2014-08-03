@@ -20,7 +20,7 @@
   "Returns a DateTime instance in the UTC time zone corresponding to the given
   number of milliseconds after the Unix epoch."
   [millis]
-  (doto (date/UtcDateTime.) (.setTime millis)))
+  (doto (date/DateTime.) (.setTime millis)))
 
 (defn from-string
   "Returns DateTime instance from string using formatters in clj-time.format,

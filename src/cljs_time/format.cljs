@@ -350,7 +350,7 @@ time if supplied."}
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                  (parser s)))]
          (if (>= (count parse-seq) min-parts)
-           (let [d (date/UtcDateTime. 0 0 0 0 0 0 0)]
+           (let [d (date/DateTime. 0 0 0 0 0 0 0)]
              (->> parse-seq
                   (reduce (fn [date [part do-parse]] (do-parse date part))
                           {:years 0 :months 0 :days 1
@@ -401,7 +401,7 @@ formatted with each of the available printing formatters."
    :millis millis})
 
 (extend-protocol Mappable
-  goog.date.UtcDateTime
+  goog.date.DateTime
   (instant->map [dt]
     (to-map
       (.getYear dt)

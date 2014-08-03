@@ -82,11 +82,11 @@
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
-    goog.date.UtcDateTime
+    goog.date.DateTime
     goog.i18n.TimeZone))
 
 (defn = [& args]
-  (cond (every? #(instance? goog.date.UtcDateTime %) args)
+  (cond (every? #(instance? goog.date.DateTime %) args)
         (apply cljs.core/= (map #(.getTime %) args))
         :default (apply cljs.core/= args)))
 
@@ -171,7 +171,7 @@
     (reduce #((periods (key %2)) operator %1 (val %2)) date p)))
 
 (extend-protocol DateTimeProtocol
-  goog.date.UtcDateTime
+  goog.date.DateTime
   (year [this] (.getYear this))
   (month [this] (inc (.getMonth this)))
   (day [this] (.getDate this))
@@ -192,7 +192,7 @@
 (defn now
   "Returns a DateTime for the current instant in the UTC time zone."
   []
-  (if *sys-time* *sys-time* (goog.date.UtcDateTime.)))
+  (if *sys-time* *sys-time* (goog.date.DateTime.)))
 
 (defn at-midnight [datetime]
   (let [datetime (.clone datetime)]
@@ -210,7 +210,7 @@
 (defn epoch
   "Returns a DateTime for the begining of the Unix epoch in the UTC time zone."
   []
-  (doto (goog.date.UtcDateTime.) (.setTime 0)))
+  (doto (goog.date.DateTime.) (.setTime 0)))
 
 (defn date-midnight
   "Constructs and returns a new DateMidnight in UTC.
@@ -223,7 +223,7 @@
   ([year month]
    (date-midnight year month 1))
   ([year month day]
-   (goog.date.UtcDateTime. year (dec month) day)))
+   (goog.date.DateTime. year (dec month) day)))
 
 (defn date-time
   "Constructs and returns a new DateTime in UTC.
@@ -247,7 +247,7 @@
   ([year month day hour minute second]
    (date-time year month day hour minute second 0))
   ([year month day hour minute second millis]
-   (goog.date.UtcDateTime. year (dec month) day hour minute second millis)))
+   (goog.date.DateTime. year (dec month) day hour minute second millis)))
 
 (defn period
   ([period value]
@@ -507,7 +507,7 @@
 (defn today-at
   ([hours minutes seconds millis]
    (let [midnight (goog.date.Date.)]
-     (doto (goog.date.UtcDateTime. 0)
+     (doto (goog.date.DateTime. 0)
        (.setYear (.getYear midnight))
        (.setMonth (.getMonth midnight))
        (.setDate (.getDate midnight))

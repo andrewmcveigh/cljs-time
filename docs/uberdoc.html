@@ -3054,7 +3054,7 @@ net.brehaut.ClojureTools = (function (SH) {
   number of milliseconds after the Unix epoch.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn from-long
   [millis]
-  (doto (date/UtcDateTime.) (.setTime millis)))</pre></td></tr><tr><td class="docs"><p>Returns DateTime instance from string using formatters in clj-time.format,
+  (doto (date/DateTime.) (.setTime millis)))</pre></td></tr><tr><td class="docs"><p>Returns DateTime instance from string using formatters in clj-time.format,
   returning first which parses</p>
 </td><td class="codes"><pre class="brush: clojure">(defn from-string
   [s]
@@ -3199,11 +3199,11 @@ true
 </td><td class="codes"><pre class="brush: clojure">(ns cljs-time.core
   (:refer-clojure :exclude [= extend second])
   (:require
-    goog.date.UtcDateTime
+    goog.date.DateTime
     goog.i18n.TimeZone))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(set! *print-fn* (fn [x] (.log js/console x)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn = [&amp; args]
-  (cond (every? #(instance? goog.date.UtcDateTime %) args)
+  (cond (every? #(instance? goog.date.DateTime %) args)
         (apply cljs.core/= (map #(.getTime %) args))
         :default (apply cljs.core/= args)))</pre></td></tr><tr><td class="docs"><p>Interface for various date time functions</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol DateTimeProtocol
@@ -3271,7 +3271,7 @@ true
   (fn [operator date]
     (reduce #((periods (key %2)) operator %1 (val %2)) date p)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(extend-protocol DateTimeProtocol
-  goog.date.UtcDateTime
+  goog.date.DateTime
   (year [this] (.getYear this))
   (month [this] (inc (.getMonth this)))
   (day [this] (.getDate this))
@@ -3288,7 +3288,7 @@ true
 </td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *sys-time* nil)</pre></td></tr><tr><td class="docs"><p>Returns a DateTime for the current instant in the UTC time zone.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn now
   []
-  (if *sys-time* *sys-time* (goog.date.UtcDateTime.)))</pre></td></tr><tr><td class="docs">
+  (if *sys-time* *sys-time* (goog.date.DateTime.)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn at-midnight [datetime]
   (let [datetime (.clone datetime)]
     (doto datetime
@@ -3301,7 +3301,7 @@ true
   (at-midnight (if *sys-time* *sys-time* (now))))</pre></td></tr><tr><td class="docs"><p>Returns a DateTime for the begining of the Unix epoch in the UTC time zone.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn epoch
   []
-  (doto (goog.date.UtcDateTime.) (.setTime 0)))</pre></td></tr><tr><td class="docs"><p>Constructs and returns a new DateMidnight in UTC.</p>
+  (doto (goog.date.DateTime.) (.setTime 0)))</pre></td></tr><tr><td class="docs"><p>Constructs and returns a new DateMidnight in UTC.</p>
 
 <p>  Specify the year, month of year, day of month. Note that month and day are
   1-indexed. Any number of least-significant components can be ommited, in
@@ -3312,7 +3312,7 @@ true
   ([year month]
    (date-midnight year month 1))
   ([year month day]
-   (goog.date.UtcDateTime. year (dec month) day)))</pre></td></tr><tr><td class="docs"><p>Constructs and returns a new DateTime in UTC.</p>
+   (goog.date.DateTime. year (dec month) day)))</pre></td></tr><tr><td class="docs"><p>Constructs and returns a new DateTime in UTC.</p>
 
 <p>  Specify the year, month of year, day of month, hour of day, minute if hour,
   second of minute, and millisecond of second. Note that month and day are
@@ -3334,7 +3334,7 @@ true
   ([year month day hour minute second]
    (date-time year month day hour minute second 0))
   ([year month day hour minute second millis]
-   (goog.date.UtcDateTime. year (dec month) day hour minute second millis)))</pre></td></tr><tr><td class="docs">
+   (goog.date.DateTime. year (dec month) day hour minute second millis)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn period
   ([period value]
    (with-meta {period value} {:type ::period}))
@@ -3529,7 +3529,7 @@ true
 </td><td class="codes"><pre class="brush: clojure">(defn today-at
   ([hours minutes seconds millis]
    (let [midnight (goog.date.Date.)]
-     (doto (goog.date.UtcDateTime. 0)
+     (doto (goog.date.DateTime. 0)
        (.setYear (.getYear midnight))
        (.setMonth (.getMonth midnight))
        (.setDate (.getDate midnight))
@@ -3803,7 +3803,7 @@ Z       time zone offset/id          zone          -0800; -08:00; America/Los_An
                                   (parser s)))]
        (when (&gt;= (count parse-seq) min-parts)
          (reduce (fn [date [part do-parse]] (do-parse date part) date)
-                 (date/UtcDateTime. 0 0 0 0 0 0 0)
+                 (date/DateTime. 0 0 0 0 0 0 0)
                  parse-seq)))))
   ([s]
    (first
@@ -3828,7 +3828,7 @@ form determined by the given formatter.</p>
    :seconds seconds
    :millis millis})</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(extend-protocol Mappable
-  goog.date.UtcDateTime
+  goog.date.DateTime
   (instant-&gt;map [dt]
     (to-map
       (.getYear dt)
