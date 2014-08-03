@@ -27,7 +27,7 @@
   with-pivot-year."
   (:require
     [cljs-time.internal.core :refer [valid-date?]]
-    [cljs-time.core :as time]
+    [cljs-time.core :as time :refer [*date-class*]]
     [clojure.set :refer [difference]]
     [clojure.string :as string]
     [goog.date :as date]
@@ -350,7 +350,7 @@ time if supplied."}
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                  (parser s)))]
          (if (>= (count parse-seq) min-parts)
-           (let [d (date/DateTime. 0 0 0 0 0 0 0)]
+           (let [d (*date-class*. 0 0 0 0 0 0 0)]
              (->> parse-seq
                   (reduce (fn [date [part do-parse]] (do-parse date part))
                           {:years 0 :months 0 :days 1

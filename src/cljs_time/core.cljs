@@ -83,7 +83,22 @@
   (:refer-clojure :exclude [= extend second])
   (:require
     goog.date.DateTime
+    goog.date.UtcDateTime
     goog.i18n.TimeZone))
+
+(def ^:dynamic *date-class* goog.date.UtcDateTime)
+
+(defn use-local-time [f]
+  (binding [*date-class* goog.date.DateTime] (f)))
+
+(defn use-utc-time [f]
+  (binding [*date-class* goog.date.UtcDateTime] (f)))
+
+(defn always-use-local-time []
+  (set! *date-class* goog.date.DateTime))
+
+(defn always-use-utc-time []
+  (set! *date-class* goog.date.UtcDateTime))
 
 (defn = [& args]
   (cond (every? #(instance? goog.date.DateTime %) args)
@@ -183,8 +198,7 @@
   (after? [this that] (> (.getTime this) (.getTime that)))
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
-  (minus- [this period] ((period-fn period) - this))
-  )
+  (minus- [this period] ((period-fn period) - this)))
 
 
 (def ^:dynamic *sys-time* nil)
@@ -192,7 +206,7 @@
 (defn now
   "Returns a DateTime for the current instant in the UTC time zone."
   []
-  (if *sys-time* *sys-time* (goog.date.DateTime.)))
+  (if *sys-time* *sys-time* (*date-class*.)))
 
 (defn at-midnight [datetime]
   (let [datetime (.clone datetime)]
@@ -210,7 +224,7 @@
 (defn epoch
   "Returns a DateTime for the begining of the Unix epoch in the UTC time zone."
   []
-  (doto (goog.date.DateTime.) (.setTime 0)))
+  (doto (*date-class*.) (.setTime 0)))
 
 (defn date-midnight
   "Constructs and returns a new DateMidnight in UTC.
@@ -223,7 +237,7 @@
   ([year month]
    (date-midnight year month 1))
   ([year month day]
-   (goog.date.DateTime. year (dec month) day)))
+   (*date-class*. year (dec month) day)))
 
 (defn date-time
   "Constructs and returns a new DateTime in UTC.
@@ -247,7 +261,7 @@
   ([year month day hour minute second]
    (date-time year month day hour minute second 0))
   ([year month day hour minute second millis]
-   (goog.date.DateTime. year (dec month) day hour minute second millis)))
+   (*date-class*. year (dec month) day hour minute second millis)))
 
 (defn period
   ([period value]
@@ -507,7 +521,7 @@
 (defn today-at
   ([hours minutes seconds millis]
    (let [midnight (goog.date.Date.)]
-     (doto (goog.date.DateTime. 0)
+     (doto (*date-class*. 0)
        (.setYear (.getYear midnight))
        (.setMonth (.getMonth midnight))
        (.setDate (.getDate midnight))
