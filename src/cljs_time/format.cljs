@@ -26,7 +26,7 @@
   etc with the functions with-zone, with-locale, with-chronology, and
   with-pivot-year."
   (:require
-    [cljs-time.internal.core :refer [valid-date?]]
+    [cljs-time.internal.core :refer [index-of valid-date?]]
     [cljs-time.core :as time :refer [*date-class*]]
     [clojure.set :refer [difference]]
     [clojure.string :as string]
@@ -203,8 +203,8 @@
         MMM #(let [full (first (filter (fn [m]
                                          (re-seq (re-pattern (str "^" %2)) m))
                                        months))]
-               (M %1 (str (inc (.indexOf (into-array months) full)))))
-        MMMM #(M %1 (str (inc (.indexOf (into-array months) %2))))
+               (M %1 (str (inc (index-of months full)))))
+        MMMM #(M %1 (str (inc (index-of months %2))))
         skip (fn [x & args] x)
         tz #(assoc %1 :time-zone %2)]
     {"d" ["(\\d{1,2})" d]
@@ -248,9 +248,9 @@
 
 
 (defn parser-sort-order-pred [parser]
-  (.indexOf
-    (into-array ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h" "H"
-                 "m" "s" "S" "hh" "HH" "mm" "ss" "a" "SSS" "Z" "ZZ"])
+  (index-of
+    ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h" "H"
+     "m" "s" "S" "hh" "HH" "mm" "ss" "a" "SSS" "Z" "ZZ"]
     parser))
 
 (def date-format-pattern

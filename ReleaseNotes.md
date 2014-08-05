@@ -1,3 +1,7 @@
+## v0.1.6
+
+ - Don't rely on browser .indexOf. Fix #8
+
 ## 0.1.5
 
  - Separate parse from goog.date and check for valid date
