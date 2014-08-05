@@ -44,6 +44,16 @@
                   args)]
     (apply gstring/format fmt args)))
 
+(defn- zero-pad
+  "Remove the need to pull in gstring/format code in advanced compilation"
+  ([n] (if (<= 0 n 9) (str "0" n) (str n)))
+  ([n zeros]
+   ; No need to handle negative numbers
+   (if (> 1 zeros)
+     (str n)
+     (str (string/join (take (- zeros (count (str n))) (repeat "0")))
+          n))))
+
 (def months
   ["January" "February" "March" "April" "May" "June" "July" "August"
    "September" "October" "November" "December"])
@@ -131,14 +141,14 @@
         doy    #(.getDayOfYear %)
         dow    #(.getDay %)]
     {"d" d
-     "dd" #(format "%02d" (d %))
+     "dd" #(zero-pad (d %))
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
      "dow" #(days (dow %))
      "DDD" doy
      "EEE" #(abbreviate 3 (days (dow %)))
      "EEEE" #(days (dow %))
      "M" M
-     "MM" #(format "%02d" (M %))
+     "MM" #(zero-pad (M %))
      "MMM" #(abbreviate 3 (months (dec (M %))))
      "MMMM" #(months (dec (M %)))
      "yyyy" y
@@ -151,14 +161,14 @@
      "m" m
      "s" s
      "S" S
-     "hh" #(format "%02d" (h %))
-     "HH" #(format "%02d" (H %))
-     "mm" #(format "%02d" (m %))
-     "ss" #(format "%02d" (s %))
-     "SSS" #(format "%03d" (S %))
+     "hh" #(zero-pad (h %))
+     "HH" #(zero-pad (H %))
+     "mm" #(zero-pad (m %))
+     "ss" #(zero-pad (s %))
+     "SSS" #(zero-pad (S %) 3)
      "Z" Z
      "ZZ" Z
-     "ww" #(format "%02d" (Math/ceil (/ (doy %) 7)))
+     "ww" #(zero-pad (Math/ceil (/ (doy %) 7)))
      "e" dow}))
 
 (defn timezone-adjustment [d timezone-string]
