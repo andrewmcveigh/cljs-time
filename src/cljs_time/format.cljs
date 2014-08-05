@@ -95,6 +95,8 @@
     m       minute of hour               number        30
     s       second of minute             number        55
     S       fraction of second           number        978
+    a       meridiem                     text          am; pm
+    A       meridiem                     text          AM; PM
 
     z       time zone                    text          Pacific Standard Time; PST
     Z       time zone offset/id          zone          -0800; -08:00; America/Los_Angeles
