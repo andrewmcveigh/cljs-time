@@ -185,6 +185,12 @@
   []
   (if *sys-time* *sys-time* (goog.date.UtcDateTime.)))
 
+(defn time-now
+  "Returns a LocalTime for the current instant without date or time zone
+  using ISOChronology in the current time zone."
+  []
+  (goog.date.DateTime.))
+
 (defn at-midnight [datetime]
   (let [datetime (.clone datetime)]
     (doto datetime
@@ -239,6 +245,40 @@
    (date-time year month day hour minute second 0))
   ([year month day hour minute second millis]
    (goog.date.UtcDateTime. year (dec month) day hour minute second millis)))
+
+(defn local-date-time
+  "Constructs and returns a new LocalDateTime.
+Specify the year, month of year, day of month, hour of day, minute of hour,
+second of minute, and millisecond of second. Note that month and day are
+1-indexed while hour, second, minute, and millis are 0-indexed.
+Any number of least-significant components can be ommited, in which case
+they will default to 1 or 0 as appropriate."
+  ([year]
+   (local-date-time year 1 1 0 0 0 0))
+  ([year month]
+   (local-date-time year month 1 0 0 0 0))
+  ([year month day]
+   (local-date-time year month day 0 0 0 0))
+  ([year month day hour]
+   (local-date-time year month day hour 0 0 0))
+  ([year month day hour minute]
+   (local-date-time year month day hour minute 0 0))
+  ([year month day hour minute second]
+   (local-date-time year month day hour minute second 0))
+  ([year month day hour minute second millis]
+   (goog.date.DateTime. year month day hour minute second millis)))
+
+(defn local-date
+  "Constructs and returns a new LocalDate.
+Specify the year, month, and day. Does not deal with timezones."
+  [year month day]
+  (goog.date.Date. year month day))
+
+(defn today
+  "Constructs and returns a new LocalDate representing today's date.
+LocalDate objects do not deal with timezones at all."
+  []
+  (goog.date.Date.))
 
 (defn period
   ([period value]
