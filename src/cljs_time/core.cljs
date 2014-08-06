@@ -507,6 +507,53 @@ LocalDate objects do not deal with timezones at all."
   [{start-a :start end-a :end} {start-b :start end-b :end}]
   (or (= start-a end-b) (= end-a start-b)))
 
+(defn date? [x]
+ (satisfies? DateTimeProtocol x))
+
+(defn interval? [x]
+ (= ::interval (:type (meta x))))
+
+(defn period? [x]
+ (= ::period (:type (meta x))))
+
+(defn period-type? [type x]
+  (and (period? x) (contains? x type)))
+
+(defn years?
+  "Returns true if the given value is an instance of Years"
+  [val]
+  (period-type? :years val))
+
+(defn months?
+  "Returns true if the given value is an instance of Months"
+  [val]
+  (period-type? :months val))
+
+(defn weeks?
+  "Returns true if the given value is an instance of Weeks"
+  [val]
+  (period-type? :weeks val))
+
+(defn days?
+  "Returns true if the given value is an instance of Days"
+  [val]
+  (period-type? :days val))
+
+(defn hours?
+  "Returns true if the given value is an instance of Hours"
+  [val]
+  (period-type? :hours val))
+
+(defn minutes?
+  "Returns true if the given value is an instance of Minutes"
+  [val]
+  (period-type? :minutes val))
+
+(defn seconds?
+  "Returns true if the given value is an instance of Seconds"
+  [val]
+  (period-type? :seconds val))
+
 (defn mins-ago
   [d]
   (in-minutes (interval d (now))))
