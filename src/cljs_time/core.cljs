@@ -29,23 +29,6 @@
     => (hour (local-date-time 1986 10 14 22))
     22
 
-  The date-time constructor always returns times in the UTC time zone. If you
-  want a time with the specified fields in a different time zone, use
-  from-time-zone:
-
-    => (from-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-    #<DateTime 1986-10-22T00:00:00.000-02:00>
-
-  If on the other hand you want a given absolute instant in time in a
-  different time zone, use to-time-zone:
-
-    => (to-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-    #<DateTime 1986-10-21T22:00:00.000-02:00>
-
-  In addition to time-zone-for-offset, you can use the time-zone-for-id and
-  default-time-zone functions and the utc Var to constgruct or get DateTimeZone
-  instances.
-
   The functions after? and before? determine the relative position of two
   DateTime instances:
 
