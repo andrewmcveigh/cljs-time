@@ -494,12 +494,12 @@ LocalDate objects do not deal with timezones at all."
   With 4 arguments: Returns true if the range specified by start-a and end-a
   overlaps with the range specified by start-b and end-b."
   ([{start-a :start end-a :end} {start-b :start end-b :end}]
-   (overlaps? start-a end-a start-b end-b))
+     (and (not (or (= start-a end-b) (= end-a start-b)))
+          (overlaps? start-a end-a start-b end-b)))
   ([start-a end-a start-b end-b]
-   (or (and (before? start-b end-a) (after? end-b start-a))
-       (and (after? end-b start-a) (before? start-b end-a))
-       ;(or (= start-a end-b) (= start-b end-a))
-       )))
+     (or (and (before? start-b end-a) (after? end-b start-a))
+         (and (after? end-b start-a) (before? start-b end-a))
+         (or (= start-a end-b) (= start-b end-a)))))
 
 (defn abuts?
   "Returns true if Interval a abuts b, i.e. then end of a is exactly the
