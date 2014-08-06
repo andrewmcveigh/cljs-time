@@ -67,17 +67,23 @@
   "Convert `obj` to a goog.date.Date instance"
   [obj]
   (if-let [dt (to-date-time obj)]
-    (let [local (date/Date.)]
-      (doto local
-        (.setTime (+ (.getTime dt) (* 60000 (.getTimezoneOffset local))))))))
+    (doto (date/Date.)
+      (.setYear (.getYear dt))
+      (.setMonth (.getMonth dt))
+      (.setDate (.getDate dt)))))
 
 (defn to-local-date-time
   "Convert `obj` to a goog.date.DateTime instance"
   [obj]
   (if-let [dt (to-date-time obj)]
-    (let [local (date/DateTime.)]
-      (doto local
-        (.setTime (+ (.getTime dt) (* 60000 (.getTimezoneOffset local))))))))
+    (doto (date/DateTime.)
+      (.setYear (.getYear dt))
+      (.setMonth (.getMonth dt))
+      (.setDate (.getDate dt))
+      (.setHours (.getHours dt))
+      (.setMinutes (.getMinutes dt))
+      (.setSeconds (.getSeconds dt))
+      (.setMilliseconds (.getMilliseconds dt)))))
 
 (extend-protocol ICoerce
   nil

@@ -101,7 +101,7 @@
   (is (= (date/Date. 1998 3 25) (to-local-date (date-time 1998 4 25))))
   (is (= (date/Date. 1998 3 25) (to-local-date (date-midnight 1998 4 25))))
   (is (= (date/Date. 1998 3 25) (to-local-date (js/Date. 893462400000))))
-  (is (= (date/Date. 1970 0 1) (to-local-date 0))) ;; TODO: this should pass
+  (is (= (date/Date. 1970 0 1) (to-local-date 0)))
   (is (= (date/Date. 1998 3 25) (to-local-date 893462400000)))
   (is (= (date/Date. 1998 3 25) (to-local-date "1998-04-25T00:00:00.000Z"))))
 
@@ -111,6 +111,6 @@
   (is (nil? (to-local-date-time "x")))
   (is (= (date/DateTime. 1998 3 25 10 20) (to-local-date-time (date-time 1998 4 25 10 20))))
   (is (= (date/DateTime. 1998 3 25 0 0) (to-local-date-time (date-midnight 1998 4 25))))
-  (is (= (date/DateTime. 1970 0 1 0 0) (to-local-date-time 0))) ;; TODO: this should pass
+  (is (= (date/DateTime. 1970 0 1 0 0) (to-local-date-time 0)))
   (is (= (date/DateTime. 1998 3 25 0 0 55 0) (to-local-date-time 893462455000)))
   (is (= (date/DateTime. 1998 3 25 10 20 30 400) (to-local-date-time "1998-04-25T10:20:30.400Z"))))
