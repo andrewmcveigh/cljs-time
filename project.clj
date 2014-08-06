@@ -23,8 +23,7 @@
                      :pretty-print true}}
     :test {:source-paths ["src" "test"]
            :incremental? true
-           :notify-command
-           ["phantomjs" "resources/runner.js" "target/unit-test.js"]
+           :notify-command ["phantomjs" :cljs.test/runner "target/unit-test.js"]
            :compiler {:output-to "target/unit-test.js"
                       :optimizations :whitespace
                       :pretty-print true}}}}
