@@ -82,8 +82,10 @@
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
-    goog.date.UtcDateTime
-    goog.i18n.TimeZone))
+   [goog.date.Date]
+   [goog.date.DateTime]
+   [goog.date.UtcDateTime]
+   [goog.i18n.TimeZone]))
 
 (defn = [& args]
   (cond (every? #(instance? goog.date.Date %) args)
