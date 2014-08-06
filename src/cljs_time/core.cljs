@@ -86,7 +86,7 @@
     goog.i18n.TimeZone))
 
 (defn = [& args]
-  (cond (every? #(instance? goog.date.DateTime %) args)
+  (cond (every? #(instance? goog.date.Date %) args)
         (apply cljs.core/= (map #(.getTime %) args))
         :default (apply cljs.core/= args)))
 
