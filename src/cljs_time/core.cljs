@@ -86,7 +86,7 @@
     goog.i18n.TimeZone))
 
 (defn = [& args]
-  (cond (every? #(instance? goog.date.UtcDateTime %) args)
+  (cond (every? #(instance? goog.date.DateTime %) args)
         (apply cljs.core/= (map #(.getTime %) args))
         :default (apply cljs.core/= args)))
 
@@ -175,7 +175,30 @@
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
   (minus- [this period] ((period-fn period) - this))
-  )
+
+  goog.date.DateTime
+  (year [this] (.getYear this))
+  (month [this] (inc (.getMonth this)))
+  (day [this] (.getDate this))
+  (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
+  (hour [this] (.getHours this))
+  (minute [this] (.getMinutes this))
+  (second [this] (.getSeconds this))
+  (milli [this] (.getMilliseconds this))
+  (after? [this that] (> (.getTime this) (.getTime that)))
+  (before? [this that] (< (.getTime this) (.getTime that)))
+  (plus- [this period] ((period-fn period) + this))
+  (minus- [this period] ((period-fn period) - this))
+
+  goog.date.Date
+  (year [this] (.getYear this))
+  (month [this] (inc (.getMonth this)))
+  (day [this] (.getDate this))
+  (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
+  (after? [this that] (> (.getTime this) (.getTime that)))
+  (before? [this that] (< (.getTime this) (.getTime that)))
+  (plus- [this period] ((period-fn period) + this))
+  (minus- [this period] ((period-fn period) - this)))
 
 
 (def ^:dynamic *sys-time* nil)
@@ -266,13 +289,13 @@ they will default to 1 or 0 as appropriate."
   ([year month day hour minute second]
    (local-date-time year month day hour minute second 0))
   ([year month day hour minute second millis]
-   (goog.date.DateTime. year month day hour minute second millis)))
+   (goog.date.DateTime. year (dec month) day hour minute second millis)))
 
 (defn local-date
   "Constructs and returns a new LocalDate.
 Specify the year, month, and day. Does not deal with timezones."
   [year month day]
-  (goog.date.Date. year month day))
+  (goog.date.Date. year (dec month) day))
 
 (defn today
   "Constructs and returns a new LocalDate representing today's date.
