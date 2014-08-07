@@ -1,4 +1,10 @@
-(ns cljs-time.internal.core)
+(ns cljs-time.internal.core
+  (:refer-clojure :exclude [=]))
+
+(defn = [& args]
+  (cond (every? #(instance? goog.date.Date %) args)
+        (apply cljs.core/= (map #(.getTime %) args))
+        :default (apply cljs.core/= args)))
 
 (defn leap-year? [y]
   (cond (zero? (mod y 400)) true
@@ -29,3 +35,9 @@
 
 (defn index-of [coll x]
   (first (keep-indexed #(when (= %2 x) %1) coll)))
+
+(defn period
+  ([period value]
+   (with-meta {period value} {:type :cljs-time.core/period}))
+  ([p1 v1 & kvs]
+   (apply assoc (period p1 v1) kvs)))

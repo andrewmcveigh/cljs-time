@@ -65,15 +65,13 @@
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
+   [cljs-time.internal.core :refer [= leap-year? period]]
    [goog.date.Date]
    [goog.date.DateTime]
    [goog.date.UtcDateTime]
    [goog.i18n.TimeZone]))
 
-(defn = [& args]
-  (cond (every? #(instance? goog.date.Date %) args)
-        (apply cljs.core/= (map #(.getTime %) args))
-        :default (apply cljs.core/= args)))
+(def ^:dynamic *sys-time* nil)
 
 (defprotocol DateTimeProtocol
   "Interface for various date time functions"
@@ -88,23 +86,8 @@
   (milli [this] "Return the millisecond of second component of the given date/time.")
   (after? [this that] "Returns true if ReadableDateTime 'this' is strictly after date/time 'that'.")
   (before? [this that] "Returns true if ReadableDateTime 'this' is strictly before date/time 'that'.")
-  (plus- [this period]
-         "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
-  (minus- [this period]
-          "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
-
-
-(def utc (goog.i18n.TimeZone/createTimeZone
-           (clj->js {:id "UTC"
-                     :std_offset 0
-                     :names ["UTC"]
-                     :transitions []})))
-
-(defn leap-year? [y]
-  (cond (zero? (mod y 400)) true
-        (zero? (mod y 100)) false
-        (zero? (mod y 4)) true
-        :else false))
+  (plus- [this period] "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
+  (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
 
 (def periods
   (let [fixed-time-fn (fn [f set-fn op date value]
@@ -185,8 +168,11 @@
   (plus- [this period] ((period-fn period) + this))
   (minus- [this period] ((period-fn period) - this)))
 
-
-(def ^:dynamic *sys-time* nil)
+(def utc (goog.i18n.TimeZone/createTimeZone
+           (clj->js {:id "UTC"
+                     :std_offset 0
+                     :names ["UTC"]
+                     :transitions []})))
 
 (defn now
   "Returns a DateTime for the current instant in the UTC time zone."
@@ -210,7 +196,7 @@
 (defn today-at-midnight
   "Returns a DateMidnight for today at midnight in the UTC time zone."
   []
-  (at-midnight (if *sys-time* *sys-time* (now))))
+  (at-midnight (now)))
 
 (defn epoch
   "Returns a DateTime for the begining of the Unix epoch in the UTC time zone."
@@ -288,12 +274,6 @@ LocalDate objects do not deal with timezones at all."
   []
   (goog.date.Date.))
 
-(defn period
-  ([period value]
-   (with-meta {period value} {:type ::period}))
-  ([p1 v1 & kvs]
-   (apply assoc (period p1 v1) kvs)))
-
 (defn years
   "Given a number, returns a Period representing that many years.
   Without an argument, returns a PeriodType representing only years."
@@ -365,11 +345,30 @@ LocalDate objects do not deal with timezones at all."
   [period]
   (minus (now) period))
 
+(defn yesterday
+  "Returns a DateTime for yesterday relative to now"
+  []
+  (-> 1 days ago))
+
 (defn from-now
   "Returns a DateTime a supplied period after the present.
   e.g. `(-> 30 minutes from-now)`"
   [period]
   (plus (now) period))
+
+(defn earliest
+  "Returns the earliest of the supplied DateTimes"
+  ([dt1 dt2]
+     (if (before? dt1 dt2) dt1 dt2))
+  ([dts]
+     (reduce earliest dts)))
+
+(defn latest
+  "Returns the latest of the supplied DateTimes"
+  ([dt1 dt2]
+     (if (after? dt1 dt2) dt1 dt2))
+  ([dts]
+     (reduce latest dts)))
 
 (defn interval
   "Returns an interval representing the span between the two given ReadableDateTimes.

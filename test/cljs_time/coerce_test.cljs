@@ -4,8 +4,9 @@
     [cemerick.cljs.test :refer [is deftest]])
   (:require
     [cemerick.cljs.test :as t]
+    [cljs-time.internal.core :refer [=]]
     [cljs-time.core
-     :refer [= date-time date-midnight plus hours local-date local-date-time]]
+     :refer [date-time date-midnight plus hours local-date local-date-time]]
     [cljs-time.coerce :refer
      [from-date from-long from-string to-date to-date-time to-epoch to-long
       to-string to-local-date to-local-date-time]]

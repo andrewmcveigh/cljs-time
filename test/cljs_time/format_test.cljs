@@ -5,7 +5,8 @@
   (:require
     [cemerick.cljs.test :as t]
     [cljs-time.coerce :refer [from-date to-date]]
-    [cljs-time.core :as time :refer [= date-time interval utc within?]]
+    [cljs-time.internal.core :refer [=]]
+    [cljs-time.core :as time :refer [date-time interval utc within?]]
     [cljs-time.format :as format :refer [formatter formatters instant->map parse unparse]]))
 
 (defn utc-int-vec [d]
