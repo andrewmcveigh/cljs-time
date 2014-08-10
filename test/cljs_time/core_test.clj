@@ -9,3 +9,6 @@
   [sym & body]
   (when `(cljs.core/undefined? ~sym)
     `(do ~@body)))
+
+(defmacro try= [error & body]
+  `(= ::try=error (try ~@body (catch ~error _# ::try=error))))

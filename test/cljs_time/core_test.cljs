@@ -3,7 +3,7 @@
   (:require-macros
     [cemerick.cljs.test :refer [is deftest]]
     [cljs-time.macros :refer [do-at]]
-    [cljs-time.core-test :refer [when-available when-not-available]])
+    [cljs-time.core-test :refer [try= when-available when-not-available]])
   (:require
     [cemerick.cljs.test :as t]
     [cljs-time.internal.core :refer [=]]
@@ -14,7 +14,7 @@
       in-years in-months in-weeks in-days in-hours in-minutes in-seconds
       in-millis minus plus earliest latest
       local-date local-date-time today
-      day-of-week after? before?
+      day-of-week after? before? ago from-now
       years months weeks days hours minutes seconds millis
       years? months? weeks? days? hours? minutes? seconds?
       extend start end mins-ago]]))
@@ -88,13 +88,13 @@
     (is (= 2    (second d)))
     (is (= 1    (milli  d)))))
 
-;(deftest test-year-month-and-accessors
-  ;(let [d (year-month 1986)]
-    ;(is (= 1986 (year   d)))
-    ;(is (= 1    (month  d))))
-  ;(let [d (date-time 1986 10)]
-    ;(is (= 1986 (year   d)))
-    ;(is (= 10   (month  d)))))
+(deftest test-year-month-and-accessors
+  ;; (let [d (year-month 1986)]
+  ;;   (is (= 1986 (year   d)))
+  ;;   (is (= 1    (month  d))))
+  (let [d (date-time 1986 10)]
+    (is (= 1986 (year   d)))
+    (is (= 10   (month  d)))))
 
 (deftest test-local-date-and-accessors
   (let [d (local-date 2013 3 19)]
@@ -184,61 +184,59 @@
   (is (= (local-date-time 1986 10 14 4 2)
          (minus (local-date-time 1986 10 14 6 5) (hours 2) (minutes 3)))))
 
-;(deftest test-ago
-  ;(when-available
-    ;with-redefs
-    ;(with-redefs [now #(date-time 2011 4 16 10 9 00)]
-      ;(is (= (-> 10 years ago)
-             ;(date-time 2001 4 16 10 9 00)))))
-  ;(when-not-available
-    ;with-redefs
-    ;(binding [now #(date-time 2011 4 16 10 9 00)]
-      ;(is (= (-> 10 years ago)
-             ;(date-time 2001 4 16 10 9 00))))))
+(deftest test-ago
+  (when-available
+    with-redefs
+    (with-redefs [now #(date-time 2011 4 16 10 9 00)]
+      (is (= (-> 10 years ago)
+             (date-time 2001 4 16 10 9 00)))))
+  (when-not-available
+    with-redefs
+    (binding [now #(date-time 2011 4 16 10 9 00)]
+      (is (= (-> 10 years ago)
+             (date-time 2001 4 16 10 9 00))))))
 
-;(deftest test-from-now
-  ;(when-available
-    ;with-redefs
-    ;(with-redefs [now #(date-time 2011 4 16 10 9 00)]
-      ;(is (= (-> 30 minutes from-now)
-             ;(date-time 2011 4 16 10 39 00)))))
-  ;(when-not-available
-    ;with-redefs
-    ;(binding [now #(date-time 2011 4 16 10 9 00)]
-      ;(is (= (-> 30 minutes from-now)
-             ;(date-time 2011 4 16 10 39 00))))))
+(deftest test-from-now
+  (when-available
+    with-redefs
+    (with-redefs [now #(date-time 2011 4 16 10 9 00)]
+      (is (= (-> 30 minutes from-now)
+             (date-time 2011 4 16 10 39 00)))))
+  (when-not-available
+    with-redefs
+    (binding [now #(date-time 2011 4 16 10 9 00)]
+      (is (= (-> 30 minutes from-now)
+             (date-time 2011 4 16 10 39 00))))))
 
 (deftest test-earliest
-    (let [d1 (date-time 1990 1 1 23 1 1)
-          d2 (date-time 2000 1 1 23 1 1)
-          d3 (date-time 2010 1 1 23 1 1)
-          d4 (date-time 2020 1 1 23 1 1)]
-      (is (= d1 (earliest d1 d2)))
-      (is (= d2 (earliest d2 d3)))
-      (is (= d1 (earliest d1 d3)))
-      (is (= d1 (earliest [d1 d2 d3 d4])))
-      (is (= d1 (earliest [d4 d2 d3 d1])))
-      (is (= d2 (earliest [d4 d3 d2])))
-      (is (= d4 (earliest [d4])))
-      ;; (is (= Exception) (earliest [d1 d2 nil]))
-      ;; (is (= Exception) (earliest d2 nil))
-      ))
+  (let [d1 (date-time 1990 1 1 23 1 1)
+        d2 (date-time 2000 1 1 23 1 1)
+        d3 (date-time 2010 1 1 23 1 1)
+        d4 (date-time 2020 1 1 23 1 1)]
+    (is (= d1 (earliest d1 d2)))
+    (is (= d2 (earliest d2 d3)))
+    (is (= d1 (earliest d1 d3)))
+    (is (= d1 (earliest [d1 d2 d3 d4])))
+    (is (= d1 (earliest [d4 d2 d3 d1])))
+    (is (= d2 (earliest [d4 d3 d2])))
+    (is (= d4 (earliest [d4])))
+    (is (try= js/TypeError (earliest [d1 d2 nil])))
+    (is (try= js/TypeError (earliest d2 nil)))))
 
 (deftest test-latest
-    (let [d1 (date-time 1990 1 1 23 1 1)
-          d2 (date-time 2000 1 1 23 1 1)
-          d3 (date-time 2010 1 1 23 1 1)
-          d4 (date-time 2020 1 1 23 1 1)]
-      (is (= d2 (latest d1 d2)))
-      (is (= d3 (latest d2 d3)))
-      (is (= d3 (latest d1 d3)))
-      (is (= d4 (latest [d1 d2 d3 d4])))
-      (is (= d4 (latest [d4 d2 d3 d1])))
-      (is (= d3 (latest [d2 d3 d1])))
-      (is (= d1 (latest [d1])))
-      ;; (is (= Exception) (latest [d1 d2 nil]))
-      ;; (is (= Exception) (latest d2 nil))
-      ))
+  (let [d1 (date-time 1990 1 1 23 1 1)
+        d2 (date-time 2000 1 1 23 1 1)
+        d3 (date-time 2010 1 1 23 1 1)
+        d4 (date-time 2020 1 1 23 1 1)]
+    (is (= d2 (latest d1 d2)))
+    (is (= d3 (latest d2 d3)))
+    (is (= d3 (latest d1 d3)))
+    (is (= d4 (latest [d1 d2 d3 d4])))
+    (is (= d4 (latest [d4 d2 d3 d1])))
+    (is (= d3 (latest [d2 d3 d1])))
+    (is (= d1 (latest [d1])))
+    (is (try= js/TypeError (latest [d1 d2 nil])))
+    (is (try= js/TypeError (latest d2 nil)))))
 
 (deftest test-start-end
   (let [s (date-time 1986 10 14 12 5 4)
@@ -411,7 +409,6 @@
     (is (= d6 (first-day-of-the-month 2012 6)))
     (is (= d7 (first-day-of-the-month 2013 2)))
     (is (= d8 (first-day-of-the-month 2016 2)))))
-
 
 (deftest test-today-at
   (let [n  (now)
