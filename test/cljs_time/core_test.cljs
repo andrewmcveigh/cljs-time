@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [= extend second])
   (:require-macros
     [cemerick.cljs.test :refer [is deftest]]
-    [cljs-time.macros :refer [do-at]])
+    [cljs-time.macros :refer [do-at]]
+    [cljs-time.core-test :refer [when-available when-not-available]])
   (:require
     [cemerick.cljs.test :as t]
     [cljs-time.internal.core :refer [=]]
@@ -182,22 +183,6 @@
          (minus (local-date-time 1986 10 14 6) (hours 2))))
   (is (= (local-date-time 1986 10 14 4 2)
          (minus (local-date-time 1986 10 14 6 5) (hours 2) (minutes 3)))))
-
-;(defmacro when-available
-  ;[sym & body]
-  ;(try
-    ;(and (resolve sym)
-         ;(list* 'do body))
-    ;(catch ClassNotFoundException _#)))
-
-;(defmacro when-not-available
-  ;[sym & body]
-  ;(when-not
-    ;(try
-      ;(resolve sym)
-      ;(catch ClassNotFoundException _#
-        ;nil))
-    ;`(do ~@body)))
 
 ;(deftest test-ago
   ;(when-available
