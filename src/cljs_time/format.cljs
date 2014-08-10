@@ -26,33 +26,14 @@
   etc with the functions with-zone, with-locale, with-chronology, and
   with-pivot-year."
   (:require
-    [cljs-time.internal.core :refer [index-of valid-date?]]
+    [cljs-time.internal.core :refer [index-of valid-date? format zero-pad]]
     [cljs-time.core :as time]
     [clojure.set :refer [difference]]
     [clojure.string :as string]
     [goog.date :as date]
     [goog.string :as gstring]
-    [goog.string.format]))
-
-(defn format
-  "Formats a string using goog.string.format."
-  [fmt & args]
-  (let [args (map (fn [x]
-                    (if (or (keyword? x) (symbol? x))
-                      (str x)
-                      x))
-                  args)]
-    (apply gstring/format fmt args)))
-
-(defn- zero-pad
-  "Remove the need to pull in gstring/format code in advanced compilation"
-  ([n] (if (<= 0 n 9) (str "0" n) (str n)))
-  ([n zeros]
-   ; No need to handle negative numbers
-   (if (> 1 zeros)
-     (str n)
-     (str (string/join (take (- zeros (count (str n))) (repeat "0")))
-          n))))
+    [goog.string.format]
+    ))
 
 (def months
   ["January" "February" "March" "April" "May" "June" "July" "August"
@@ -265,17 +246,37 @@
                     date-format-pattern
                     #(first (date-parsers %)))))
 
+(defn- parser-fn [fmts]
+  (fn [s]
+    (->> (interleave (nfirst (re-seq (date-parse-pattern fmts) s))
+                     (map first (re-seq date-format-pattern fmts)))
+         (partition 2)
+         (sort-by (comp parser-sort-order-pred second)))))
+
+(defn- formatter-fn [fmts formatters]
+  (fn [date & [formatter-overrides]]
+    [(string/replace fmts #"'([^']+)'" "$1")
+     date-format-pattern
+     #(((or formatter-overrides formatters) %) date)]))
+
 (defn formatter
   ([fmts]
-     {:parser #(->> (interleave
-                     (nfirst (re-seq (date-parse-pattern fmts) %))
-                     (map first (re-seq date-format-pattern fmts)))
-                    (partition 2)
-                    (sort-by (comp parser-sort-order-pred second)))
-    :formatter (fn [date]
-                 [(string/replace fmts #"'([^']+)'" "$1")
-                  date-format-pattern
-                  #((date-formatters %) date)])}))
+     (formatter fmts time/utc))
+  ([fmts dtz]
+     (with-meta
+       {:parser (parser-fn fmts)
+        :formatter (formatter-fn fmts date-formatters)}
+       {:type ::formatter})))
+
+(defn formatter-local [fmts]
+  (with-meta
+    {:parser (parser-fn fmts)
+     :formatter
+     (formatter-fn fmts
+                   (assoc date-formatters
+                     "Z" (constantly "")
+                     "ZZ" (constantly "")))}
+    {:type ::formatter}))
 
 (defn not-implemented [sym]
   #(throw (clj->js {:name :not-implemented
@@ -353,38 +354,96 @@ time if supplied."}
 (def part-splitter-regex
   #"(?:(?!(?:\+|-)\d{2}):(?!\d{2}$))|[^\w:]+|.[TW]|'[^']+'")
 
+(defmulti date-map type)
+
+(defmethod date-map goog.date.Date [d]
+  {:years 0 :months 0 :days 1})
+
+(defmethod date-map goog.date.DateTime [d]
+  {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0})
+
+(defmethod date-map goog.date.UtcDateTime [d]
+  {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0
+   :time-zone nil})
+
+(defn parse* [constructor {:keys [parser] :as fmt} s]
+  {:pre [(seq s)]}
+  (let [min-parts (count (string/split s part-splitter-regex))]
+    (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
+                              (parser s)))]
+      (if (>= (count parse-seq) min-parts)
+        (let [d (new constructor 0 0 0 0 0 0 0)
+              empty (date-map d)
+              setters (select-keys date-setters (keys empty))]
+          (->> parse-seq
+               (reduce (fn [date [part do-parse]] (do-parse date part))
+                       empty)
+               valid-date?
+               (merge-with #(%1 d %2) setters))
+          d)
+        (throw
+         (ex-info "The parser could not match the input string."
+                  {:type :parser-no-match}))))))
+
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
-  ([{:keys [parser]} s]
-     {:pre [(seq s)]}
-     (let [min-parts (count (string/split s part-splitter-regex))]
-       (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
-                                 (parser s)))]
-         (if (>= (count parse-seq) min-parts)
-           (let [d (date/UtcDateTime. 0 0 0 0 0 0 0)]
-             (->> parse-seq
-                  (reduce (fn [date [part do-parse]] (do-parse date part))
-                          {:years 0 :months 0 :days 1
-                           :hours 0 :minutes 0 :seconds 0 :millis 0})
-                  valid-date?
-                  (merge-with #(%1 d %2) date-setters))
-             d)
-           (throw
-            (ex-info "The parser could not match the input string."
-                     {:type :parser-no-match}))))))
+  ([fmt s]
+     (parse* goog.date.UtcDateTime fmt s))
   ([s]
      (first
       (for [f (vals formatters)
             :let [d (try (parse f s) (catch js/Error _))]
             :when d] d))))
 
+(defn parse-local
+  "Returns a LocalDateTime instance obtained by parsing the
+  given string according to the given formatter."
+  ([fmt s]
+     (parse* goog.date.DateTime fmt s))
+  ([s]
+     (first
+      (for [f (vals formatters)
+            :let [d (try (parse-local f s) (catch js/Error _ nil))]
+            :when d] d))))
+
+(defn parse-local-date
+  "Returns a LocalDate instance obtained by parsing the
+  given string according to the given formatter."
+  ([fmt s]
+     (parse* goog.date.Date fmt s))
+  ([s]
+     (first
+      (for [f (vals formatters)
+            :let [d (try (parse-local-date f s) (catch js/Error _ nil))]
+            :when d] d))))
+
 (defn unparse
   "Returns a string representing the given DateTime instance in UTC and in the
 form determined by the given formatter."
-  [{:keys [formatter]} date]
-  {:pre [(not (nil? date)) (instance? date/DateTime date)]}
-  (apply string/replace (formatter date)))
+  [{:keys [formatter]} dt]
+  {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
+  (apply string/replace (formatter dt)))
+
+(defn unparse-local
+  "Returns a string representing the given LocalDateTime instance in the
+  form determined by the given formatter."
+  [{:keys [formatter] :as fmt} dt]
+  {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
+  (apply string/replace
+         (formatter dt (assoc date-formatters
+                         "Z" (constantly "")
+                         "ZZ" (constantly "")))))
+
+(defn unparse-local-date
+  "Returns a string representing the given LocalDate instance in the form
+  determined by the given formatter."
+  [{:keys [formatter] :as fmt} dt]
+  {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
+  (apply string/replace
+         (formatter dt (assoc date-formatters
+                         "Z" (constantly "")
+                         "ZZ" (constantly "")))))
 
 (defn show-formatters
   "Shows how a given DateTime, or by default the current time, would be

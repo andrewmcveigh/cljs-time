@@ -65,7 +65,7 @@
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
-   [cljs-time.internal.core :refer [= leap-year? period]]
+   [cljs-time.internal.core :refer [= leap-year? period format]]
    [goog.date.Date]
    [goog.date.DateTime]
    [goog.date.UtcDateTime]
@@ -273,6 +273,46 @@ Specify the year, month, and day. Does not deal with timezones."
 LocalDate objects do not deal with timezones at all."
   []
   (goog.date.Date.))
+
+(defn time-zone-for-offset
+  "Returns a DateTimeZone for the given offset, specified either in hours or
+  hours and minutes."
+  ([hours]
+     (time-zone-for-offset hours nil))
+  ([hours minutes]
+     (let [sign (if (neg? hours) :- :+)
+           fmt (str "UTC%s%02d" (when minutes ":%02d"))
+           hours (if (neg? hours) (* -1 hours) hours)
+           tz-name (if minutes
+                     (format fmt (name sign) hours minutes)
+                     (format fmt (name sign) hours))]
+       (with-meta
+         {:id tz-name
+          :offset [sign hours (or minutes 0) 0]
+          :rules "-"
+          :names [tz-name]}
+         {:type ::time-zone}))))
+
+(defn default-time-zone
+  "Returns the default DateTimeZone for the current environment."
+  []
+  (let [hours (/ (* -1 (.getTimezoneOffset (goog.date.DateTime.))) 60)]
+    (prn 'default-time-zone hours (int hours) (mod hours 1))
+    (time-zone-for-offset (int hours) (mod hours 1))))
+
+(defn to-time-zone
+  "Returns a new ReadableDateTime corresponding to the same absolute instant in time as
+the given ReadableDateTime, but with calendar fields corresponding to the given
+TimeZone."
+  [dt tz]
+  (.withZone dt tz))
+
+(defn from-time-zone
+  "Returns a new ReadableDateTime corresponding to the same point in calendar time as
+the given ReadableDateTime, but for a correspondingly different absolute instant in
+time."
+  [dt tz]
+  (.withZoneRetainFields dt tz))
 
 (defn years
   "Given a number, returns a Period representing that many years.
