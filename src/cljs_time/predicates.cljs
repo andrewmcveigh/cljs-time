@@ -30,6 +30,12 @@
 (defn sunday? [date-time]
   (= (time/day-of-week date-time) 7))
 
+;; weekend / weekday checks
+(defn weekend? [date-time]
+  (or (saturday? date-time) (sunday? date-time)))
+
+(defn weekday? [date-time]
+  (not (weekend? date-time)))
 
 ;; months of the year
 (defn january? [date-time]
