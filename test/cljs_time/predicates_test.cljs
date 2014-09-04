@@ -6,9 +6,9 @@
     [cemerick.cljs.test :as t]
     [cljs-time.core :refer [date-time]]
     [cljs-time.predicates :refer
-     [monday? tuesday? wednesday? thursday? friday? saturday? sunday? january?
-      february? march? april? may? june? july? august? september? october?
-      november? december?]]))
+     [monday? tuesday? wednesday? thursday? friday? saturday? sunday? weekend?
+      weekday? january? february? march? april? may? june? july? august?
+      september? october? november? december?]]))
 
 (deftest test-days-of-the-week
   (is (= true (monday? (date-time 2012 9 10))))
@@ -18,7 +18,11 @@
   (is (= true (friday? (date-time 2012 9 14))))
   (is (= true (saturday? (date-time 2012 9 15))))
   (is (= true (sunday? (date-time 2012 9 16))))
-  (is (= false (monday? (date-time 2012 9 16)))))
+  (is (= false (monday? (date-time 2012 9 16))))
+  (is (= true (weekend? (date-time 2012 9 15))))
+  (is (= true (weekend? (date-time 2012 9 16))))
+  (is (= false (weekend? (date-time 2012 9 10))))
+  (is (= true (weekday? (date-time 2012 9 10)))))
 
 (deftest test-months-of-the-year
   (is (= true (january? (date-time 2012 1 10))))
