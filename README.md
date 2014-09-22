@@ -98,21 +98,7 @@ Once you have a date-time, use accessors like `hour` and `second` to access the 
 22
 ```
 
-The date-time constructor always returns times in the UTC time zone. If you want a time with the specified fields in a different time zone, use `from-time-zone`:
-
-``` clj
-=> (from-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-#<DateTime 1986-10-22T00:00:00.000-02:00>
-```
-
-If on the other hand you want a given absolute instant in time in a different time zone, use `to-time-zone`:
-
-``` clj
-=> (to-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-#<DateTime 1986-10-21T22:00:00.000-02:00>
-```
-
-In addition to `time-zone-for-offset`, you can use the `time-zone-for-id` and `default-time-zone` functions and the `utc` Var to construct or get `DateTimeZone` instances.
+The date-time constructor always returns times in the UTC time zone. 
 
 If you only want a date with no time component, consider using the `local-date` and `today` functions.
 These return `LocalDate` instances that do not have time components (and thus don't suffer from timezone-related shifting).
