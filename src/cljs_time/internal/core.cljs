@@ -1,4 +1,14 @@
-(ns cljs-time.internal.core)
+(ns cljs-time.internal.core
+  (:refer-clojure :exclude [=])
+  (:require
+   [clojure.string :as string]
+   [goog.string :as gstring]
+   [goog.string.format]))
+
+(defn = [& args]
+  (cond (every? #(instance? goog.date.Date %) args)
+        (apply cljs.core/= (map #(.getTime %) args))
+        :default (apply cljs.core/= args)))
 
 (defn leap-year? [y]
   (cond (zero? (mod y 400)) true
@@ -29,3 +39,30 @@
 
 (defn index-of [coll x]
   (first (keep-indexed #(when (= %2 x) %1) coll)))
+
+(defn period
+  ([period value]
+   (with-meta {period value} {:type :cljs-time.core/period}))
+  ([p1 v1 & kvs]
+   (apply assoc (period p1 v1) kvs)))
+
+(defn format
+  "Formats a string using goog.string.format."
+  [fmt & args]
+  (let [args (map (fn [x]
+                    (if (or (keyword? x) (symbol? x))
+                      (str x)
+                      x))
+                  args)]
+    (apply gstring/format fmt args)))
+
+(defn zero-pad
+  "Remove the need to pull in gstring/format code in advanced compilation"
+  ([n] (if (<= 0 n 9) (str "0" n) (str n)))
+  ([n zeros]
+   ; No need to handle negative numbers
+   (if (> 1 zeros)
+     (str n)
+     (str (string/join (take (- zeros (count (str n))) (repeat "0")))
+          n))))
+

@@ -1,13 +1,13 @@
-(defproject com.andrewmcveigh/cljs-time "0.1.7-SNAPSHOT"
+(defproject com.andrewmcveigh/cljs-time "0.2.0-SNAPSHOT"
   :description "A clj-time inspired date library for clojurescript."
   :url "https://github.com/andrewmcveigh/cljs-time"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :scm {:url "git@github.com:andrewmcveigh/cljs-time.git"}
-  :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-2202"]]
+  :dependencies [[org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojurescript "0.0-2280"]]
 
-  :plugins [[com.cemerick/clojurescript.test "0.3.0"]
+  :plugins [[com.cemerick/clojurescript.test "0.3.1"]
             [lein-cljsbuild "1.0.3"]
             [lein-marginalia "0.7.1"]
             [com.cemerick/austin "0.1.4"]]
@@ -23,8 +23,7 @@
                      :pretty-print true}}
     :test {:source-paths ["src" "test"]
            :incremental? true
-           :notify-command
-           ["phantomjs" "resources/runner.js" "target/unit-test.js"]
+           :notify-command ["phantomjs" :cljs.test/runner "target/unit-test.js"]
            :compiler {:output-to "target/unit-test.js"
                       :optimizations :whitespace
                       :pretty-print true}}}}

@@ -29,23 +29,6 @@
     => (hour (local-date-time 1986 10 14 22))
     22
 
-  The date-time constructor always returns times in the UTC time zone. If you
-  want a time with the specified fields in a different time zone, use
-  from-time-zone:
-
-    => (from-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-    #<DateTime 1986-10-22T00:00:00.000-02:00>
-
-  If on the other hand you want a given absolute instant in time in a
-  different time zone, use to-time-zone:
-
-    => (to-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-    #<DateTime 1986-10-21T22:00:00.000-02:00>
-
-  In addition to time-zone-for-offset, you can use the time-zone-for-id and
-  default-time-zone functions and the utc Var to constgruct or get DateTimeZone
-  instances.
-
   The functions after? and before? determine the relative position of two
   DateTime instances:
 
@@ -82,13 +65,13 @@
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
-    goog.date.UtcDateTime
-    goog.i18n.TimeZone))
+   [cljs-time.internal.core :refer [= leap-year? period format]]
+   [goog.date.Date]
+   [goog.date.DateTime]
+   [goog.date.UtcDateTime]
+   [goog.i18n.TimeZone]))
 
-(defn = [& args]
-  (cond (every? #(instance? goog.date.UtcDateTime %) args)
-        (apply cljs.core/= (map #(.getTime %) args))
-        :default (apply cljs.core/= args)))
+(def ^:dynamic *sys-time* nil)
 
 (defprotocol DateTimeProtocol
   "Interface for various date time functions"
@@ -103,23 +86,8 @@
   (milli [this] "Return the millisecond of second component of the given date/time.")
   (after? [this that] "Returns true if ReadableDateTime 'this' is strictly after date/time 'that'.")
   (before? [this that] "Returns true if ReadableDateTime 'this' is strictly before date/time 'that'.")
-  (plus- [this period]
-         "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
-  (minus- [this period]
-          "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
-
-
-(def utc (goog.i18n.TimeZone/createTimeZone
-           (clj->js {:id "UTC"
-                     :std_offset 0
-                     :names ["UTC"]
-                     :transitions []})))
-
-(defn leap-year? [y]
-  (cond (zero? (mod y 400)) true
-        (zero? (mod y 100)) false
-        (zero? (mod y 4)) true
-        :else false))
+  (plus- [this period] "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
+  (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
 
 (def periods
   (let [fixed-time-fn (fn [f set-fn op date value]
@@ -175,15 +143,47 @@
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
   (minus- [this period] ((period-fn period) - this))
-  )
 
+  goog.date.DateTime
+  (year [this] (.getYear this))
+  (month [this] (inc (.getMonth this)))
+  (day [this] (.getDate this))
+  (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
+  (hour [this] (.getHours this))
+  (minute [this] (.getMinutes this))
+  (second [this] (.getSeconds this))
+  (milli [this] (.getMilliseconds this))
+  (after? [this that] (> (.getTime this) (.getTime that)))
+  (before? [this that] (< (.getTime this) (.getTime that)))
+  (plus- [this period] ((period-fn period) + this))
+  (minus- [this period] ((period-fn period) - this))
 
-(def ^:dynamic *sys-time* nil)
+  goog.date.Date
+  (year [this] (.getYear this))
+  (month [this] (inc (.getMonth this)))
+  (day [this] (.getDate this))
+  (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
+  (after? [this that] (> (.getTime this) (.getTime that)))
+  (before? [this that] (< (.getTime this) (.getTime that)))
+  (plus- [this period] ((period-fn period) + this))
+  (minus- [this period] ((period-fn period) - this)))
+
+(def utc (goog.i18n.TimeZone/createTimeZone
+           (clj->js {:id "UTC"
+                     :std_offset 0
+                     :names ["UTC"]
+                     :transitions []})))
 
 (defn now
   "Returns a DateTime for the current instant in the UTC time zone."
   []
   (if *sys-time* *sys-time* (goog.date.UtcDateTime.)))
+
+(defn time-now
+  "Returns a LocalTime for the current instant without date or time zone
+  using ISOChronology in the current time zone."
+  []
+  (goog.date.DateTime.))
 
 (defn at-midnight [datetime]
   (let [datetime (.clone datetime)]
@@ -196,7 +196,7 @@
 (defn today-at-midnight
   "Returns a DateMidnight for today at midnight in the UTC time zone."
   []
-  (at-midnight (if *sys-time* *sys-time* (now))))
+  (at-midnight (now)))
 
 (defn epoch
   "Returns a DateTime for the begining of the Unix epoch in the UTC time zone."
@@ -240,11 +240,79 @@
   ([year month day hour minute second millis]
    (goog.date.UtcDateTime. year (dec month) day hour minute second millis)))
 
-(defn period
-  ([period value]
-   (with-meta {period value} {:type ::period}))
-  ([p1 v1 & kvs]
-   (apply assoc (period p1 v1) kvs)))
+(defn local-date-time
+  "Constructs and returns a new LocalDateTime.
+Specify the year, month of year, day of month, hour of day, minute of hour,
+second of minute, and millisecond of second. Note that month and day are
+1-indexed while hour, second, minute, and millis are 0-indexed.
+Any number of least-significant components can be ommited, in which case
+they will default to 1 or 0 as appropriate."
+  ([year]
+   (local-date-time year 1 1 0 0 0 0))
+  ([year month]
+   (local-date-time year month 1 0 0 0 0))
+  ([year month day]
+   (local-date-time year month day 0 0 0 0))
+  ([year month day hour]
+   (local-date-time year month day hour 0 0 0))
+  ([year month day hour minute]
+   (local-date-time year month day hour minute 0 0))
+  ([year month day hour minute second]
+   (local-date-time year month day hour minute second 0))
+  ([year month day hour minute second millis]
+   (goog.date.DateTime. year (dec month) day hour minute second millis)))
+
+(defn local-date
+  "Constructs and returns a new LocalDate.
+Specify the year, month, and day. Does not deal with timezones."
+  [year month day]
+  (goog.date.Date. year (dec month) day))
+
+(defn today
+  "Constructs and returns a new LocalDate representing today's date.
+LocalDate objects do not deal with timezones at all."
+  []
+  (goog.date.Date.))
+
+(defn time-zone-for-offset
+  "Returns a DateTimeZone for the given offset, specified either in hours or
+  hours and minutes."
+  ([hours]
+     (time-zone-for-offset hours nil))
+  ([hours minutes]
+     (let [sign (if (neg? hours) :- :+)
+           fmt (str "UTC%s%02d" (when minutes ":%02d"))
+           hours (if (neg? hours) (* -1 hours) hours)
+           tz-name (if minutes
+                     (format fmt (name sign) hours minutes)
+                     (format fmt (name sign) hours))]
+       (with-meta
+         {:id tz-name
+          :offset [sign hours (or minutes 0) 0]
+          :rules "-"
+          :names [tz-name]}
+         {:type ::time-zone}))))
+
+(defn default-time-zone
+  "Returns the default DateTimeZone for the current environment."
+  []
+  (let [hours (/ (* -1 (.getTimezoneOffset (goog.date.DateTime.))) 60)]
+    (prn 'default-time-zone hours (int hours) (mod hours 1))
+    (time-zone-for-offset (int hours) (mod hours 1))))
+
+(defn to-time-zone
+  "Returns a new ReadableDateTime corresponding to the same absolute instant in time as
+the given ReadableDateTime, but with calendar fields corresponding to the given
+TimeZone."
+  [dt tz]
+  (.withZone dt tz))
+
+(defn from-time-zone
+  "Returns a new ReadableDateTime corresponding to the same point in calendar time as
+the given ReadableDateTime, but for a correspondingly different absolute instant in
+time."
+  [dt tz]
+  (.withZoneRetainFields dt tz))
 
 (defn years
   "Given a number, returns a Period representing that many years.
@@ -317,11 +385,30 @@
   [period]
   (minus (now) period))
 
+(defn yesterday
+  "Returns a DateTime for yesterday relative to now"
+  []
+  (-> 1 days ago))
+
 (defn from-now
   "Returns a DateTime a supplied period after the present.
   e.g. `(-> 30 minutes from-now)`"
   [period]
   (plus (now) period))
+
+(defn earliest
+  "Returns the earliest of the supplied DateTimes"
+  ([dt1 dt2]
+     (if (before? dt1 dt2) dt1 dt2))
+  ([dts]
+     (reduce earliest dts)))
+
+(defn latest
+  "Returns the latest of the supplied DateTimes"
+  ([dt1 dt2]
+     (if (after? dt1 dt2) dt1 dt2))
+  ([dts]
+     (reduce latest dts)))
 
 (defn interval
   "Returns an interval representing the span between the two given ReadableDateTimes.
@@ -431,18 +518,65 @@
   With 4 arguments: Returns true if the range specified by start-a and end-a
   overlaps with the range specified by start-b and end-b."
   ([{start-a :start end-a :end} {start-b :start end-b :end}]
-   (overlaps? start-a end-a start-b end-b))
+     (and (not (or (= start-a end-b) (= end-a start-b)))
+          (overlaps? start-a end-a start-b end-b)))
   ([start-a end-a start-b end-b]
-   (or (and (before? start-b end-a) (after? end-b start-a))
-       (and (after? end-b start-a) (before? start-b end-a))
-       ;(or (= start-a end-b) (= start-b end-a))
-       )))
+     (or (and (before? start-b end-a) (after? end-b start-a))
+         (and (after? end-b start-a) (before? start-b end-a))
+         (or (= start-a end-b) (= start-b end-a)))))
 
 (defn abuts?
   "Returns true if Interval a abuts b, i.e. then end of a is exactly the
   beginning of b."
   [{start-a :start end-a :end} {start-b :start end-b :end}]
   (or (= start-a end-b) (= end-a start-b)))
+
+(defn date? [x]
+ (satisfies? DateTimeProtocol x))
+
+(defn interval? [x]
+ (= ::interval (:type (meta x))))
+
+(defn period? [x]
+ (= ::period (:type (meta x))))
+
+(defn period-type? [type x]
+  (and (period? x) (contains? x type)))
+
+(defn years?
+  "Returns true if the given value is an instance of Years"
+  [val]
+  (period-type? :years val))
+
+(defn months?
+  "Returns true if the given value is an instance of Months"
+  [val]
+  (period-type? :months val))
+
+(defn weeks?
+  "Returns true if the given value is an instance of Weeks"
+  [val]
+  (period-type? :weeks val))
+
+(defn days?
+  "Returns true if the given value is an instance of Days"
+  [val]
+  (period-type? :days val))
+
+(defn hours?
+  "Returns true if the given value is an instance of Hours"
+  [val]
+  (period-type? :hours val))
+
+(defn minutes?
+  "Returns true if the given value is an instance of Minutes"
+  [val]
+  (period-type? :minutes val))
+
+(defn seconds?
+  "Returns true if the given value is an instance of Seconds"
+  [val]
+  (period-type? :seconds val))
 
 (defn mins-ago
   [d]

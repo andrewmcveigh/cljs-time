@@ -10,6 +10,7 @@
     #<19980425T000000>"
   (:refer-clojure :exclude [extend second])
   (:require
+    [cljs-time.core :refer [date-time year month day hour minute second milli]]
     [cljs-time.format :as time-fmt]
     [goog.date :as date]))
 
@@ -62,6 +63,28 @@
   (if-let [dt (to-date-time obj)]
     (time-fmt/unparse (:date-time time-fmt/formatters) dt)))
 
+(defn to-local-date
+  "Convert `obj` to a goog.date.Date instance"
+  [obj]
+  (if-let [dt (to-date-time obj)]
+    (doto (date/Date.)
+      (.setYear (.getYear dt))
+      (.setMonth (.getMonth dt))
+      (.setDate (.getDate dt)))))
+
+(defn to-local-date-time
+  "Convert `obj` to a goog.date.DateTime instance"
+  [obj]
+  (if-let [dt (to-date-time obj)]
+    (doto (date/DateTime.)
+      (.setYear (.getYear dt))
+      (.setMonth (.getMonth dt))
+      (.setDate (.getDate dt))
+      (.setHours (.getHours dt))
+      (.setMinutes (.getMinutes dt))
+      (.setSeconds (.getSeconds dt))
+      (.setMilliseconds (.getMilliseconds dt)))))
+
 (extend-protocol ICoerce
   nil
   (to-date-time [_]
@@ -71,13 +94,19 @@
   (to-date-time [date]
     (from-date date))
 
+  goog.date.Date
+  (to-date-time [local-date]
+    (date-time (year local-date) (month local-date) (day local-date)))
+
   goog.date.DateTime
+  (to-date-time [local-date-time]
+    (date-time (year local-date-time) (month local-date-time) (day local-date-time)
+               (hour local-date-time) (minute local-date-time) (second local-date-time)
+               (milli local-date-time)))
+
+  goog.date.UtcDateTime
   (to-date-time [date-time]
     date-time)
-
-  goog.date.Date
-  (to-date-time [date-midnight]
-    (doto date-midnight (.set date-midnight)))
 
   number
   (to-date-time [long]

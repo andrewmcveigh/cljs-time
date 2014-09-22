@@ -3,11 +3,10 @@
 A date and time library for ClojureScript, immitating the
 [clj-time](https://github.com/clj-time/clj-time) library.
 
-This is my crude and naïve attempt at replicating some of the functionality in
-clj-time. This is in no way a drop-in clojurescript replacement for clj-time,
-however the goal is that over time I can hopefully replicate enough of the
-clj-time API and functionality to make this library "good enough" for other
-projects.
+Cljs-time is an attempt at replicating the functionality in clj-time. **This is
+not a drop-in clojurescript replacement for clj-time**, however the goal is that
+over time enough functionality of the clj-time API can be replicated to make
+this library "good enough" for other projects.
 
 This library is currently leaning on the [Google Closure goog.date](http://docs.closure-library.googlecode.com/git/namespace_goog_date.html)
 library for basic date/time functionality. **The date objects in this library
@@ -55,12 +54,12 @@ Please open issues against the
 
 ## API
 
-So far, most of the clj-time API has been implemented, apart from the bits that
-deal with local time(s). Some of the parts that don't make sense in
-clojurescript, such as Java interop, have been left out.
+Most of the clj-time API has been implemented. Some of the parts that
+don't make sense in clojurescript, such as Java interop, and
+java.sql.* have been left out.
 
-The majority of the tests from clj-time (that don't deal with local-time) have
-been copied over, and are passing.
+The majority of the tests from clj-time have been copied over, and are
+passing.
 
 [API documentation](http://andrewmcveigh.github.io/cljs-time/uberdoc.html) is
 available.
@@ -98,7 +97,7 @@ Once you have a date-time, use accessors like `hour` and `second` to access the 
 22
 ```
 
-The date-time constructor always returns times in the UTC time zone. 
+The date-time constructor always returns times in the UTC time zone.
 
 If you only want a date with no time component, consider using the `local-date` and `today` functions.
 These return `LocalDate` instances that do not have time components (and thus don't suffer from timezone-related shifting).

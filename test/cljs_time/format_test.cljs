@@ -5,8 +5,17 @@
   (:require
     [cemerick.cljs.test :as t]
     [cljs-time.coerce :refer [from-date to-date]]
-    [cljs-time.core :as time :refer [= date-time interval utc within?]]
-    [cljs-time.format :as format :refer [formatter formatters instant->map parse unparse]]))
+    [cljs-time.internal.core :refer [=]]
+    [cljs-time.core :as time
+     :refer [date-time interval utc within?
+             local-date local-date-time
+             ]]
+    [cljs-time.format :as format
+     :refer [formatter formatters instant->map parse unparse
+             formatter-local
+             parse-local parse-local-date
+             unparse-local unparse-local-date
+             ]]))
 
 (defn utc-int-vec [d]
   [(time/year d) (time/month d) (time/day d)
@@ -149,10 +158,10 @@
     (is (= (date-time 2010 3 11)
            (parse fmt "20100311")))))
 
-;(deftest test-formatter-local
-;(let [fmt (formatter-local "yyyyMMdd")]
-;(is (= (local-date-time 2010 3 11)
-;(parse-local fmt "20100311")))))
+(deftest test-formatter-local
+  (let [fmt (formatter-local "yyyyMMdd")]
+    (is (= (local-date-time 2010 3 11)
+           (parse-local fmt "20100311")))))
 
 (deftest test-parse
   (is (= (date-time 2010 10 11)
@@ -177,44 +186,55 @@
     ;(date-time 2010 3 11 17 49 20 881))))
     ))
 
-;(deftest test-local-parse
-;(is (= (local-date-time 2010 10 11)
-;(parse-local "2010-10-11T00:00:00")))
-;(let [fmt (formatters :date)]
-;(is (= (local-date-time 2010 3 11)
-;(parse-local fmt "2010-03-11"))))
-;(let [fmt (formatters :basic-date-time)]
-;(is (= (local-date-time 2010 3 11 17 49 20 881)
-;(parse-local fmt "20100311T174920.881Z")))))
+(deftest test-local-parse
+  (is (= (local-date-time 2010 10 11)
+         (parse-local "2010-10-11T00:00:00")))
+  (let [fmt (formatters :date)]
+    (is (= (local-date-time 2010 3 11)
+           (parse-local fmt "2010-03-11"))))
+  (let [fmt (formatters :basic-date-time)]
+    (is (= (local-date-time 2010 3 11 17 49 20 881)
+           (parse-local fmt "20100311T174920.881Z")))))
 
-;(deftest test-local-unparse
-;(let [fmt (formatters :date)]
-;(is (= "2010-03-11"
-;(unparse-local fmt (local-date-time 2010 3 11)))))
-;(let [fmt (formatters :basic-date-time)]
-;(is (= "20100311T174920.881"
-;(unparse-local fmt (local-date-time 2010 3 11 17 49 20 881))))
-;(is (= "20100311T174920.881"
-;(unparse-local (formatter-local "yyyyMMdd'T'HHmmss.SSS")
-;(local-date-time 2010 3 11 17 49 20 881))))))
+(deftest test-local-unparse
+  (let [fmt (formatters :date)]
+    (is (= "2010-03-11"
+           (unparse-local fmt (local-date-time 2010 3 11)))))
+  (let [fmt (formatters :basic-date-time)]
+    (is (= "20100311T174920.881"
+           (unparse-local fmt (local-date-time 2010 3 11 17 49 20 881))))
+    (is (= "20100311T174920.881"
+           (unparse-local (formatter-local "yyyyMMdd'T'HHmmss.SSS")
+                          (local-date-time 2010 3 11 17 49 20 881))))))
 
-;(deftest test-local-date-parse
-;(is (= (local-date 2010 10 11)
-;(parse-local-date "2010-10-11T00:00:00")))
-;(let [fmt (formatters :date)]
-;(is (= (local-date 2010 3 11)
-;(parse-local-date fmt "2010-03-11"))))
-;(let [fmt (formatters :basic-date-time)]
-;(is (= (local-date 2010 3 11)
-;(parse-local-date fmt "20100311T000000.000Z")))))
+(deftest test-local-date-parse
+  (is (= (local-date 2010 10 11)
+         (parse-local-date "2010-10-11T00:00:00")))
+  (let [fmt (formatters :date)]
+    (is (= (local-date 2010 3 11)
+           (parse-local-date fmt "2010-03-11"))))
+  (let [fmt (formatters :basic-date-time)]
+    (is (= (local-date 2010 3 11)
+           (parse-local-date fmt "20100311T000000.000Z")))))
 
-;(deftest test-local-date-unparse
-;(let [fmt (formatters :date)]
-;(is (= "2010-03-11"
-;(unparse-local-date fmt (local-date 2010 3 11)))))
-;(let [fmt (formatters :basic-date-time)]
-;(is (= "20100311T000000.000"
-;(unparse-local-date fmt (local-date-time 2010 3 11 00 00 00 000))))))
+(deftest test-local-date-unparse
+  (let [fmt (formatters :date)]
+    (is (= "2010-03-11"
+           (unparse-local-date fmt (local-date 2010 3 11)))))
+  (let [fmt (formatters :basic-date-time)]
+    (is (= "20100311T000000.000"
+           (unparse-local-date fmt (local-date-time 2010 3 11 00 00 00 000))))))
+
+;; (deftest test-local-time-parse
+;;   (is (= (local-time 12)
+;;          (parse-local-time "12:00:00")))
+;;   (is (= (local-time 12 13 14 15)
+;;          (parse-local-time "12:13:14.015"))))
+
+;; (deftest test-local-time-unparse
+;;   (let [fmt (formatter "HH:mm:ss.SSS")] ; Cannot use (formatters :local-time) here as it does not support printing
+;;     (is (= "13:14:15.167"
+;;            (unparse-local-time fmt (local-time 13 14 15 167))))))
 
 ;(deftest test-formatter-modifiers
 ;(let [fmt (formatter "YYYY-MM-dd HH:mm z" (time-zone-for-id "America/Chicago"))]
