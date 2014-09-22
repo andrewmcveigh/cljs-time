@@ -27,7 +27,7 @@
   with-pivot-year."
   (:require
     [cljs-time.internal.core :refer [index-of valid-date?]]
-    [cljs-time.core :as time]
+    [cljs-time.core :as time :refer [*date-class*]]
     [clojure.set :refer [difference]]
     [clojure.string :as string]
     [goog.date :as date]
@@ -43,6 +43,16 @@
                       x))
                   args)]
     (apply gstring/format fmt args)))
+
+(defn- zero-pad
+  "Remove the need to pull in gstring/format code in advanced compilation"
+  ([n] (if (<= 0 n 9) (str "0" n) (str n)))
+  ([n zeros]
+   ; No need to handle negative numbers
+   (if (> 1 zeros)
+     (str n)
+     (str (string/join (take (- zeros (count (str n))) (repeat "0")))
+          n))))
 
 (def months
   ["January" "February" "March" "April" "May" "June" "July" "August"
@@ -85,6 +95,8 @@
     m       minute of hour               number        30
     s       second of minute             number        55
     S       fraction of second           number        978
+    a       meridiem                     text          am; pm
+    A       meridiem                     text          AM; PM
 
     z       time zone                    text          Pacific Standard Time; PST
     Z       time zone offset/id          zone          -0800; -08:00; America/Los_Angeles
@@ -131,14 +143,14 @@
         doy    #(.getDayOfYear %)
         dow    #(.getDay %)]
     {"d" d
-     "dd" #(format "%02d" (d %))
+     "dd" #(zero-pad (d %))
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
      "dow" #(days (dow %))
      "DDD" doy
      "EEE" #(abbreviate 3 (days (dow %)))
      "EEEE" #(days (dow %))
      "M" M
-     "MM" #(format "%02d" (M %))
+     "MM" #(zero-pad (M %))
      "MMM" #(abbreviate 3 (months (dec (M %))))
      "MMMM" #(months (dec (M %)))
      "yyyy" y
@@ -151,14 +163,14 @@
      "m" m
      "s" s
      "S" S
-     "hh" #(format "%02d" (h %))
-     "HH" #(format "%02d" (H %))
-     "mm" #(format "%02d" (m %))
-     "ss" #(format "%02d" (s %))
-     "SSS" #(format "%03d" (S %))
+     "hh" #(zero-pad (h %))
+     "HH" #(zero-pad (H %))
+     "mm" #(zero-pad (m %))
+     "ss" #(zero-pad (s %))
+     "SSS" #(zero-pad (S %) 3)
      "Z" Z
      "ZZ" Z
-     "ww" #(format "%02d" (Math/ceil (/ (doy %) 7)))
+     "ww" #(zero-pad (Math/ceil (/ (doy %) 7)))
      "e" dow}))
 
 (defn timezone-adjustment [d timezone-string]
@@ -344,13 +356,13 @@ time if supplied."}
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
-  ([{:keys [parser]} s]
+  ([{:keys [parser] :as formatter} s on-fail]
      {:pre [(seq s)]}
      (let [min-parts (count (string/split s part-splitter-regex))]
        (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
                                  (parser s)))]
          (if (>= (count parse-seq) min-parts)
-           (let [d (date/UtcDateTime. 0 0 0 0 0 0 0)]
+           (let [d (*date-class*. 0 0 0 0 0 0 0)]
              (->> parse-seq
                   (reduce (fn [date [part do-parse]] (do-parse date part))
                           {:years 0 :months 0 :days 1
@@ -358,9 +370,12 @@ time if supplied."}
                   valid-date?
                   (merge-with #(%1 d %2) date-setters))
              d)
-           (throw
-            (ex-info "The parser could not match the input string."
-                     {:type :parser-no-match}))))))
+           (on-fail)))))
+  ([formatter s]
+   (parse formatter s
+          #(throw
+             (ex-info "The parser could not match the input string."
+                      {:type :parser-no-match}))))
   ([s]
      (first
       (for [f (vals formatters)
@@ -398,7 +413,7 @@ formatted with each of the available printing formatters."
    :millis millis})
 
 (extend-protocol Mappable
-  goog.date.UtcDateTime
+  goog.date.DateTime
   (instant->map [dt]
     (to-map
       (.getYear dt)
