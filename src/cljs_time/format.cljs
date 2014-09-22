@@ -26,12 +26,14 @@
   etc with the functions with-zone, with-locale, with-chronology, and
   with-pivot-year."
   (:require
+    [cljs-time.internal.core :refer [index-of valid-date? format zero-pad]]
     [cljs-time.core :as time]
-    [cljs-time.internal.core
-     :refer [dow doy #+cljs format index-of offset-string parse-int
-             valid-date?]]
     [clojure.set :refer [difference]]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [goog.date :as date]
+    [goog.string :as gstring]
+    [goog.string.format]
+    ))
 
 (def months
   ["January" "February" "March" "April" "May" "June" "July" "August"
@@ -74,6 +76,8 @@
     m       minute of hour               number        30
     s       second of minute             number        55
     S       fraction of second           number        978
+    a       meridiem                     text          am; pm
+    A       meridiem                     text          AM; PM
 
     z       time zone                    text          Pacific Standard Time; PST
     Z       time zone offset/id          zone          -0800; -08:00; America/Los_Angeles
@@ -105,27 +109,29 @@
   '.', ' ', '#' and '?' will appear in the resulting time text even they are
   not embraced within single quotes."}
   date-formatters
-  (let [d #(time/day %)
-        M #(time/month %)
-        y #(time/year %)
-        h #(let [hr (mod (time/hour %) 12)]
-             (if (zero? hr) 12 hr))
-        a #(if (< (time/hour %) 12) "am" "pm")
-        A #(if (< (time/hour %) 12) "AM" "PM")
-        H #(time/hour %)
-        m #(time/minute %)
-        s #(time/second %)
-        S #(time/milli %)
-        Z #(offset-string (:time-zone %))]
+  (let [d      #(.getDate %)
+        M #(inc (.getMonth %))
+        y      #(.getYear %)
+        h      #(let [hr (mod (.getHours %) 12)]
+                  (if (zero? hr) 12 hr))
+        a      #(if (< (.getHours %) 12) "am" "pm")
+        A      #(if (< (.getHours %) 12) "AM" "PM")
+        H      #(.getHours %)
+        m      #(.getMinutes %)
+        s      #(.getSeconds %)
+        S      #(.getMilliseconds %)
+        Z      #(.getTimezoneOffsetString %)
+        doy    #(.getDayOfYear %)
+        dow    #(.getDay %)]
     {"d" d
-     "dd" #(format "%02d" (d %))
+     "dd" #(zero-pad (d %))
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
-     "dow" #(days (time/day-of-week %))
+     "dow" #(days (dow %))
      "DDD" doy
-     "EEE" #(abbreviate 3 (days (time/day-of-week %)))
-     "EEEE" #(days (time/day-of-week %))
+     "EEE" #(abbreviate 3 (days (dow %)))
+     "EEEE" #(days (dow %))
      "M" M
-     "MM" #(format "%02d" (M %))
+     "MM" #(zero-pad (M %))
      "MMM" #(abbreviate 3 (months (dec (M %))))
      "MMMM" #(months (dec (M %)))
      "yyyy" y
@@ -138,29 +144,35 @@
      "m" m
      "s" s
      "S" S
-     "hh" #(format "%02d" (h %))
-     "HH" #(format "%02d" (H %))
-     "mm" #(format "%02d" (m %))
-     "ss" #(format "%02d" (s %))
-     "SSS" #(format "%03d" (S %))
+     "hh" #(zero-pad (h %))
+     "HH" #(zero-pad (H %))
+     "mm" #(zero-pad (m %))
+     "ss" #(zero-pad (s %))
+     "SSS" #(zero-pad (S %) 3)
      "Z" Z
      "ZZ" Z
-     "ww" #(format "%02d" (Math/ceil (/ (doy %) 7)))
+     "ww" #(zero-pad (Math/ceil (/ (doy %) 7)))
      "e" dow}))
 
 (defn timezone-adjustment [d timezone-string]
-  (let [[[_ zz hh mm]]
-        (re-seq #"(ZZ?)|(?:([+\-]?\d{2})(?::?(\d{2}))?)$" timezone-string)]
-    (cond (#{"Z" "ZZ"} zz) d
-          (and hh mm)
-          (let [[hh mm] (map parse-int [hh mm])]
-            (assoc d :time-zone (time/time-zone-for-offset hh mm))))))
+  (let [[_ sign hh mm] (string/split timezone-string
+                                     #"Z|(?:([-+])(\d{2})(?::?(\d{2}))?)$")]
+    (when (and sign hh mm)
+      (let [sign (cond (= sign "-") time/plus
+                       (= sign "+") time/minus)
+            [hh mm] (map #(js/parseInt % 10) [hh mm])
+            adjusted (-> d
+                         (sign (time/hours hh))
+                         (sign (time/minutes mm)))]
+        (.setTime d (.getTime adjusted))))
+    d))
 
 (def date-parsers
-  (let [assoc-fn (fn [kw] #(assoc %1 kw (parse-int %2)))
+  (let [parse-int #(js/parseInt % 10)
+        assoc-fn (fn [kw] #(assoc %1 kw (parse-int %2)))
         y (assoc-fn :years)
         d (assoc-fn :days)
-        M (assoc-fn :months)
+        M #(assoc %1 :months (dec (parse-int %2)))
         h #(assoc %1 :hours (mod (parse-int %2) 12))
         a (fn [{:keys [hours] :as date} x]
             (if (#{"pm" "p"} (string/lower-case x))
@@ -171,7 +183,13 @@
         m (assoc-fn :minutes)
         s (assoc-fn :seconds)
         S (assoc-fn :millis)
-        skip (fn [x & args] x)]
+        MMM #(let [full (first (filter (fn [m]
+                                         (re-seq (re-pattern (str "^" %2)) m))
+                                       months))]
+               (M %1 (str (inc (index-of months full)))))
+        MMMM #(M %1 (str (inc (index-of months %2))))
+        skip (fn [x & args] x)
+        tz #(assoc %1 :time-zone %2)]
     {"d" ["(\\d{1,2})" d]
      "dd" ["(\\d{2})" d]
      "dth" ["(\\d{1,2})(?:st|nd|rd|th)" d]
@@ -180,17 +198,10 @@
      "y" ["(\\d{1,4})" y]
      "yy" ["(\\d{2,4})" y]
      "yyyy" ["(\\d{4})" y]
-     "MMM" [(str \( (string/join \| (map (partial abbreviate 3) months)) \))
-            #(let [full (first (filter (fn [m]
-                                         (re-seq (re-pattern (str "^" %2)) m))
-                                       months))]
-               (M %1 (str (inc (index-of months full)))))]
-     "MMMM" [(str \( (string/join \| months) \))
-             #(M %1 (str (inc (index-of months %2))))]
-     "E" [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
-          skip]
-     "EEE" [(str \( (string/join \| (map (partial abbreviate 3) days)) \))
-            skip]
+     "MMM" [(str \( (string/join \| (map (partial abbreviate 3) months)) \)) MMM]
+     "MMMM" [(str \( (string/join \| months) \)) MMMM]
+     "E" [(str \( (string/join \| (map (partial abbreviate 3) days)) \)) skip]
+     "EEE" [(str \( (string/join \| (map (partial abbreviate 3) days)) \)) skip]
      "EEEE" [(str \( (string/join \| days) \)) skip]
      "dow" [(str \( (string/join \| days) \)) skip]
      "a" ["(am|pm|a|p|AM|PM|A|P)" a]
@@ -205,13 +216,25 @@
      "mm" ["(\\d{2})" m]
      "ss" ["(\\d{2})" s]
      "SSS" ["(\\d{3})" S]
-     "Z" ["((?:(?:\\+|-)\\d{2}:?\\d{2})|Z+)" timezone-adjustment]
-     "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" timezone-adjustment]}))
+     "Z" ["((?:(?:\\+|-)\\d{2}:?\\d{2})|Z+)" tz]
+     "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" tz]}))
+
+(def date-setters
+  {:years #(.setYear %1 %2)
+   :months #(.setMonth %1 %2)
+   :days #(.setDate %1 %2)
+   :hours #(.setHours %1 %2)
+   :minutes #(.setMinutes %1 %2)
+   :seconds #(.setSeconds %1 %2)
+   :millis #(.setMilliseconds %1 %2)
+   :time-zone timezone-adjustment})
+
 
 (defn parser-sort-order-pred [parser]
-  (index-of ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h" "H"
-             "m" "s" "S" "hh" "HH" "mm" "ss" "a" "SSS" "ZZ" "Z"]
-            parser))
+  (index-of
+    ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h" "H"
+     "m" "s" "S" "hh" "HH" "mm" "ss" "a" "SSS" "Z" "ZZ"]
+    parser))
 
 (def date-format-pattern
   (re-pattern
@@ -221,23 +244,43 @@
   (re-pattern
     (string/replace (string/replace formatter #"'([^']+)'" "$1")
                     date-format-pattern
-                    #(first (date-parsers #+clj (first %) #+cljs %)))))
+                    #(first (date-parsers %)))))
+
+(defn- parser-fn [fmts]
+  (fn [s]
+    (->> (interleave (nfirst (re-seq (date-parse-pattern fmts) s))
+                     (map first (re-seq date-format-pattern fmts)))
+         (partition 2)
+         (sort-by (comp parser-sort-order-pred second)))))
+
+(defn- formatter-fn [fmts formatters]
+  (fn [date & [formatter-overrides]]
+    [(string/replace fmts #"'([^']+)'" "$1")
+     date-format-pattern
+     #(((or formatter-overrides formatters) %) date)]))
 
 (defn formatter
   ([fmts]
-     {:parser #(->> (interleave
-                     (nfirst (re-seq (date-parse-pattern fmts) %))
-                     (map first (re-seq date-format-pattern fmts)))
-                    (partition 2)
-                    (sort-by (comp parser-sort-order-pred second)))
-    :formatter (fn [date]
-                 [(string/replace fmts #"'([^']+)'" "$1")
-                  date-format-pattern
-                  #(str ((date-formatters #+clj (first %) #+cljs %) date))])}))
+     (formatter fmts time/utc))
+  ([fmts dtz]
+     (with-meta
+       {:parser (parser-fn fmts)
+        :formatter (formatter-fn fmts date-formatters)}
+       {:type ::formatter})))
+
+(defn formatter-local [fmts]
+  (with-meta
+    {:parser (parser-fn fmts)
+     :formatter
+     (formatter-fn fmts
+                   (assoc date-formatters
+                     "Z" (constantly "")
+                     "ZZ" (constantly "")))}
+    {:type ::formatter}))
 
 (defn not-implemented [sym]
-  #(throw (ex-info (format "%s not implemented yet" (name sym))
-                   {:type :not-implemented})))
+  #(throw (clj->js {:name :not-implemented
+                    :message (format "%s not implemented yet" (name sym))})))
 
 (def ^{:doc "Map of ISO 8601 and a single RFC 822 formatters that can be used
 for parsing and, in most cases, printing.
@@ -311,36 +354,96 @@ time if supplied."}
 (def part-splitter-regex
   #"(?:(?!(?:\+|-)\d{2}):(?!\d{2}$))|[^\w:]+|.[TW]|'[^']+'")
 
+(defmulti date-map type)
+
+(defmethod date-map goog.date.Date [d]
+  {:years 0 :months 0 :days 1})
+
+(defmethod date-map goog.date.DateTime [d]
+  {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0})
+
+(defmethod date-map goog.date.UtcDateTime [d]
+  {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0
+   :time-zone nil})
+
+(defn parse* [constructor {:keys [parser] :as fmt} s]
+  {:pre [(seq s)]}
+  (let [min-parts (count (string/split s part-splitter-regex))]
+    (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
+                              (parser s)))]
+      (if (>= (count parse-seq) min-parts)
+        (let [d (new constructor 0 0 0 0 0 0 0)
+              empty (date-map d)
+              setters (select-keys date-setters (keys empty))]
+          (->> parse-seq
+               (reduce (fn [date [part do-parse]] (do-parse date part))
+                       empty)
+               valid-date?
+               (merge-with #(%1 d %2) setters))
+          d)
+        (throw
+         (ex-info "The parser could not match the input string."
+                  {:type :parser-no-match}))))))
+
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
-  ([{:keys [parser]} s]
-     (let [min-parts (count (string/split s part-splitter-regex))]
-       (if-let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
-                                    (parser s)))]
-         (if (>= (count parse-seq) min-parts)
-           (->> parse-seq
-                (reduce (fn [date [part do-parse]] (do-parse date part))
-                        (time/date-time 0 1 1 0 0 0 0))
-                (valid-date?))
-           (throw
-            (ex-info "The parser could not match the input string."
-                     {:type :parser-no-match})))
-         (throw
-          (ex-info "The parser could not match the input string."
-                   {:type :parser-no-match})))))
+  ([fmt s]
+     (parse* goog.date.UtcDateTime fmt s))
   ([s]
      (first
       (for [f (vals formatters)
-            :let [d (try (parse f s) (catch #+clj Exception #+cljs js/Error _))]
+            :let [d (try (parse f s) (catch js/Error _))]
+            :when d] d))))
+
+(defn parse-local
+  "Returns a LocalDateTime instance obtained by parsing the
+  given string according to the given formatter."
+  ([fmt s]
+     (parse* goog.date.DateTime fmt s))
+  ([s]
+     (first
+      (for [f (vals formatters)
+            :let [d (try (parse-local f s) (catch js/Error _ nil))]
+            :when d] d))))
+
+(defn parse-local-date
+  "Returns a LocalDate instance obtained by parsing the
+  given string according to the given formatter."
+  ([fmt s]
+     (parse* goog.date.Date fmt s))
+  ([s]
+     (first
+      (for [f (vals formatters)
+            :let [d (try (parse-local-date f s) (catch js/Error _ nil))]
             :when d] d))))
 
 (defn unparse
   "Returns a string representing the given DateTime instance in UTC and in the
 form determined by the given formatter."
-  [{:keys [formatter]} date]
-  {:pre [(not (nil? date)) (instance? cljs_time.core.DateTime date)]}
-  (apply string/replace (formatter date)))
+  [{:keys [formatter]} dt]
+  {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
+  (apply string/replace (formatter dt)))
+
+(defn unparse-local
+  "Returns a string representing the given LocalDateTime instance in the
+  form determined by the given formatter."
+  [{:keys [formatter] :as fmt} dt]
+  {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
+  (apply string/replace
+         (formatter dt (assoc date-formatters
+                         "Z" (constantly "")
+                         "ZZ" (constantly "")))))
+
+(defn unparse-local-date
+  "Returns a string representing the given LocalDate instance in the form
+  determined by the given formatter."
+  [{:keys [formatter] :as fmt} dt]
+  {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
+  (apply string/replace
+         (formatter dt (assoc date-formatters
+                         "Z" (constantly "")
+                         "ZZ" (constantly "")))))
 
 (defn show-formatters
   "Shows how a given DateTime, or by default the current time, would be
@@ -365,19 +468,18 @@ formatted with each of the available printing formatters."
    :seconds seconds
    :millis millis})
 
-;; (extend-protocol Mappable
-;;   goog.date.UtcDateTime
-;;   (instant->map [dt]
-;;     (to-map
-;;       (.getYear dt)
-;;       (inc (.getMonth dt))
-;;       (.getDate dt)
-;;       (.getHours dt)
-;;       (.getMinutes dt)
-;;       (.getSeconds dt)
-;;       (.getMilliseconds dt))))
+(extend-protocol Mappable
+  goog.date.UtcDateTime
+  (instant->map [dt]
+    (to-map
+      (.getYear dt)
+      (inc (.getMonth dt))
+      (.getDate dt)
+      (.getHours dt)
+      (.getMinutes dt)
+      (.getSeconds dt)
+      (.getMilliseconds dt))))
 
-#+cljs
 (extend-protocol Mappable
   ObjMap
   (instant->map [m]
@@ -386,12 +488,8 @@ formatted with each of the available printing formatters."
       :cljs-time.core/interval (time/->period m))))
 
 (extend-protocol Mappable
-  #+clj clojure.lang.IPersistentMap #+cljs cljs.core.PersistentArrayMap
+  cljs.core/PersistentArrayMap
   (instant->map [m]
     (case (:type (meta m))
       :cljs-time.core/period m
       :cljs-time.core/interval (time/->period m))))
-
-(extend-protocol Mappable
-  cljs_time.core.DateTime
-  (instant->map [m] (dissoc m :time-zone)))

@@ -15,7 +15,5 @@ pom.xml*
 .repl/
 out/
 .nrepl-port
-**/*\~
+**/*~
 **/#*#
-**/\.\#*
-src/cljs_time/tz/data.cljx

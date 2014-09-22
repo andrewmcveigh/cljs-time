@@ -1,22 +1,23 @@
 (ns cljs-time.core-test
-  (:refer-clojure :exclude [extend second])
-  #+cljs (:require-macros
-          [cemerick.cljs.test :refer [is deftest]]
-          [cljs-time.macros :refer [do-at]])
+  (:refer-clojure :exclude [= extend second])
+  (:require-macros
+    [cemerick.cljs.test :refer [is deftest]]
+    [cljs-time.macros :refer [do-at]]
+    [cljs-time.core-test :refer [try= when-available when-not-available]])
   (:require
-   #+cljs [cemerick.cljs.test :as t]
-   #+clj [clojure.test :refer [is deftest]]
-   [cljs-time.internal.core :refer [millis-since-epoch]]
-   [cljs-time.core :refer
-    [date-time epoch year month day date-midnight today-at-midnight hour
-     minute second milli abuts? interval overlaps? last-day-of-the-month
-     number-of-days-in-the-month first-day-of-the-month today-at now within?
-     in-years in-months in-weeks in-days in-hours in-minutes in-seconds
-     in-millis minus plus
-                                        ;year-month
-     day-of-week after? before?  years months
-     weeks days hours minutes seconds millis extend start end mins-ago]]
-   #+clj [cljs-time.macros :refer [do-at]]))
+    [cemerick.cljs.test :as t]
+    [cljs-time.internal.core :refer [=]]
+    [cljs-time.core :refer
+     [date-time epoch year month day date-midnight today-at-midnight hour
+      minute second milli abuts? interval overlaps? last-day-of-the-month
+      number-of-days-in-the-month first-day-of-the-month today-at now within?
+      in-years in-months in-weeks in-days in-hours in-minutes in-seconds
+      in-millis minus plus earliest latest
+      local-date local-date-time today
+      day-of-week after? before? ago from-now
+      years months weeks days hours minutes seconds millis
+      years? months? weeks? days? hours? minutes? seconds?
+      extend start end mins-ago]]))
 
 (deftest test-now
   (is (= (date-time 2010 1 1)
@@ -69,43 +70,43 @@
     (is (= 0    (second d)))
     (is (= 0    (milli  d)))))
 
-;(deftest test-local-date-time-and-accessors
-  ;(let [d (local-date-time 1986)]
-    ;(is (= 1986 (year   d)))
-    ;(is (= 1    (month  d)))
-    ;(is (= 1    (day    d)))
-    ;(is (= 0    (hour   d)))
-    ;(is (= 0    (minute d)))
-    ;(is (= 0    (second d)))
-    ;(is (= 0    (milli  d))))
-  ;(let [d (date-time 1986 10 14 4 3 2 1)]
-    ;(is (= 1986 (year   d)))
-    ;(is (= 10   (month  d)))
-    ;(is (= 14   (day    d)))
-    ;(is (= 4    (hour   d)))
-    ;(is (= 3    (minute d)))
-    ;(is (= 2    (second d)))
-    ;(is (= 1    (milli  d)))))
+(deftest test-local-date-time-and-accessors
+  (let [d (local-date-time 1986)]
+    (is (= 1986 (year   d)))
+    (is (= 1    (month  d)))
+    (is (= 1    (day    d)))
+    (is (= 0    (hour   d)))
+    (is (= 0    (minute d)))
+    (is (= 0    (second d)))
+    (is (= 0    (milli  d))))
+  (let [d (date-time 1986 10 14 4 3 2 1)]
+    (is (= 1986 (year   d)))
+    (is (= 10   (month  d)))
+    (is (= 14   (day    d)))
+    (is (= 4    (hour   d)))
+    (is (= 3    (minute d)))
+    (is (= 2    (second d)))
+    (is (= 1    (milli  d)))))
 
-;(deftest test-year-month-and-accessors
-  ;(let [d (year-month 1986)]
-    ;(is (= 1986 (year   d)))
-    ;(is (= 1    (month  d))))
-  ;(let [d (date-time 1986 10)]
-    ;(is (= 1986 (year   d)))
-    ;(is (= 10   (month  d)))))
+(deftest test-year-month-and-accessors
+  ;; (let [d (year-month 1986)]
+  ;;   (is (= 1986 (year   d)))
+  ;;   (is (= 1    (month  d))))
+  (let [d (date-time 1986 10)]
+    (is (= 1986 (year   d)))
+    (is (= 10   (month  d)))))
 
-;(deftest test-local-date-and-accessors
-  ;(let [d (local-date 2013 3 19)]
-    ;(is (= 2013 (year   d)))
-    ;(is (= 3    (month  d)))
-    ;(is (= 19   (day    d)))
-    ;(is (= 2    (day-of-week d)))))
+(deftest test-local-date-and-accessors
+  (let [d (local-date 2013 3 19)]
+    (is (= 2013 (year   d)))
+    (is (= 3    (month  d)))
+    (is (= 19   (day    d)))
+    (is (= 2    (day-of-week d)))))
 
-;(deftest test-today
-  ;(is (= (local-date 2013 4 20)
-         ;(do-at (from-time-zone (date-time 2013 4 20) (default-time-zone))
-                ;(today)))))
+;; (deftest test-today
+;;   (is (= (local-date 2013 4 20)
+;;          (do-at (from-time-zone (date-time 2013 4 20) (default-time-zone))
+;;                 (today)))))
 
 (deftest test-day-of-week
   (let [d (date-time 2010 4 24)]
@@ -148,80 +149,94 @@
   (is (= (date-time 1986 10 14 4 2)
          (minus (date-time 1986 10 14 6 5) (hours 2) (minutes 3)))))
 
-;(deftest test-after?-local
-  ;(is (after? (local-date-time 1987) (local-date-time 1986)))
-  ;(is (not (after? (local-date-time 1986) (local-date-time 1987))))
-  ;(is (not (after? (local-date-time 1986) (local-date-time 1986)))))
+(deftest test-after?-local
+  (is (after? (local-date-time 1987) (local-date-time 1986)))
+  (is (not (after? (local-date-time 1986) (local-date-time 1987))))
+  (is (not (after? (local-date-time 1986) (local-date-time 1986)))))
 
-;(deftest test-before?-local
-  ;(is (before? (local-date-time 1986) (local-date-time 1987)))
-  ;(is (not (before? (local-date-time 1987) (local-date-time 1986))))
-  ;(is (not (before? (local-date-time 1986) (local-date-time 1986)))))
+(deftest test-before?-local
+  (is (before? (local-date-time 1986) (local-date-time 1987)))
+  (is (not (before? (local-date-time 1987) (local-date-time 1986))))
+  (is (not (before? (local-date-time 1986) (local-date-time 1986)))))
 
-;(deftest test-periods-local
-  ;(is (= (local-date-time 1986 10 14 4 3 2 1)
-         ;(plus (local-date-time 1984)
-           ;(years 2)
-           ;(months 9)
-           ;(days 13)
-           ;(hours 4)
-           ;(minutes 3)
-           ;(seconds 2)
-           ;(millis 1))))
-  ;(is (= (local-date-time 1986 1 8)
-         ;(plus (local-date-time 1986 1 1) (weeks 1)))))
+(deftest test-periods-local
+  (is (= (local-date-time 1986 10 14 4 3 2 1)
+         (plus (local-date-time 1984)
+           (years 2)
+           (months 9)
+           (days 13)
+           (hours 4)
+           (minutes 3)
+           (seconds 2)
+           (millis 1))))
+  (is (= (local-date-time 1986 1 8)
+         (plus (local-date-time 1986 1 1) (weeks 1)))))
 
-;(deftest test-plus-local
-  ;(is (= (local-date-time 1986 10 14 6)
-         ;(plus (local-date-time 1986 10 14 4) (hours 2))))
-  ;(is (= (local-date-time 1986 10 14 6 5)
-         ;(plus (local-date-time 1986 10 14 4 2) (hours 2) (minutes 3)))))
+(deftest test-plus-local
+  (is (= (local-date-time 1986 10 14 6)
+         (plus (local-date-time 1986 10 14 4) (hours 2))))
+  (is (= (local-date-time 1986 10 14 6 5)
+         (plus (local-date-time 1986 10 14 4 2) (hours 2) (minutes 3)))))
 
-;(deftest test-minus-local
-  ;(is (= (local-date-time 1986 10 14 4)
-         ;(minus (local-date-time 1986 10 14 6) (hours 2))))
-  ;(is (= (local-date-time 1986 10 14 4 2)
-         ;(minus (local-date-time 1986 10 14 6 5) (hours 2) (minutes 3)))))
+(deftest test-minus-local
+  (is (= (local-date-time 1986 10 14 4)
+         (minus (local-date-time 1986 10 14 6) (hours 2))))
+  (is (= (local-date-time 1986 10 14 4 2)
+         (minus (local-date-time 1986 10 14 6 5) (hours 2) (minutes 3)))))
 
-;(defmacro when-available
-  ;[sym & body]
-  ;(try
-    ;(and (resolve sym)
-         ;(list* 'do body))
-    ;(catch ClassNotFoundException _#)))
+(deftest test-ago
+  (when-available
+    with-redefs
+    (with-redefs [now #(date-time 2011 4 16 10 9 00)]
+      (is (= (-> 10 years ago)
+             (date-time 2001 4 16 10 9 00)))))
+  (when-not-available
+    with-redefs
+    (binding [now #(date-time 2011 4 16 10 9 00)]
+      (is (= (-> 10 years ago)
+             (date-time 2001 4 16 10 9 00))))))
 
-;(defmacro when-not-available
-  ;[sym & body]
-  ;(when-not
-    ;(try
-      ;(resolve sym)
-      ;(catch ClassNotFoundException _#
-        ;nil))
-    ;`(do ~@body)))
+(deftest test-from-now
+  (when-available
+    with-redefs
+    (with-redefs [now #(date-time 2011 4 16 10 9 00)]
+      (is (= (-> 30 minutes from-now)
+             (date-time 2011 4 16 10 39 00)))))
+  (when-not-available
+    with-redefs
+    (binding [now #(date-time 2011 4 16 10 9 00)]
+      (is (= (-> 30 minutes from-now)
+             (date-time 2011 4 16 10 39 00))))))
 
-;(deftest test-ago
-  ;(when-available
-    ;with-redefs
-    ;(with-redefs [now #(date-time 2011 4 16 10 9 00)]
-      ;(is (= (-> 10 years ago)
-             ;(date-time 2001 4 16 10 9 00)))))
-  ;(when-not-available
-    ;with-redefs
-    ;(binding [now #(date-time 2011 4 16 10 9 00)]
-      ;(is (= (-> 10 years ago)
-             ;(date-time 2001 4 16 10 9 00))))))
+(deftest test-earliest
+  (let [d1 (date-time 1990 1 1 23 1 1)
+        d2 (date-time 2000 1 1 23 1 1)
+        d3 (date-time 2010 1 1 23 1 1)
+        d4 (date-time 2020 1 1 23 1 1)]
+    (is (= d1 (earliest d1 d2)))
+    (is (= d2 (earliest d2 d3)))
+    (is (= d1 (earliest d1 d3)))
+    (is (= d1 (earliest [d1 d2 d3 d4])))
+    (is (= d1 (earliest [d4 d2 d3 d1])))
+    (is (= d2 (earliest [d4 d3 d2])))
+    (is (= d4 (earliest [d4])))
+    (is (try= js/TypeError (earliest [d1 d2 nil])))
+    (is (try= js/TypeError (earliest d2 nil)))))
 
-;(deftest test-from-now
-  ;(when-available
-    ;with-redefs
-    ;(with-redefs [now #(date-time 2011 4 16 10 9 00)]
-      ;(is (= (-> 30 minutes from-now)
-             ;(date-time 2011 4 16 10 39 00)))))
-  ;(when-not-available
-    ;with-redefs
-    ;(binding [now #(date-time 2011 4 16 10 9 00)]
-      ;(is (= (-> 30 minutes from-now)
-             ;(date-time 2011 4 16 10 39 00))))))
+(deftest test-latest
+  (let [d1 (date-time 1990 1 1 23 1 1)
+        d2 (date-time 2000 1 1 23 1 1)
+        d3 (date-time 2010 1 1 23 1 1)
+        d4 (date-time 2020 1 1 23 1 1)]
+    (is (= d2 (latest d1 d2)))
+    (is (= d3 (latest d2 d3)))
+    (is (= d3 (latest d1 d3)))
+    (is (= d4 (latest [d1 d2 d3 d4])))
+    (is (= d4 (latest [d4 d2 d3 d1])))
+    (is (= d3 (latest [d2 d3 d1])))
+    (is (= d1 (latest [d1])))
+    (is (try= js/TypeError (latest [d1 d2 nil])))
+    (is (try= js/TypeError (latest d2 nil)))))
 
 (deftest test-start-end
   (let [s (date-time 1986 10 14 12 5 4)
@@ -232,8 +247,7 @@
 
 (defn i= [& args]
   (apply = (map (fn [{:keys [start end]}]
-                  {:start (millis-since-epoch start)
-                   :end (millis-since-epoch end)})
+                  {:start (.getTime start) :end (.getTime end)})
                 args)))
 
 (deftest test-extend
@@ -269,45 +283,41 @@
   (let [d1 (date-time 1985)
         d2 (date-time 1986)
         d3 (date-time 1987)
-        ;ld1 (local-date 2013 1 1)
-        ;ld2 (local-date 2013 2 28)
-        ;ld3 (local-date 2013 10 5)
-        ]
+        ld1 (local-date 2013 1 1)
+        ld2 (local-date 2013 2 28)
+        ld3 (local-date 2013 10 5)]
     (is (within? (interval d1 d3) d2))
     (is (not (within? (interval d1 d2) d3)))
     (is (not (within? (interval d1 d2) d2)))
     (is (not (within? (interval d2 d3) d1)))
-    ;(is (within? ld1 ld3 ld2))
-    ;(is (not (within? ld1 ld2 ld3)))
-    ;(is (not (within? ld3 ld2 ld1)))
-    ;(is (not (within? ld2 ld3 ld1)))
-    ))
+    (is (within? ld1 ld3 ld2))
+    (is (not (within? ld1 ld2 ld3)))
+    (is (not (within? ld3 ld2 ld1)))
+    (is (not (within? ld2 ld3 ld1)))))
 
 (deftest test-overlaps?
   (let [d1 (date-time 1985)
         d2 (date-time 1986)
         d3 (date-time 1987)
         d4 (date-time 1988)
-        ;ld1 (local-date 2013 1 1)
-        ;ld2 (local-date 2013 2 5)
-        ;ld3 (local-date 2013 2 28)
-        ;ld4 (local-date 2014 1 1)
-        ;ld5 (local-date 2014 5 6)
-        ]
+        ld1 (local-date 2013 1 1)
+        ld2 (local-date 2013 2 5)
+        ld3 (local-date 2013 2 28)
+        ld4 (local-date 2014 1 1)
+        ld5 (local-date 2014 5 6)]
     (is (overlaps? (interval d1 d3) (interval d2 d4)))
     (is (overlaps? (interval d1 d3) (interval d2 d3)))
     (is (not (overlaps? (interval d1 d2) (interval d2 d3))))
     (is (not (overlaps? (interval d1 d2) (interval d3 d4))))
-    ;(is (overlaps? ld1 ld3 ld2 ld4))
-    ;(is (overlaps? ld2 ld4 ld3 ld5))
-    ;(is (overlaps? ld1 ld5 ld1 ld5))
-    ;(is (overlaps? ld1 ld5 ld2 ld4))
-    ;(is (overlaps? ld2 ld4 ld1 ld5))
-    ;(is (overlaps? ld1 ld2 ld2 ld3))
-    ;(is (overlaps? ld2 ld3 ld1 ld2))
-    ;(is (not (overlaps? ld1 ld2 ld3 ld4)))
-    ;(is (not (overlaps? ld1 ld3 ld4 ld5)))
-    ))
+    (is (overlaps? ld1 ld3 ld2 ld4))
+    (is (overlaps? ld2 ld4 ld3 ld5))
+    (is (overlaps? ld1 ld5 ld1 ld5))
+    (is (overlaps? ld1 ld5 ld2 ld4))
+    (is (overlaps? ld2 ld4 ld1 ld5))
+    (is (overlaps? ld1 ld2 ld2 ld3))
+    (is (overlaps? ld2 ld3 ld1 ld2))
+    (is (not (overlaps? ld1 ld2 ld3 ld4)))
+    (is (not (overlaps? ld1 ld3 ld4 ld5)))))
 
 (deftest test-abuts?
   (let [d1 (date-time 1985)
@@ -319,26 +329,26 @@
     (is (not (abuts? (interval d1 d3) (interval d2 d3))))
     (is (abuts? (interval d2 d3) (interval d1 d2)))))
 
-;(deftest test-years?
-  ;(is (years? (years 2))))
+(deftest test-years?
+  (is (years? (years 2))))
 
-;(deftest test-months?
-  ;(is (months? (months 2))))
+(deftest test-months?
+  (is (months? (months 2))))
 
-;(deftest test-weeks?
-  ;(is (weeks? (weeks 2))))
+(deftest test-weeks?
+  (is (weeks? (weeks 2))))
 
-;(deftest test-days?
-  ;(is (days? (days 2))))
+(deftest test-days?
+  (is (days? (days 2))))
 
-;(deftest test-hours?
-  ;(is (hours? (hours 2))))
+(deftest test-hours?
+  (is (hours? (hours 2))))
 
-;(deftest test-minutes?
-  ;(is (minutes? (minutes 2))))
+(deftest test-minutes?
+  (is (minutes? (minutes 2))))
 
-;(deftest test-secs?
-  ;(is (seconds? (seconds 2))))
+(deftest test-secs?
+  (is (seconds? (seconds 2))))
 
 (deftest mins-ago-test
   (is (= 5 (mins-ago (minus (now) (minutes 5))))))

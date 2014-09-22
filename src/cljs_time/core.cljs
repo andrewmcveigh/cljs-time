@@ -29,23 +29,6 @@
     => (hour (local-date-time 1986 10 14 22))
     22
 
-  The date-time constructor always returns times in the UTC time zone. If you
-  want a time with the specified fields in a different time zone, use
-  from-time-zone:
-
-    => (from-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-    #<DateTime 1986-10-22T00:00:00.000-02:00>
-
-  If on the other hand you want a given absolute instant in time in a
-  different time zone, use to-time-zone:
-
-    => (to-time-zone (date-time 1986 10 22) (time-zone-for-offset -2))
-    #<DateTime 1986-10-21T22:00:00.000-02:00>
-
-  In addition to time-zone-for-offset, you can use the time-zone-for-id and
-  default-time-zone functions and the utc Var to constgruct or get DateTimeZone
-  instances.
-
   The functions after? and before? determine the relative position of two
   DateTime instances:
 
@@ -80,196 +63,145 @@
   Note that all functions in this namespace work with Joda objects or ints. If
   you need to print or parse date-times, see cljs-time.format. If you need to
   ceorce date-times to or from other types, see cljs-time.coerce."
-  (:refer-clojure :exclude [extend second])
+  (:refer-clojure :exclude [= extend second])
   (:require
-   [cljs-time.internal.core
-    :refer [->time-zone bal-units #+cljs format dow days-in-month leap-year?
-            millis-since-epoch rebalance split-formats year-corrected-dim]
-    :as internal.core]
-   [cljs-time.tz.data :refer [zones]]))
+   [cljs-time.internal.core :refer [= leap-year? period format]]
+   [goog.date.Date]
+   [goog.date.DateTime]
+   [goog.date.UtcDateTime]
+   [goog.i18n.TimeZone]))
+
+(def ^:dynamic *sys-time* nil)
 
 (defprotocol DateTimeProtocol
   "Interface for various date time functions"
   (year [this] "Return the year component of the given date/time.")
   (month [this] "Return the month component of the given date/time.")
   (day [this] "Return the day of month component of the given date/time.")
-  (day-of-week [this]
-    "Return the day of week component of the given date/time. Monday
-    is 1 and Sunday is 7")
-  (hour [this]
-    "Return the hour of day component of the given date/time. A time
-    of 12:01am will have an hour component of 0.")
+  (day-of-week [this] "Return the day of week component of the given date/time. Monday is 1 and Sunday is 7")
+  (hour [this] "Return the hour of day component of the given date/time. A time of 12:01am will have an hour component of 0.")
   (minute [this] "Return the minute of hour component of the given date/time.")
   (sec [this] "Return the second of minute component of the given date/time.")
-  (second [this]
-    "Return the second of minute component of the given date/time.")
-  (milli [this]
-    "Return the millisecond of second component of the given date/time.")
-  (after? [this that]
-    "Returns true if ReadableDateTime 'this' is strictly after
-    date/time 'that'.")
-  (before? [this that]
-    "Returns true if ReadableDateTime 'this' is strictly before
-    date/time 'that'.")
-  (plus- [this period]
-    "Returns a new date/time corresponding to the given date/time
-    moved forwards by the given Period(s).")
-  (minus- [this period]
-    "Returns a new date/time corresponding to the given date/time
-    moved backwards by the given Period(s)."))
-
-(defn time-zone-for-offset
-  "Returns a DateTimeZone for the given offset, specified either in hours or
-hours and minutes."
-  ([hours]
-   (time-zone-for-offset hours nil))
-  ([hours minutes]
-   (let [sign (if (neg? hours) :- :+)
-         fmt (str "UTC%s%02d" (when minutes ":%02d"))
-         hours (if (neg? hours) (* -1 hours) hours)
-         tz-name (if minutes
-                   (format fmt (name sign) hours minutes)
-                   (format fmt (name sign) hours))]
-     (with-meta
-       {:id tz-name
-        :offset [sign hours (or minutes 0) 0]
-        :rules "-"
-        :names [tz-name]}
-       {:type ::time-zone}))))
-
-(defn time-zone-for-id
-  "Returns a DateTimeZone for the given ID, which must be in long form, e.g.
-'America/Matamoros'."
-  [id]
-  (->time-zone (last (zones id)) id))
-
-(def utc
-  (with-meta
-    {:id "Etc/UTC" :offset [:+ 0] :rules "-" :names ["UTC"]}
-    {:type ::time-zone}))
+  (second [this] "Return the second of minute component of the given date/time.")
+  (milli [this] "Return the millisecond of second component of the given date/time.")
+  (after? [this that] "Returns true if ReadableDateTime 'this' is strictly after date/time 'that'.")
+  (before? [this that] "Returns true if ReadableDateTime 'this' is strictly before date/time 'that'.")
+  (plus- [this period] "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
+  (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
 
 (def periods
   (let [fixed-time-fn (fn [f set-fn op date value]
-                        (set-fn date (op (f date) value)))]
-    {:millis (partial fixed-time-fn milli #(assoc %1 :millis %2))
-     :seconds (partial fixed-time-fn second #(assoc %1 :seconds %2))
-     :minutes (partial fixed-time-fn minute #(assoc %1 :minutes %2))
-     :hours (partial fixed-time-fn hour #(assoc %1 :hours %2))
-     :days (partial fixed-time-fn day #(assoc %1 :days %2))
-     :weeks (fn [op date value] (assoc date :days (op (day date) (* 7 value))))
+                        (let [date (.clone date)]
+                          (set-fn date (op (f date) value))
+                          date))]
+    {:millis (partial fixed-time-fn milli #(.setMilliseconds %1 %2))
+     :seconds (partial fixed-time-fn second #(.setSeconds %1 %2))
+     :minutes (partial fixed-time-fn minute #(.setMinutes %1 %2))
+     :hours (partial fixed-time-fn hour #(.setHours %1 %2))
+     :days (partial fixed-time-fn day #(.setDate %1 %2))
+     :weeks (fn [op date value]
+              (let [date (.clone date)]
+                (.setDate date (op (day date) (* 7 value)))
+                date))
      :months (fn [op date value]
-               (let [date (fixed-time-fn month
-                                         #(assoc %1 :months %2)
-                                         op date value)
-                     [months years] (bal-units (month date) (year date) 12 1)
-                     dim (days-in-month (dec months))]
-                 (assoc (if (> (day date) dim) (assoc date :days dim) date)
-                   :months months
-                   :years years)))
+               (let [date (.clone date)
+                     m (op (month date) value)
+                     y (year date)
+                     y (cond (> m 12) (+ y 1)
+                             (< m 1) (- y 1)
+                             :else y)
+                     m (cond (> m 12) (mod m 12)
+                             (< m 1) (+ m 12)
+                             :else m)]
+                 (.setMonth date (dec m))
+                 (.setYear date y)
+                 date))
      :years (fn [op date value]
-              (let [day (day date)]
-                (assoc date 
-                  :days (if (and (leap-year? (year date))
-                                 (= 2 (month date))
-                                 (= 29 day))
-                          28
-                          day)
-                  :years (op (year date) value))))}))
+              (let [date (.clone date)]
+                (if (and (leap-year? (year date))
+                         (= 2 (month date))
+                         (= 29 (day date)))
+                  (.setDate date 28))
+                (.setYear date (op (year date) value))
+                date))}))
 
 (defn period-fn [p]
   (fn [operator date]
-    (rebalance
-     (reduce #((periods (key %2)) operator %1 (val %2)) date p))))
+    (reduce #((periods (key %2)) operator %1 (val %2)) date p)))
 
-(defrecord DateTime
-    [years months days hours minutes seconds millis time-zone]
-  DateTimeProtocol
-  (year [_] years)
-  (month [_] months)
-  (day [_] days)
-  (day-of-week [_] (dow years months days))
-  (hour [_] hours)
-  (minute [_] minutes)
-  (second [_] seconds)
-  (milli [_] millis)
-  (after? [this that] (> (millis-since-epoch this) (millis-since-epoch that)))
-  (before? [this that] (< (millis-since-epoch this) (millis-since-epoch that)))
+(extend-protocol DateTimeProtocol
+  goog.date.UtcDateTime
+  (year [this] (.getYear this))
+  (month [this] (inc (.getMonth this)))
+  (day [this] (.getDate this))
+  (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
+  (hour [this] (.getHours this))
+  (minute [this] (.getMinutes this))
+  (second [this] (.getSeconds this))
+  (milli [this] (.getMilliseconds this))
+  (after? [this that] (> (.getTime this) (.getTime that)))
+  (before? [this that] (< (.getTime this) (.getTime that)))
+  (plus- [this period] ((period-fn period) + this))
+  (minus- [this period] ((period-fn period) - this))
+
+  goog.date.DateTime
+  (year [this] (.getYear this))
+  (month [this] (inc (.getMonth this)))
+  (day [this] (.getDate this))
+  (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
+  (hour [this] (.getHours this))
+  (minute [this] (.getMinutes this))
+  (second [this] (.getSeconds this))
+  (milli [this] (.getMilliseconds this))
+  (after? [this that] (> (.getTime this) (.getTime that)))
+  (before? [this that] (< (.getTime this) (.getTime that)))
+  (plus- [this period] ((period-fn period) + this))
+  (minus- [this period] ((period-fn period) - this))
+
+  goog.date.Date
+  (year [this] (.getYear this))
+  (month [this] (inc (.getMonth this)))
+  (day [this] (.getDate this))
+  (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
+  (after? [this that] (> (.getTime this) (.getTime that)))
+  (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
   (minus- [this period] ((period-fn period) - this)))
 
-(def ^:dynamic *sys-time* nil)
-
-(defn from-millis-since-epoch [ms]
-  (let [SSS (mod ms 1000)
-        ms (- ms SSS)
-        ss (mod ms 60000)
-        ms (- ms ss)
-        mm (mod ms 3600000)
-        ms (- ms mm)
-        hh (mod ms 86400000)
-        ms (- ms hh)
-        [yy ms] (loop [year 1970 ms ms]
-                  (let [ms-year (if (neg? ms) (dec year) year)
-                        ms-in-year (if (leap-year? ms-year)
-                                     31622400000
-                                     31536000000)]
-                    (if (<= ms ms-in-year)
-                      [year ms]
-                      (recur ((if (neg? ms) dec inc) year) (- ms ms-in-year)))))
-        [dd MM] (loop [days (/ ms 86400000) month 1]
-                  (let [dim (year-corrected-dim yy month)]
-                    (if (<= days dim)
-                      [(inc days) month]
-                      (recur (- days dim) (inc month)))))]
-    (rebalance
-     (->DateTime yy MM dd (/ hh 3600000) (/ mm 60000) (/ ss 1000) SSS utc))))
+(def utc (goog.i18n.TimeZone/createTimeZone
+           (clj->js {:id "UTC"
+                     :std_offset 0
+                     :names ["UTC"]
+                     :transitions []})))
 
 (defn now
   "Returns a DateTime for the current instant in the UTC time zone."
   []
-  (if *sys-time*
-    *sys-time*
-    #+cljs (from-millis-since-epoch (js/Date.now))
-    #+clj (from-millis-since-epoch (.getTime (java.util.Date.)))))
+  (if *sys-time* *sys-time* (goog.date.UtcDateTime.)))
 
-(defn date-time
-  "Constructs and returns a new DateTime in UTC.
+(defn time-now
+  "Returns a LocalTime for the current instant without date or time zone
+  using ISOChronology in the current time zone."
+  []
+  (goog.date.DateTime.))
 
-  Specify the year, month of year, day of month, hour of day, minute if hour,
-  second of minute, and millisecond of second. Note that month and day are
-  1-indexed while hour, second, minute, and millis are 0-indexed.
-
-  Any number of least-significant components can be ommited, in which case
-  they will default to 1 or 0 as appropriate."
-  ([year]
-     (date-time year 1 1 0 0 0 0))
-  ([year month]
-     (date-time year month 1 0 0 0 0))
-  ([year month day]
-     (date-time year month day 0 0 0 0))
-  ([year month day hour]
-     (date-time year month day hour 0 0 0))
-  ([year month day hour minute]
-     (date-time year month day hour minute 0 0))
-  ([year month day hour minute second]
-     (date-time year month day hour minute second 0))
-  ([year month day hour minute second millis]
-     (date-time year month day hour minute second millis utc))
-  ([year month day hour minute second millis tz]
-     (->DateTime year month day hour minute second millis tz)))
-
-(defn at-midnight [{:keys [years months days]}]
-  (date-time years months days))
+(defn at-midnight [datetime]
+  (let [datetime (.clone datetime)]
+    (doto datetime
+      (.setHours 0)
+      (.setMinutes 0)
+      (.setSeconds 0)
+      (.setMilliseconds 0))))
 
 (defn today-at-midnight
   "Returns a DateMidnight for today at midnight in the UTC time zone."
   []
-  (at-midnight (if *sys-time* *sys-time* (now))))
+  (at-midnight (now)))
 
 (defn epoch
   "Returns a DateTime for the begining of the Unix epoch in the UTC time zone."
   []
-  (from-millis-since-epoch 0))
+  (doto (goog.date.UtcDateTime.) (.setTime 0)))
 
 (defn date-midnight
   "Constructs and returns a new DateMidnight in UTC.
@@ -282,13 +214,105 @@ hours and minutes."
   ([year month]
    (date-midnight year month 1))
   ([year month day]
-   (date-time year month day)))
+   (goog.date.UtcDateTime. year (dec month) day)))
 
-(defn period
-  ([period value]
-   (with-meta {period value} {:type ::period}))
-  ([p1 v1 & kvs]
-   (apply assoc (period p1 v1) kvs)))
+(defn date-time
+  "Constructs and returns a new DateTime in UTC.
+
+  Specify the year, month of year, day of month, hour of day, minute if hour,
+  second of minute, and millisecond of second. Note that month and day are
+  1-indexed while hour, second, minute, and millis are 0-indexed.
+
+  Any number of least-significant components can be ommited, in which case
+  they will default to 1 or 0 as appropriate."
+  ([year]
+   (date-time year 1 1 0 0 0 0))
+  ([year month]
+   (date-time year month 1 0 0 0 0))
+  ([year month day]
+   (date-time year month day 0 0 0 0))
+  ([year month day hour]
+   (date-time year month day hour 0 0 0))
+  ([year month day hour minute]
+   (date-time year month day hour minute 0 0))
+  ([year month day hour minute second]
+   (date-time year month day hour minute second 0))
+  ([year month day hour minute second millis]
+   (goog.date.UtcDateTime. year (dec month) day hour minute second millis)))
+
+(defn local-date-time
+  "Constructs and returns a new LocalDateTime.
+Specify the year, month of year, day of month, hour of day, minute of hour,
+second of minute, and millisecond of second. Note that month and day are
+1-indexed while hour, second, minute, and millis are 0-indexed.
+Any number of least-significant components can be ommited, in which case
+they will default to 1 or 0 as appropriate."
+  ([year]
+   (local-date-time year 1 1 0 0 0 0))
+  ([year month]
+   (local-date-time year month 1 0 0 0 0))
+  ([year month day]
+   (local-date-time year month day 0 0 0 0))
+  ([year month day hour]
+   (local-date-time year month day hour 0 0 0))
+  ([year month day hour minute]
+   (local-date-time year month day hour minute 0 0))
+  ([year month day hour minute second]
+   (local-date-time year month day hour minute second 0))
+  ([year month day hour minute second millis]
+   (goog.date.DateTime. year (dec month) day hour minute second millis)))
+
+(defn local-date
+  "Constructs and returns a new LocalDate.
+Specify the year, month, and day. Does not deal with timezones."
+  [year month day]
+  (goog.date.Date. year (dec month) day))
+
+(defn today
+  "Constructs and returns a new LocalDate representing today's date.
+LocalDate objects do not deal with timezones at all."
+  []
+  (goog.date.Date.))
+
+(defn time-zone-for-offset
+  "Returns a DateTimeZone for the given offset, specified either in hours or
+  hours and minutes."
+  ([hours]
+     (time-zone-for-offset hours nil))
+  ([hours minutes]
+     (let [sign (if (neg? hours) :- :+)
+           fmt (str "UTC%s%02d" (when minutes ":%02d"))
+           hours (if (neg? hours) (* -1 hours) hours)
+           tz-name (if minutes
+                     (format fmt (name sign) hours minutes)
+                     (format fmt (name sign) hours))]
+       (with-meta
+         {:id tz-name
+          :offset [sign hours (or minutes 0) 0]
+          :rules "-"
+          :names [tz-name]}
+         {:type ::time-zone}))))
+
+(defn default-time-zone
+  "Returns the default DateTimeZone for the current environment."
+  []
+  (let [hours (/ (* -1 (.getTimezoneOffset (goog.date.DateTime.))) 60)]
+    (prn 'default-time-zone hours (int hours) (mod hours 1))
+    (time-zone-for-offset (int hours) (mod hours 1))))
+
+(defn to-time-zone
+  "Returns a new ReadableDateTime corresponding to the same absolute instant in time as
+the given ReadableDateTime, but with calendar fields corresponding to the given
+TimeZone."
+  [dt tz]
+  (.withZone dt tz))
+
+(defn from-time-zone
+  "Returns a new ReadableDateTime corresponding to the same point in calendar time as
+the given ReadableDateTime, but for a correspondingly different absolute instant in
+time."
+  [dt tz]
+  (.withZoneRetainFields dt tz))
 
 (defn years
   "Given a number, returns a Period representing that many years.
@@ -361,17 +385,36 @@ hours and minutes."
   [period]
   (minus (now) period))
 
+(defn yesterday
+  "Returns a DateTime for yesterday relative to now"
+  []
+  (-> 1 days ago))
+
 (defn from-now
   "Returns a DateTime a supplied period after the present.
   e.g. `(-> 30 minutes from-now)`"
   [period]
   (plus (now) period))
 
+(defn earliest
+  "Returns the earliest of the supplied DateTimes"
+  ([dt1 dt2]
+     (if (before? dt1 dt2) dt1 dt2))
+  ([dts]
+     (reduce earliest dts)))
+
+(defn latest
+  "Returns the latest of the supplied DateTimes"
+  ([dt1 dt2]
+     (if (after? dt1 dt2) dt1 dt2))
+  ([dts]
+     (reduce latest dts)))
+
 (defn interval
   "Returns an interval representing the span between the two given ReadableDateTimes.
   Note that intervals are closed on the left and open on the right."
   [start end]
-  {:pre [(< (millis-since-epoch start) (millis-since-epoch end))]}
+  {:pre [(< (.getTime start) (.getTime end))]}
   (with-meta {:start start :end end} {:type ::interval}))
 
 (defn start
@@ -393,7 +436,7 @@ hours and minutes."
 (defn in-millis
   "Returns the number of milliseconds in the given Interval."
   [{:keys [start end]}]
-  (- (millis-since-epoch end) (millis-since-epoch start)))
+  (- (.getTime end) (.getTime start)))
 
 (defn in-seconds
   "Returns the number of standard seconds in the given Interval."
@@ -424,7 +467,7 @@ hours and minutes."
   (take-while #(before? % end) (map #(plus start (months (inc %))) (range))))
 
 (defn total-days-in-whole-months [interval]
-  (map #(days-in-month (dec (month %))) (month-range interval)))
+  (map #(.getNumberOfDaysInMonth %) (month-range interval)))
 
 (defn in-months
   "Returns the number of months in the given Interval.
@@ -465,6 +508,7 @@ hours and minutes."
    (within? start end date))
   ([start end date]
    (or (= start date)
+       ;(= end date)
        (and (before? start date) (after? end date)))))
 
 (defn overlaps?
@@ -474,10 +518,12 @@ hours and minutes."
   With 4 arguments: Returns true if the range specified by start-a and end-a
   overlaps with the range specified by start-b and end-b."
   ([{start-a :start end-a :end} {start-b :start end-b :end}]
-   (overlaps? start-a end-a start-b end-b))
+     (and (not (or (= start-a end-b) (= end-a start-b)))
+          (overlaps? start-a end-a start-b end-b)))
   ([start-a end-a start-b end-b]
-   (or (and (before? start-b end-a) (after? end-b start-a))
-       (and (after? end-b start-a) (before? start-b end-a)))))
+     (or (and (before? start-b end-a) (after? end-b start-a))
+         (and (after? end-b start-a) (before? start-b end-a))
+         (or (= start-a end-b) (= start-b end-a)))))
 
 (defn abuts?
   "Returns true if Interval a abuts b, i.e. then end of a is exactly the
@@ -485,23 +531,68 @@ hours and minutes."
   [{start-a :start end-a :end} {start-b :start end-b :end}]
   (or (= start-a end-b) (= end-a start-b)))
 
+(defn date? [x]
+ (satisfies? DateTimeProtocol x))
+
+(defn interval? [x]
+ (= ::interval (:type (meta x))))
+
+(defn period? [x]
+ (= ::period (:type (meta x))))
+
+(defn period-type? [type x]
+  (and (period? x) (contains? x type)))
+
+(defn years?
+  "Returns true if the given value is an instance of Years"
+  [val]
+  (period-type? :years val))
+
+(defn months?
+  "Returns true if the given value is an instance of Months"
+  [val]
+  (period-type? :months val))
+
+(defn weeks?
+  "Returns true if the given value is an instance of Weeks"
+  [val]
+  (period-type? :weeks val))
+
+(defn days?
+  "Returns true if the given value is an instance of Days"
+  [val]
+  (period-type? :days val))
+
+(defn hours?
+  "Returns true if the given value is an instance of Hours"
+  [val]
+  (period-type? :hours val))
+
+(defn minutes?
+  "Returns true if the given value is an instance of Minutes"
+  [val]
+  (period-type? :minutes val))
+
+(defn seconds?
+  "Returns true if the given value is an instance of Seconds"
+  [val]
+  (period-type? :seconds val))
+
 (defn mins-ago
   [d]
   (in-minutes (interval d (now))))
 
 (defn last-day-of-the-month
   ([dt]
-     (last-day-of-the-month (year dt) (month dt)))
+   (last-day-of-the-month (year dt) (month dt)))
   ([year month]
-     (-> (date-time year month 1)
-         (plus (months 1))
-         (minus (days 1)))))
+   (minus (date-time year (inc month) 1) (days 1))))
 
 (defn number-of-days-in-the-month
   ([dt]
    (number-of-days-in-the-month (year dt) (month dt)))
   ([year month]
-   (day (last-day-of-the-month year month))))
+   (.getDate (last-day-of-the-month year month))))
 
 (defn first-day-of-the-month
   ([dt]
@@ -518,7 +609,7 @@ hours and minutes."
                      (remove false?
                              (map leap-year?
                                   (range start-year (+ start-year years)))))
-        start-month (month start)
+        start-month  (month start)
         days-in-months (total-days-in-whole-months interval)
         months (count days-in-months)
         days-to-remove (+ (* 365 years) leap-years (reduce + days-in-months))
@@ -540,12 +631,15 @@ hours and minutes."
 
 (defn today-at
   ([hours minutes seconds millis]
-    (let [midnight (today-at-midnight)]
-      (assoc midnight
-        :hours hours
-        :minutes minutes
-        :seconds seconds
-        :millis millis)))
+   (let [midnight (goog.date.Date.)]
+     (doto (goog.date.UtcDateTime. 0)
+       (.setYear (.getYear midnight))
+       (.setMonth (.getMonth midnight))
+       (.setDate (.getDate midnight))
+       (.setHours hours)
+       (.setMinutes minutes)
+       (.setSeconds seconds)
+       (.setMilliseconds millis))))
   ([hours minutes seconds]
    (today-at hours minutes seconds 0))
   ([hours minutes]

@@ -10,18 +10,18 @@
     #<19980425T000000>"
   (:refer-clojure :exclude [extend second])
   (:require
-   [cljs-time.core :as time]
-   [cljs-time.internal.core :refer [millis-since-epoch]]
-   [cljs-time.format :as time-fmt]))
+    [cljs-time.core :refer [date-time year month day hour minute second milli]]
+    [cljs-time.format :as time-fmt]
+    [goog.date :as date]))
 
 (defprotocol ICoerce
-  (to-date-time [obj] "Convert `obj` to a cljs_time.core.DateTime instance."))
+  (to-date-time [obj] "Convert `obj` to a goog.date.DateTime instance."))
 
 (defn from-long
   "Returns a DateTime instance in the UTC time zone corresponding to the given
   number of milliseconds after the Unix epoch."
   [millis]
-  (time/from-millis-since-epoch millis))
+  (doto (date/UtcDateTime.) (.setTime millis)))
 
 (defn from-string
   "Returns DateTime instance from string using formatters in clj-time.format,
@@ -29,9 +29,7 @@
   [s]
   (first
     (for [f (vals time-fmt/formatters)
-          :let [d (try
-                    (time-fmt/parse f s)
-                    (catch #+clj Exception #+cljs js/Error _))]
+          :let [d (try (time-fmt/parse f s) (catch js/Error _))]
           :when d] d)))
 
 (defn from-date
@@ -44,7 +42,7 @@
   "Convert `obj` to the number of milliseconds after the Unix epoch."
   [obj]
   (if-let [dt (to-date-time obj)]
-    (millis-since-epoch dt)))
+    (.getTime dt)))
 
 (defn to-epoch
   "Convert `obj` to Unix epoch."
@@ -53,10 +51,10 @@
     (and millis (/ millis 1000))))
 
 (defn to-date
-  "Convert `obj` to a Java/JavaScript Date instance."
+  "Convert `obj` to a JavaScript Date instance."
   [obj]
   (if-let [dt (to-date-time obj)]
-    (#+clj java.util.Date. #+cljs js/Date. (millis-since-epoch dt))))
+    (js/Date. (.getTime dt))))
 
 (defn to-string
   "Returns a string representation of obj in UTC time-zone
@@ -65,35 +63,55 @@
   (if-let [dt (to-date-time obj)]
     (time-fmt/unparse (:date-time time-fmt/formatters) dt)))
 
+(defn to-local-date
+  "Convert `obj` to a goog.date.Date instance"
+  [obj]
+  (if-let [dt (to-date-time obj)]
+    (doto (date/Date.)
+      (.setYear (.getYear dt))
+      (.setMonth (.getMonth dt))
+      (.setDate (.getDate dt)))))
+
+(defn to-local-date-time
+  "Convert `obj` to a goog.date.DateTime instance"
+  [obj]
+  (if-let [dt (to-date-time obj)]
+    (doto (date/DateTime.)
+      (.setYear (.getYear dt))
+      (.setMonth (.getMonth dt))
+      (.setDate (.getDate dt))
+      (.setHours (.getHours dt))
+      (.setMinutes (.getMinutes dt))
+      (.setSeconds (.getSeconds dt))
+      (.setMilliseconds (.getMilliseconds dt)))))
+
 (extend-protocol ICoerce
   nil
   (to-date-time [_]
     nil)
 
-  cljs_time.core.DateTime
-  (to-date-time [date] date)
-
-  #+clj java.util.Date #+cljs js/Date
+  js/Date
   (to-date-time [date]
     (from-date date))
 
-  ;; #+cljs js/Object
-  ;; #+cljs
-  ;; (to-date-time [date]
-  ;;   (from-date date))
+  goog.date.Date
+  (to-date-time [local-date]
+    (date-time (year local-date) (month local-date) (day local-date)))
 
-  ;; goog.date.DateTime
-  ;; (to-date-time [date-time]
-  ;;   date-time)
+  goog.date.DateTime
+  (to-date-time [local-date-time]
+    (date-time (year local-date-time) (month local-date-time) (day local-date-time)
+               (hour local-date-time) (minute local-date-time) (second local-date-time)
+               (milli local-date-time)))
 
-  ;; goog.date.Date
-  ;; (to-date-time [date-midnight]
-  ;;   (doto date-midnight (.set date-midnight)))
+  goog.date.UtcDateTime
+  (to-date-time [date-time]
+    date-time)
 
-  #+clj Number #+cljs number
+  number
   (to-date-time [long]
     (from-long long))
 
-  #+clj String #+cljs string
+  string
   (to-date-time [string]
     (from-string string)))

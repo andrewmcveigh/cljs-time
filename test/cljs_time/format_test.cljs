@@ -1,63 +1,56 @@
 (ns cljs-time.format-test
-  #+cljs (:require-macros [cemerick.cljs.test :refer [is deftest]])
+  (:refer-clojure :exclude [=])
+  (:require-macros
+    [cemerick.cljs.test :refer [is deftest]])
   (:require
-    #+cljs [cemerick.cljs.test :as t]
-    #+clj [clojure.test :refer [is deftest]]
+    [cemerick.cljs.test :as t]
     [cljs-time.coerce :refer [from-date to-date]]
-    [cljs-time.core :as time :refer [date-time interval utc within?]]
+    [cljs-time.internal.core :refer [=]]
+    [cljs-time.core :as time
+     :refer [date-time interval utc within?
+             local-date local-date-time
+             ]]
     [cljs-time.format :as format
-     :refer [formatter formatters instant->map parse unparse]]
-    [cljs-time.internal.core :refer [parse-int]]))
-
-(defn ->utc [{{[sign hh mm ss] :offset} :time-zone :as dt}]
-  (let [sign (cond (= sign :-) time/plus
-                   (= sign :+) time/minus)
-        [hh mm ss] (map #(or % 0) [hh mm ss])]
-    (-> dt
-        (sign (time/hours hh))
-        (sign (time/minutes mm))
-        (sign (time/seconds ss)))))
+     :refer [formatter formatters instant->map parse unparse
+             formatter-local
+             parse-local parse-local-date
+             unparse-local unparse-local-date
+             ]]))
 
 (defn utc-int-vec [d]
-  (let [d (->utc d)]
-    [(time/year d) (time/month d) (time/day d)
-     (time/hour d) (time/minute d) (time/second d) (time/milli d)]))
+  [(time/year d) (time/month d) (time/day d)
+   (time/hour d) (time/minute d) (time/second d) (time/milli d)])
 
 (deftest parse-test
-  (is
-   (= :parser-no-match 
-      (try
-        (format/parse (formatter "dth MMM yyyy HH:mm") "28th August 2013 14:26")
-        (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
-               (:type (ex-data e))))))
-  (is
-   (= :invalid-date
-      (try
-        (format/parse (formatter "dd/MM/yyyy") "30/02/2014")
-        (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
-               (:type (ex-data e))))))
+  (try
+    (format/parse (formatter "dth MMM yyyy HH:mm") "28th August 2013 14:26")
+    (catch ExceptionInfo e (is (= :parser-no-match (:type (ex-data e))))))
   (is
    (= :invalid-date
       (try
         (format/parse (formatter "dd/MM/yyyy") "31/04/2013")
-        (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
-               (:type (ex-data e))))))
+        (catch ExceptionInfo e (:type (ex-data e))))))
   (is
    (= :invalid-date
       (try
         (format/parse (formatter "dd/MM/yyyy") "32/04/2013")
-        (catch #+clj clojure.lang.ExceptionInfo #+cljs ExceptionInfo e
-               (:type (ex-data e))))))
-  (is (= [1938 8 12 0 0 0 0]
-         (utc-int-vec (format/parse (formatter "dd/MM/yyyy") "12/08/1938"))))
-  (is (= [2013 8 28 14 26 0 0]
-         (utc-int-vec
-          (format/parse (formatter "dth MMMM yyyy HH:mm")
-                        "28th August 2013 14:26"))))
-  (is (= [2012 2 29 14 26 0 0]
-         (utc-int-vec
-          (format/parse (formatter "dth MMMM yyyy HH:mm")
-                        "29th February 2012 14:26"))))
+        (catch ExceptionInfo e (:type (ex-data e))))))
+  (let [date (format/parse (formatter "dd/MM/yyyy") "12/08/1938")]
+    (is (= 1938 (.getYear date)))
+    (is (= 12   (.getDate date)))
+    (is (= 7    (.getMonth date))))
+  (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "28th August 2013 14:26")]
+    (is (= 2013 (.getYear date)))
+    (is (= 28   (.getDate date)))
+    (is (= 7    (.getMonth date)))
+    (is (= 14   (.getHours date)))
+    (is (= 26   (.getMinutes date))))
+  (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "29th February 2012 14:26")]
+    (is (= 2012 (.getYear date)))
+    (is (= 29   (.getDate date)))
+    (is (= 1    (.getMonth date)))
+    (is (= 14   (.getHours date)))
+    (is (= 26   (.getMinutes date))))
   (is (= [2014 4 1 13 57 0 0]
          (utc-int-vec
           (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ssZZ")
@@ -81,7 +74,7 @@
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
          (format/parse (formatter "dd/MM/yyyy") "30/09/2013")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 6))
-         (format/parse (formatter "dd/MM/yyyy") "28/02/2014")))
+         (format/parse (formatter "dd/MM/yyyy") "02/03/2014")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 8))
          (format/parse (formatter "dd/MM/yyyy") "30/12/2012")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
@@ -128,36 +121,36 @@
 (deftest within?-test
 
   (is (within?
-        (interval (date-time 2013 1 1 0 0 0 0)
-                  (date-time 2013 2 1 0 0 0 0))
-        (date-time 2013 1 1 0 0 0 0)))
+        (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                  (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
+        (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)))
 
   (is (within?
-        (interval (date-time 2013 1 1 0 0 0 0)
-                  (date-time 2013 2 1 0 0 0 0))
-        (date-time 2013 1 11 0 0 0 0)))
+        (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                  (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
+        (goog.date.UtcDateTime. 2013 0 11 0 0 0 0)))
 
   (is (within?
-        (interval (date-time 2013 1 1 0 0 0 0)
-                  (date-time 2013 2 1 0 0 0 0))
-        (time/minus (date-time 2013 2 1 0 0 0 0)
+        (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                  (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
+        (time/minus (goog.date.UtcDateTime. 2013 1 1 0 0 0 0)
                     (time/millis 1))))
 
   (is (not
         (within?
-          (interval (date-time 2013 1 1 0 0 0 0)
-                    (date-time 2013 2 1 0 0 0 0))
-          (date-time 2013 2 1 0 0 0 0))))
+          (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                    (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))
+          (goog.date.UtcDateTime. 2013 1 1 0 0 0 0))))
 
   (is (not (within?
-             (interval (date-time 2013 1 1 0 0 0 0)
-                       (date-time 2013 3 1 0 0 0 0))
-             (date-time 2013 3 1 0 0 0 1))))
+             (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                       (goog.date.UtcDateTime. 2013 2 1 0 0 0 0))
+             (goog.date.UtcDateTime. 2013 2 1 0 0 0 1))))
 
   (is (not (within?
-             (interval (date-time 2013 1 1 0 0 0 0)
-                       (date-time 2013 3 1 0 0 0 0))
-             (date-time 2012 12 31 23 59 59 999)))))
+             (interval (goog.date.UtcDateTime. 2013 0 1 0 0 0 0)
+                       (goog.date.UtcDateTime. 2013 2 1 0 0 0 0))
+             (goog.date.UtcDateTime. 2012 11 31 23 59 59 999)))))
 
 
 (deftest test-formatter
@@ -165,10 +158,10 @@
     (is (= (date-time 2010 3 11)
            (parse fmt "20100311")))))
 
-;(deftest test-formatter-local
-;(let [fmt (formatter-local "yyyyMMdd")]
-;(is (= (local-date-time 2010 3 11)
-;(parse-local fmt "20100311")))))
+(deftest test-formatter-local
+  (let [fmt (formatter-local "yyyyMMdd")]
+    (is (= (local-date-time 2010 3 11)
+           (parse-local fmt "20100311")))))
 
 (deftest test-parse
   (is (= (date-time 2010 10 11)
@@ -193,44 +186,55 @@
     ;(date-time 2010 3 11 17 49 20 881))))
     ))
 
-;(deftest test-local-parse
-;(is (= (local-date-time 2010 10 11)
-;(parse-local "2010-10-11T00:00:00")))
-;(let [fmt (formatters :date)]
-;(is (= (local-date-time 2010 3 11)
-;(parse-local fmt "2010-03-11"))))
-;(let [fmt (formatters :basic-date-time)]
-;(is (= (local-date-time 2010 3 11 17 49 20 881)
-;(parse-local fmt "20100311T174920.881Z")))))
+(deftest test-local-parse
+  (is (= (local-date-time 2010 10 11)
+         (parse-local "2010-10-11T00:00:00")))
+  (let [fmt (formatters :date)]
+    (is (= (local-date-time 2010 3 11)
+           (parse-local fmt "2010-03-11"))))
+  (let [fmt (formatters :basic-date-time)]
+    (is (= (local-date-time 2010 3 11 17 49 20 881)
+           (parse-local fmt "20100311T174920.881Z")))))
 
-;(deftest test-local-unparse
-;(let [fmt (formatters :date)]
-;(is (= "2010-03-11"
-;(unparse-local fmt (local-date-time 2010 3 11)))))
-;(let [fmt (formatters :basic-date-time)]
-;(is (= "20100311T174920.881"
-;(unparse-local fmt (local-date-time 2010 3 11 17 49 20 881))))
-;(is (= "20100311T174920.881"
-;(unparse-local (formatter-local "yyyyMMdd'T'HHmmss.SSS")
-;(local-date-time 2010 3 11 17 49 20 881))))))
+(deftest test-local-unparse
+  (let [fmt (formatters :date)]
+    (is (= "2010-03-11"
+           (unparse-local fmt (local-date-time 2010 3 11)))))
+  (let [fmt (formatters :basic-date-time)]
+    (is (= "20100311T174920.881"
+           (unparse-local fmt (local-date-time 2010 3 11 17 49 20 881))))
+    (is (= "20100311T174920.881"
+           (unparse-local (formatter-local "yyyyMMdd'T'HHmmss.SSS")
+                          (local-date-time 2010 3 11 17 49 20 881))))))
 
-;(deftest test-local-date-parse
-;(is (= (local-date 2010 10 11)
-;(parse-local-date "2010-10-11T00:00:00")))
-;(let [fmt (formatters :date)]
-;(is (= (local-date 2010 3 11)
-;(parse-local-date fmt "2010-03-11"))))
-;(let [fmt (formatters :basic-date-time)]
-;(is (= (local-date 2010 3 11)
-;(parse-local-date fmt "20100311T000000.000Z")))))
+(deftest test-local-date-parse
+  (is (= (local-date 2010 10 11)
+         (parse-local-date "2010-10-11T00:00:00")))
+  (let [fmt (formatters :date)]
+    (is (= (local-date 2010 3 11)
+           (parse-local-date fmt "2010-03-11"))))
+  (let [fmt (formatters :basic-date-time)]
+    (is (= (local-date 2010 3 11)
+           (parse-local-date fmt "20100311T000000.000Z")))))
 
-;(deftest test-local-date-unparse
-;(let [fmt (formatters :date)]
-;(is (= "2010-03-11"
-;(unparse-local-date fmt (local-date 2010 3 11)))))
-;(let [fmt (formatters :basic-date-time)]
-;(is (= "20100311T000000.000"
-;(unparse-local-date fmt (local-date-time 2010 3 11 00 00 00 000))))))
+(deftest test-local-date-unparse
+  (let [fmt (formatters :date)]
+    (is (= "2010-03-11"
+           (unparse-local-date fmt (local-date 2010 3 11)))))
+  (let [fmt (formatters :basic-date-time)]
+    (is (= "20100311T000000.000"
+           (unparse-local-date fmt (local-date-time 2010 3 11 00 00 00 000))))))
+
+;; (deftest test-local-time-parse
+;;   (is (= (local-time 12)
+;;          (parse-local-time "12:00:00")))
+;;   (is (= (local-time 12 13 14 15)
+;;          (parse-local-time "12:13:14.015"))))
+
+;; (deftest test-local-time-unparse
+;;   (let [fmt (formatter "HH:mm:ss.SSS")] ; Cannot use (formatters :local-time) here as it does not support printing
+;;     (is (= "13:14:15.167"
+;;            (unparse-local-time fmt (local-time 13 14 15 167))))))
 
 ;(deftest test-formatter-modifiers
 ;(let [fmt (formatter "YYYY-MM-dd HH:mm z" (time-zone-for-id "America/Chicago"))]
@@ -277,6 +281,7 @@
     (is (= "4:19pm" (unparse f1 evening)))
     (is (= "7:40"   (unparse f2 morning)))
     (is (= "16:19"  (unparse f2 evening)))
+
     (is (= "12:00am" (unparse f1 (parse f1 "12:00am"))))
     (is (= "12:00pm" (unparse f1 (parse f1 "12:00pm"))))
     (is (= "7:40am"  (unparse f1 (parse f1 "7:40am"))))
