@@ -32,7 +32,7 @@ If you are using Maven, add the following repository definition to your `pom.xml
 With Leiningen:
 
 ``` clj
-[com.andrewmcveigh/cljs-time "0.1.6"]
+[com.andrewmcveigh/cljs-time "0.2.0"]
 ```
 
 With Maven:
@@ -41,7 +41,7 @@ With Maven:
 <dependency>
   <groupId>com.andrewmcveigh</groupId>
   <artifactId>cljs-time</artifactId>
-  <version>0.1.6</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
@@ -50,7 +50,7 @@ With Maven:
 Please open issues against the
 [cljs-time repo on Github](https://github.com/andrewmcveigh/cljs-time/issues).
 
-**Note: version 0.1.6 follows the API of clj-time 0.6.0.**
+**Note: version 0.2.0 follows the API of clj-time 0.8.0.**
 
 ## API
 
@@ -163,7 +163,7 @@ To see a list of available built-in formatters and an example of a date-time pri
 
 Remember that `mm` is minutes, `MM` is months, `ss` is seconds and `SS` is milliseconds.
 
-Once you have a formatter, parsing and printing are strait-forward:
+Once you have a formatter, parsing and printing are straight-forward:
 
 ``` clj
 => (parse custom-formatter "20100311")
@@ -172,18 +172,6 @@ Once you have a formatter, parsing and printing are strait-forward:
 => (unparse custom-formatter (date-time 2010 10 3))
 "20101003"
 ```
-
-<!--To parse dates in multiple formats and format dates in just one format, you can do this:-->
-
-<!--``` clj-->
-<!--=> (def multi-parser (formatter (default-time-zone) "YYYY-MM-dd" "YYYY/MM/dd"))-->
-
-<!--=> (unparse multi-parser (parse multi-parser "2012-02-01"))-->
-<!--"2012-02-01"-->
-
-<!--=> (unparse multi-parser (parse multi-parser "2012/02/01"))-->
-<!--"2012-02-01"-->
-<!--```-->
 
 `cljs-time.core/today-at` returns a moment in time at the given hour, minute and second
 on the current date:
