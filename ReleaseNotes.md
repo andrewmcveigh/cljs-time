@@ -1,3 +1,7 @@
+## v0.2.1
+
+ - Alias #'cljs-time.core/= from internal ns. Fix #12
+
 ## v0.2.0
 
  - Bugsfixes:
