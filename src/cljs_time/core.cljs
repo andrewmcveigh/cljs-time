@@ -65,13 +65,15 @@
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
-   [cljs-time.internal.core :refer [= leap-year? period format]]
+   [cljs-time.internal.core :refer [leap-year? period format]]
    [goog.date.Date]
    [goog.date.DateTime]
    [goog.date.UtcDateTime]
    [goog.i18n.TimeZone]))
 
 (def ^:dynamic *sys-time* nil)
+
+(def = cljs-time.internal.core/=)
 
 (defprotocol DateTimeProtocol
   "Interface for various date time functions"
