@@ -416,7 +416,7 @@ time."
   "Returns an interval representing the span between the two given ReadableDateTimes.
   Note that intervals are closed on the left and open on the right."
   [start end]
-  {:pre [(< (.getTime start) (.getTime end))]}
+  {:pre [(<= (.getTime start) (.getTime end))]}
   (with-meta {:start start :end end} {:type ::interval}))
 
 (defn start
