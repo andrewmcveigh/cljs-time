@@ -1,3 +1,9 @@
+## v0.2.2
+
+ - Fix #'interval contract to match Joda Interval
+
+- Import clj-time periodic-seq function
+
 ## v0.2.1
 
  - Alias #'cljs-time.core/= from internal ns. Fix #12
