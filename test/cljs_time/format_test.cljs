@@ -22,9 +22,10 @@
    (time/hour d) (time/minute d) (time/second d) (time/milli d)])
 
 (deftest parse-test
-  (try
-    (format/parse (formatter "dth MMM yyyy HH:mm") "28th August 2013 14:26")
-    (catch ExceptionInfo e (is (= :parser-no-match (:type (ex-data e))))))
+  (is (= :parser-no-match
+         (try
+           (format/parse (formatter "dth MMM yyyy HH:mm") "28th August 2013 14:26")
+           (catch ExceptionInfo e (:type (ex-data e))))))
   (is
    (= :invalid-date
       (try
@@ -51,6 +52,9 @@
     (is (= 1    (.getMonth date)))
     (is (= 14   (.getHours date)))
     (is (= 26   (.getMinutes date))))
+  (is (= [2014 04 01 18 54 0 0]
+         (utc-int-vec
+          (format/parse (formatter "DD-MM-YYYY HH:mm") "01-04-2014 18:54"))))
   (is (= [2014 4 1 13 57 0 0]
          (utc-int-vec
           (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ssZZ")
