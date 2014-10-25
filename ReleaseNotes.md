@@ -1,3 +1,7 @@
+## v0.2.3
+
+ - Add DDD parser, YYYY, fix #6
+
 ## v0.2.2
 
  - Fix #'interval contract to match Joda Interval
