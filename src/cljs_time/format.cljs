@@ -127,6 +127,8 @@
      "dd" #(zero-pad (d %))
      "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
      "dow" #(days (dow %))
+     "D" doy
+     "DD" doy
      "DDD" doy
      "EEE" #(abbreviate 3 (days (dow %)))
      "EEEE" #(days (dow %))
@@ -135,7 +137,9 @@
      "MMM" #(abbreviate 3 (months (dec (M %))))
      "MMMM" #(months (dec (M %)))
      "yyyy" y
+     "YYYY" y
      "yy" #(mod (y %) 100)
+     "YY" #(mod (y %) 100)
      "xxxx" y
      "a" a
      "A" A
@@ -192,12 +196,18 @@
         tz #(assoc %1 :time-zone %2)]
     {"d" ["(\\d{1,2})" d]
      "dd" ["(\\d{2})" d]
+     "D" ["(\\d{1,3})" d]
+     "DD" ["(\\d{2,3})" d]
+     "DDD" ["(\\d{3})" d]
      "dth" ["(\\d{1,2})(?:st|nd|rd|th)" d]
      "M" ["(\\d{1,2})" M]
      "MM" ["((?:\\d{2})|(?:\\b\\d{1,2}\\b))" M]
      "y" ["(\\d{1,4})" y]
      "yy" ["(\\d{2,4})" y]
      "yyyy" ["(\\d{4})" y]
+     "Y" ["(\\d{1,4})" y]
+     "YY" ["(\\d{2,4})" y]
+     "YYYY" ["(\\d{4})" y]
      "MMM" [(str \( (string/join \| (map (partial abbreviate 3) months)) \)) MMM]
      "MMMM" [(str \( (string/join \| months) \)) MMMM]
      "E" [(str \( (string/join \| (map (partial abbreviate 3) days)) \)) skip]
@@ -232,8 +242,9 @@
 
 (defn parser-sort-order-pred [parser]
   (index-of
-    ["yyyy" "yy" "y" "d" "dd" "dth" "M" "MM" "MMM" "MMMM" "dow" "h" "H"
-     "m" "s" "S" "hh" "HH" "mm" "ss" "a" "SSS" "Z" "ZZ"]
+    ["YYYY" "YY" "Y" "yyyy" "yy" "y" "d" "dd" "D" "DD" "DDD" "dth"
+     "M" "MM" "MMM" "MMMM" "dow" "h" "H" "m" "s" "S" "hh" "HH" "mm" "ss" "a"
+     "SSS" "Z" "ZZ"]
     parser))
 
 (def date-format-pattern
