@@ -299,8 +299,21 @@ LocalDate objects do not deal with timezones at all."
   "Returns the default DateTimeZone for the current environment."
   []
   (let [hours (/ (* -1 (.getTimezoneOffset (goog.date.DateTime.))) 60)]
-    (prn 'default-time-zone hours (int hours) (mod hours 1))
     (time-zone-for-offset (int hours) (mod hours 1))))
+
+(defn to-default-time-zone
+  "Assuming `dt` is in the UTC timezone, returns an adjusted DateTime
+  in the default (local) timezone."
+  [dt]
+  (let [local (goog.date.DateTime.)
+        {[sign hours minutes secs] :offset} (default-time-zone)]
+    (doto local
+      (.setTime (+ (.getTime dt)
+                   (* 60000
+                      ((if (= :+ sign) + -)
+                       (* hours 3600000)
+                       (* minutes 60000)
+                       secs)))))))
 
 (defn to-time-zone
   "Returns a new ReadableDateTime corresponding to the same absolute instant in time as

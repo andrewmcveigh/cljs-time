@@ -23,23 +23,12 @@
    [cljs-time.format :as fmt]
    [goog.date.DateTime]))
 
-(defn- to-default-time-zone [dt]
-  (let [local (goog.date.DateTime.)
-        {[sign hours minutes secs] :offset} (time/default-time-zone)]
-    (doto local
-      (.setTime (+ (.getTime dt)
-                   (* 60000
-                      ((if (= :+ sign) + -)
-                       (* hours 3600000)
-                       (* minutes 60000)
-                       secs)))))))
-
 (def ^{:doc "Map of local formatters for parsing and printing." :dynamic true}
   *local-formatters*
   (into {} (map
             (fn [[k f]]
               [k (if (= (:type (meta f)) :fmt/formatter)
-                   (update-in f [:parser] #(to-default-time-zone %))
+                   (update-in f [:parser] #(time/to-default-time-zone %))
                    f)])
             fmt/formatters)))
 
@@ -59,7 +48,7 @@
 (defn- as-local-date-time-to-time-zone
   "Coerce to date-time in the default time zone."
   [obj]
-  (-> obj coerce/to-date-time to-default-time-zone))
+  (-> obj coerce/to-date-time time/to-default-time-zone))
 
 (defn- from-local-string
   "Return local DateTime instance from string using
