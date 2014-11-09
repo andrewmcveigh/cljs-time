@@ -35,16 +35,6 @@ With Leiningen:
 [com.andrewmcveigh/cljs-time "0.2.3"]
 ```
 
-With Maven:
-
-``` xml
-<dependency>
-  <groupId>com.andrewmcveigh</groupId>
-  <artifactId>cljs-time</artifactId>
-  <version>0.2.3</version>
-</dependency>
-```
-
 ## Bugs and Enhancements
 
 Please open issues against the
