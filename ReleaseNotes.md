@@ -1,3 +1,8 @@
+## v0.2.4
+
+- Correct to-default-time-zone/today implementation
+- Move to-default-time-zone to core ns
+
 ## v0.2.3
 
  - Add DDD parser, YYYY, fix #6

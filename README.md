@@ -32,7 +32,7 @@ If you are using Maven, add the following repository definition to your `pom.xml
 With Leiningen:
 
 ``` clj
-[com.andrewmcveigh/cljs-time "0.2.3"]
+[com.andrewmcveigh/cljs-time "0.2.4"]
 ```
 
 ## Bugs and Enhancements
