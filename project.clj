@@ -10,7 +10,8 @@
   :plugins [[com.cemerick/clojurescript.test "0.3.1"]
             [lein-cljsbuild "1.0.3"]
             [lein-marginalia "0.7.1"]
-            [com.cemerick/austin "0.1.4"]]
+            [com.cemerick/austin "0.1.4"]
+            [com.andrewmcveigh/lein-auto-release "0.1.7"]]
 
   :jvm-opts ["-Djava.awt.headless=true"]
   :hooks [leiningen.cljsbuild]
@@ -49,4 +50,26 @@
       ["phantomjs" "resources/runner.js" "target/cljs/simple.js"]
       "phantom-advanced"
       ["phantomjs" "resources/runner.js" "target/cljs/advanced.js"]}}}}
-  :aliases {"test-all" ["with-profile" "prod" "test"]})
+
+  :aliases {"test-all" ["with-profile" "prod" "test"]}
+
+  :release-tasks [["vcs" "assert-committed"]
+                  ["clean"]
+                  ["test-all"]
+                  ["auto-release" "checkout" "master"]
+                  ["auto-release" "merge-no-ff" "develop"]
+                  ["change" "version" "leiningen.release/bump-version" "release"]
+                  ["auto-release" "update-release-notes"]
+                  ["auto-release" "update-readme-version"]
+                  ["vcs" "commit"]
+                  ["vcs" "tag" "v"]
+                  ["deploy" "clojars"]
+                  ["vcs" "push"]
+                  ["auto-release" "checkout" "develop"]
+                  ["auto-release" "merge" "master"]
+                  ["change" "version" "leiningen.release/bump-version"]
+                  ["vcs" "commit"]
+                  ["vcs" "push"]
+                  ["auto-release" "checkout-latest-tag"]
+                  ["marg"]
+                  ["auto-release" "update-marginalia-gh-pages"]])
