@@ -272,9 +272,12 @@ Specify the year, month, and day. Does not deal with timezones."
 
 (defn today
   "Constructs and returns a new LocalDate representing today's date.
-LocalDate objects do not deal with timezones at all."
+  LocalDate objects do not deal with timezones at all."
   []
-  (goog.date.Date.))
+  (if *sys-time*
+    (let [d *sys-time*]
+      (goog.date.Date. (.getYear d) (.getMonth d) (.getDate d)))
+    (goog.date.Date.)))
 
 (defn time-zone-for-offset
   "Returns a DateTimeZone for the given offset, specified either in hours or
@@ -305,15 +308,16 @@ LocalDate objects do not deal with timezones at all."
   "Assuming `dt` is in the UTC timezone, returns an adjusted DateTime
   in the default (local) timezone."
   [dt]
-  (let [local (goog.date.DateTime.)
-        {[sign hours minutes secs] :offset} (default-time-zone)]
-    (doto local
-      (.setTime (+ (.getTime dt)
-                   (* 60000
-                      ((if (= :+ sign) + -)
-                       (* hours 3600000)
-                       (* minutes 60000)
-                       secs)))))))
+  (let [{[sign hours minutes secs] :offset} (default-time-zone)
+        f (if (= :+ sign) + -)]
+    (goog.date.DateTime.
+     (.getYear dt)
+     (.getMonth dt)
+     (.getDate dt)
+     (f hours (.getHours dt))
+     (f minutes (.getMinutes dt))
+     (f secs (.getSeconds dt))
+     (.getMilliseconds dt))))
 
 (defn to-time-zone
   "Returns a new ReadableDateTime corresponding to the same absolute instant in time as

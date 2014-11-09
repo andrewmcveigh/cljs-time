@@ -17,7 +17,7 @@
       day-of-week after? before? ago from-now
       years months weeks days hours minutes seconds millis
       years? months? weeks? days? hours? minutes? seconds?
-      extend start end mins-ago]]))
+      extend start end mins-ago default-time-zone to-default-time-zone]]))
 
 (deftest test-now
   (is (= (date-time 2010 1 1)
@@ -110,8 +110,8 @@
 
 (deftest test-today-default
   (is (= (local-date 2013 4 20)
-         (do-at (to-default-time-zone (date-time 2013 4 20) (default-time-zone)
-                                      (today))))))
+         (do-at (to-default-time-zone (date-time 2013 4 20))
+                (today)))))
 
 (deftest test-day-of-week
   (let [d (date-time 2010 4 24)]
