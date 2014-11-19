@@ -113,6 +113,12 @@
          (do-at (to-default-time-zone (date-time 2013 4 20))
                 (today)))))
 
+(deftest test-dst-time-default
+  (is (= (local-date-time 2013 4 20)
+         (to-default-time-zone (date-time 2013 4 20))))
+  (is (= (local-date-time 2013 11 20)
+         (to-default-time-zone (date-time 2013 11 20)))))
+
 (deftest test-day-of-week
   (let [d (date-time 2010 4 24)]
     (is (= 6 (day-of-week d))))

@@ -308,16 +308,14 @@ Specify the year, month, and day. Does not deal with timezones."
   "Assuming `dt` is in the UTC timezone, returns an adjusted DateTime
   in the default (local) timezone."
   [dt]
-  (let [{[sign hours minutes secs] :offset} (default-time-zone)
-        f (if (= :+ sign) + -)]
-    (goog.date.DateTime.
-     (.getYear dt)
-     (.getMonth dt)
-     (.getDate dt)
-     (f hours (.getHours dt))
-     (f minutes (.getMinutes dt))
-     (f secs (.getSeconds dt))
-     (.getMilliseconds dt))))
+  (doto (goog.date.DateTime.)
+    (.setUTCFullYear (.getYear dt))
+    (.setUTCMonth (.getMonth dt))
+    (.setUTCDate (.getDate dt))
+    (.setUTCHours (.getHours dt))
+    (.setUTCMinutes (.getMinutes dt))
+    (.setUTCSeconds (.getSeconds dt))
+    (.setUTCMilliseconds (.getMilliseconds dt))))
 
 (defn to-time-zone
   "Returns a new ReadableDateTime corresponding to the same absolute instant in time as
