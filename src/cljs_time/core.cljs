@@ -300,15 +300,16 @@ Specify the year, month, and day. Does not deal with timezones."
 
 (defn default-time-zone
   "Returns the default DateTimeZone for the current environment."
-  []
-  (let [hours (/ (* -1 (.getTimezoneOffset (goog.date.DateTime.))) 60)]
-    (time-zone-for-offset (int hours) (mod hours 1))))
+  ([] (default-time-zone nil))
+  ([dt]
+    (let [hours (/ (* -1 (.getTimezoneOffset (or dt (goog.date.DateTime.)))) 60)]
+      (time-zone-for-offset (int hours) (mod hours 1)))))
 
 (defn to-default-time-zone
   "Assuming `dt` is in the UTC timezone, returns an adjusted DateTime
   in the default (local) timezone."
   [dt]
-  (let [{[sign hours minutes secs] :offset} (default-time-zone)
+  (let [{[sign hours minutes secs] :offset} (default-time-zone dt)
         f (if (= :+ sign) + -)]
     (goog.date.DateTime.
      (.getYear dt)
