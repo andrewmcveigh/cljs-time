@@ -40,12 +40,6 @@
 (defn index-of [coll x]
   (first (keep-indexed #(when (= %2 x) %1) coll)))
 
-(defn period
-  ([period value]
-   (with-meta {period value} {:type :cljs-time.core/period}))
-  ([p1 v1 & kvs]
-   (apply assoc (period p1 v1) kvs)))
-
 (defn format
   "Formats a string using goog.string.format."
   [fmt & args]

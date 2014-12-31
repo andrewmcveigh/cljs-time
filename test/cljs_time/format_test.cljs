@@ -8,8 +8,7 @@
     [cljs-time.internal.core :refer [=]]
     [cljs-time.core :as time
      :refer [date-time interval utc within?
-             local-date local-date-time
-             ]]
+             local-date local-date-time period]]
     [cljs-time.format :as format
      :refer [formatter formatters instant->map parse unparse
              formatter-local
@@ -296,14 +295,13 @@
 (deftest test-instant->map-from-interval
   (let [it (interval (date-time 1986 9 2 0 0 2)  (date-time 1986 11 30 2 5 12))]
     (is (= (instant->map it)
-           {:years 0
-            :months 2
-            :days 28
-            :hours 2
-            :minutes 5
-            :seconds 10
-            :millis 0
-            }))))
+           (period :years 0
+                   :months 2
+                   :days 28
+                   :hours 2
+                   :minutes 5
+                   :seconds 10
+                   :millis 0)))))
 
 (deftest test-instant->map-from-date-time
   (let [dt (date-time 1986 9 2 0 0 2)]

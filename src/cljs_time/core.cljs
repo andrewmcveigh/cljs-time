@@ -65,7 +65,7 @@
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
-   [cljs-time.internal.core :refer [leap-year? period format]]
+   [cljs-time.internal.core :refer [leap-year? format]]
    [goog.date.Date]
    [goog.date.DateTime]
    [goog.date.UtcDateTime]
@@ -89,7 +89,24 @@
   (after? [this that] "Returns true if ReadableDateTime 'this' is strictly after date/time 'that'.")
   (before? [this that] "Returns true if ReadableDateTime 'this' is strictly before date/time 'that'.")
   (plus- [this period] "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
-  (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s)."))
+  (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s).")) 
+
+(defrecord Interval [start end])
+
+(defn interval
+  "Returns an interval representing the span between the two given ReadableDateTimes.
+  Note that intervals are closed on the left and open on the right."
+  [start end]
+  {:pre [(<= (.getTime start) (.getTime end))]}
+  (->Interval start end))
+
+(defrecord Period [years months weeks days hours minutes seconds millis])
+
+(defn period
+  ([period value]
+   (map->Period {period value}))
+  ([p1 v1 & kvs]
+   (apply assoc (period p1 v1) kvs)))
 
 (def periods
   (let [fixed-time-fn (fn [f set-fn op date value]
@@ -427,13 +444,6 @@ Specify the year, month, and day. Does not deal with timezones."
   ([dts]
      (reduce latest dts)))
 
-(defn interval
-  "Returns an interval representing the span between the two given ReadableDateTimes.
-  Note that intervals are closed on the left and open on the right."
-  [start end]
-  {:pre [(<= (.getTime start) (.getTime end))]}
-  (with-meta {:start start :end end} {:type ::interval}))
-
 (defn start
   "Returns the start DateTime of an Interval."
   [in]
@@ -552,10 +562,10 @@ Specify the year, month, and day. Does not deal with timezones."
  (satisfies? DateTimeProtocol x))
 
 (defn interval? [x]
- (= ::interval (:type (meta x))))
+ (instance? Interval x))
 
 (defn period? [x]
- (= ::period (:type (meta x))))
+ (instance? Period x))
 
 (defn period-type? [type x]
   (and (period? x) (contains? x type)))
@@ -617,9 +627,9 @@ Specify the year, month, and day. Does not deal with timezones."
   ([year month]
    (-> (date-time year month 1))))
 
-(defmulti ->period meta)
+(defmulti ->period type)
 
-(defmethod ->period {:type ::interval} [{:keys [start end] :as interval}]
+(defmethod ->period cljs-time.core.Interval [{:keys [start end] :as interval}]
   (let [years (in-years interval)
         start-year (year start)
         leap-years (count

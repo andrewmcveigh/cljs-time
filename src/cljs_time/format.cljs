@@ -489,16 +489,16 @@ formatted with each of the available printing formatters."
       (.getHours dt)
       (.getMinutes dt)
       (.getSeconds dt)
-      (.getMilliseconds dt))))
+      (.getMilliseconds dt)))
 
-(extend-protocol Mappable
-  ObjMap
+  cljs-time.core.Period
   (instant->map [m]
-    (case (:type (meta m))
-      :cljs-time.core/period m
-      :cljs-time.core/interval (time/->period m))))
+    (time/->period m))
 
-(extend-protocol Mappable
+  cljs-time.core.Interval
+  (instant->map [m]
+    (time/->period m))
+
   cljs.core/PersistentArrayMap
   (instant->map [m]
     (case (:type (meta m))
