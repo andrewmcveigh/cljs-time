@@ -1,11 +1,11 @@
 (ns cljs-time.local-test
   (:refer-clojure :exclude [= extend second])
   (:require-macros
-   [cemerick.cljs.test :refer [is deftest]]
+   [cljs.test :refer [is deftest]]
    [cljs-time.macros :refer [do-at]]
    [cljs-time.core-test :refer [when-available when-not-available]])
   (:require
-   [cemerick.cljs.test :as t]
+   [cljs.test :as t]
    [cljs-time.internal.core :refer [=]]
    [cljs-time.core :as time]
    [cljs-time.format :as fmt]

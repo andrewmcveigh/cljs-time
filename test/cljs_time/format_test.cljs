@@ -1,9 +1,9 @@
 (ns cljs-time.format-test
   (:refer-clojure :exclude [=])
   (:require-macros
-    [cemerick.cljs.test :refer [is deftest]])
+    [cljs.test :refer [is deftest]])
   (:require
-    [cemerick.cljs.test :as t]
+    [cljs.test :as t]
     [cljs-time.coerce :refer [from-date to-date]]
     [cljs-time.internal.core :refer [=]]
     [cljs-time.core :as time

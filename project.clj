@@ -7,10 +7,9 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2511"]]
 
-  :plugins [[com.cemerick/clojurescript.test "0.3.1"]
-            [lein-cljsbuild "1.0.3"]
+  :plugins [[lein-cljsbuild "1.0.3"]
             [lein-marginalia "0.7.1"]
-            [com.cemerick/austin "0.1.4"]
+            [com.cemerick/austin "0.1.5"]
             [com.andrewmcveigh/lein-auto-release "0.1.7"]]
 
   :jvm-opts ["-Djava.awt.headless=true"]

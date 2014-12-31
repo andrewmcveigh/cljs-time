@@ -1,9 +1,9 @@
 (ns cljs-time.periodic-test
   (:refer-clojure :exclude [=])
   (:require-macros
-    [cemerick.cljs.test :refer [is are deftest]])
+    [cljs.test :refer [is are deftest]])
   (:require
-    [cemerick.cljs.test :as t]
+    [cljs.test :as t]
     [cljs-time.core :refer [= date-time hours months]]
     [cljs-time.periodic :refer [periodic-seq]]))
 

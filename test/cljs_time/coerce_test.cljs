@@ -1,9 +1,9 @@
 (ns clj-time.coerce-test
   (:refer-clojure :exclude [= extend second])
   (:require-macros
-    [cemerick.cljs.test :refer [is deftest]])
+    [cljs.test :refer [is deftest]])
   (:require
-    [cemerick.cljs.test :as t]
+    [cljs.test :as t]
     [cljs-time.internal.core :refer [=]]
     [cljs-time.core
      :refer [date-time date-midnight plus hours local-date local-date-time]]
