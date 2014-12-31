@@ -17,7 +17,8 @@
       day-of-week after? before? ago from-now
       years months weeks days hours minutes seconds millis
       years? months? weeks? days? hours? minutes? seconds?
-      extend start end mins-ago default-time-zone to-default-time-zone]]))
+      extend start end mins-ago default-time-zone
+      to-default-time-zone from-default-time-zone]]))
 
 (deftest test-now
   (is (= (date-time 2010 1 1)
@@ -108,16 +109,44 @@
 ;;          (do-at (from-time-zone (date-time 2013 4 20) (default-time-zone))
 ;;                 (today)))))
 
+(deftest test-to-default-time-zone
+  (let [dt1 (date-time 1986 10 14 6)
+        cest? (re-find #"\(CEST\)$" (str (js/Date. (.getTime dt1))))
+        dt2 (to-default-time-zone dt1)]
+    (when cest?
+      (is (= 8 (hour dt2))))
+    (is (= (.getTime dt1) (.getTime dt2)))))
+
+(deftest test-from-default-time-zone
+  (let [dt1 (date-time 1986 10 14 6)
+        cest? (re-find #"\(CEST\)$" (str (js/Date. (.getTime dt1))))
+        dt2 (from-default-time-zone dt1)]
+    (when cest?
+      (is (= 6 (hour dt2))))
+    (cond (zero? (.getTimezoneOffset dt2))
+          (is (= (.getTime dt1) (.getTime dt2)))
+          (< (.getTimezoneOffset dt2) 0)
+          (is (> (.getTime dt1) (.getTime dt2)))
+          (> (.getTimezoneOffset dt2) 0)
+          (is (< (.getTime dt1) (.getTime dt2))))))
+
 (deftest test-today-default
   (is (= (local-date 2013 4 20)
          (do-at (to-default-time-zone (date-time 2013 4 20))
                 (today)))))
 
 (deftest test-dst-time-default
-  (is (= (local-date-time 2013 4 20)
-         (to-default-time-zone (date-time 2013 4 20))))
-  (is (= (local-date-time 2013 11 20)
-         (to-default-time-zone (date-time 2013 11 20)))))
+  (let [summer-time-change (js/Date. (.getTime (local-date-time 2013 3 31 3)))
+        cest? (re-find #"\(CEST\)$" (str summer-time-change))]
+    (when cest?
+      (is (= (local-date-time 2013 3 30 1)
+             (to-default-time-zone (date-time 2013 3 30 0))))
+      (is (= (local-date-time 2013 3 31 3)
+             (to-default-time-zone (date-time 2013 3 31 1))))
+      (is (= (local-date-time 2013 10 26 2)
+             (to-default-time-zone (date-time 2013 10 26 0))))
+      (is (= (local-date-time 2013 10 27 2)
+             (to-default-time-zone (date-time 2013 10 27 1)))))))
 
 (deftest test-day-of-week
   (let [d (date-time 2010 4 24)]

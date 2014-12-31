@@ -305,31 +305,31 @@ Specify the year, month, and day. Does not deal with timezones."
     (time-zone-for-offset (int hours) (mod hours 1))))
 
 (defn to-default-time-zone
-  "Assuming `dt` is in the UTC timezone, returns an adjusted DateTime
-  in the default (local) timezone."
+  "Assuming `dt` is in the UTC timezone, returns a DateTime
+  corresponding to the same absolute instant in time as the given
+  DateTime, but with calendar fields corresponding to in the default
+  (local) timezone."
   [dt]
-  (doto (goog.date.DateTime.)
-    (.setUTCFullYear (.getYear dt))
-    (.setUTCMonth (.getMonth dt))
-    (.setUTCDate (.getDate dt))
-    (.setUTCHours (.getHours dt))
-    (.setUTCMinutes (.getMinutes dt))
-    (.setUTCSeconds (.getSeconds dt))
-    (.setUTCMilliseconds (.getMilliseconds dt))))
+  (goog.date.DateTime. dt))
 
-(defn to-time-zone
-  "Returns a new ReadableDateTime corresponding to the same absolute instant in time as
-the given ReadableDateTime, but with calendar fields corresponding to the given
-TimeZone."
-  [dt tz]
-  (.withZone dt tz))
+(defn from-default-time-zone
+  "Assuming `dt` is in the UTC timezone, returns a DateTime
+  corresponding to the same point in calendar time as the given
+  DateTime, but for a correspondingly different absolute instant in
+  time in the default (local) timezone.
 
-(defn from-time-zone
-  "Returns a new ReadableDateTime corresponding to the same point in calendar time as
-the given ReadableDateTime, but for a correspondingly different absolute instant in
-time."
-  [dt tz]
-  (.withZoneRetainFields dt tz))
+  Note: This implementation uses the ECMAScript 5.1 implementation which
+  trades some historical daylight savings transition accuracy for simplicity.
+  see http://es5.github.io/#x15.9.1.8
+  "
+  [dt]
+  (goog.date.DateTime. (.getYear dt)
+                       (.getMonth dt)
+                       (.getDate dt)
+                       (.getHours dt)
+                       (.getMinutes dt)
+                       (.getSeconds dt)
+                       (.getMilliseconds dt)))
 
 (defn years
   "Given a number, returns a Period representing that many years.
