@@ -1,11 +1,11 @@
-(defproject com.andrewmcveigh/cljs-time "0.2.5-SNAPSHOT"
+(defproject com.andrewmcveigh/cljs-time "0.3.0-SNAPSHOT"
   :description "A clj-time inspired date library for clojurescript."
   :url "https://github.com/andrewmcveigh/cljs-time"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :scm {:url "git@github.com:andrewmcveigh/cljs-time.git"}
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2280"]]
+                 [org.clojure/clojurescript "0.0-2511"]]
 
   :plugins [[com.cemerick/clojurescript.test "0.3.1"]
             [lein-cljsbuild "1.0.3"]
@@ -14,7 +14,6 @@
             [com.andrewmcveigh/lein-auto-release "0.1.7"]]
 
   :jvm-opts ["-Djava.awt.headless=true"]
-  :hooks [leiningen.cljsbuild]
   :clojurescript? true
   :cljsbuild
   {:builds
@@ -30,7 +29,8 @@
                       :pretty-print true}}}}
   :profiles
   {:prod
-   {:cljsbuild
+   {:hooks [leiningen.cljsbuild]
+    :cljsbuild
     {:builds {:whitespace {:source-paths ["src" "test"]
                            :compiler {:output-to "target/cljs/whitespace.js"
                                       :optimizations :whitespace
