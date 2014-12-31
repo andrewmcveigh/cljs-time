@@ -229,8 +229,8 @@
      "Z" ["((?:(?:\\+|-)\\d{2}:?\\d{2})|Z+)" tz]
      "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" tz]}))
 
-(def date-setters
-  {:years #(.setYear %1 %2)
+(defn- date-setters [& default-year]
+  {:years #(.setYear %1 (or %2 default-year))
    :months #(.setMonth %1 %2)
    :days #(.setDate %1 %2)
    :hours #(.setHours %1 %2)
@@ -238,7 +238,6 @@
    :seconds #(.setSeconds %1 %2)
    :millis #(.setMilliseconds %1 %2)
    :time-zone timezone-adjustment})
-
 
 (defn parser-sort-order-pred [parser]
   (index-of
@@ -275,23 +274,26 @@
      (formatter fmts time/utc))
   ([fmts dtz]
      (with-meta
-       {:parser (parser-fn fmts)
-        :formatter (formatter-fn fmts date-formatters)}
+       {:format-str fmts
+        :formatters date-formatters}
        {:type ::formatter})))
 
 (defn formatter-local [fmts]
   (with-meta
-    {:parser (parser-fn fmts)
-     :formatter
-     (formatter-fn fmts
-                   (assoc date-formatters
-                     "Z" (constantly "")
-                     "ZZ" (constantly "")))}
+    {:format-str fmts
+     :formatters (assoc date-formatters
+                   "Z" (constantly "")
+                   "ZZ" (constantly ""))}
     {:type ::formatter}))
 
 (defn not-implemented [sym]
   #(throw (clj->js {:name :not-implemented
                     :message (format "%s not implemented yet" (name sym))})))
+
+(defn with-default-year
+  "Return a copy of a formatter that uses the given default year."
+  [f default-year]
+  (vary-meta f assoc :default-year default-year))
 
 (def ^{:doc "Map of ISO 8601 and a single RFC 822 formatters that can be used
 for parsing and, in most cases, printing.
@@ -377,18 +379,18 @@ time if supplied."}
   {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0
    :time-zone nil})
 
-(defn parse* [constructor {:keys [parser] :as fmt} s]
+(defn parse* [constructor {:keys [format-str default-year] :as fmt} s]
   {:pre [(seq s)]}
   (let [min-parts (count (string/split s part-splitter-regex))]
-    (let [parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
-                              (parser s)))]
+    (let [parse-fn (parser-fn format-str)
+          parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
+                              (parse-fn s)))]
       (if (>= (count parse-seq) min-parts)
         (let [d (new constructor 0 0 0 0 0 0 0)
               empty (date-map d)
-              setters (select-keys date-setters (keys empty))]
+              setters (select-keys (date-setters default-year) (keys empty))]
           (->> parse-seq
-               (reduce (fn [date [part do-parse]] (do-parse date part))
-                       empty)
+               (reduce (fn [date [part do-parse]] (do-parse date part)) empty)
                valid-date?
                (merge-with #(%1 d %2) setters))
           d)
@@ -432,29 +434,29 @@ time if supplied."}
 (defn unparse
   "Returns a string representing the given DateTime instance in UTC and in the
 form determined by the given formatter."
-  [{:keys [formatter]} dt]
+  [{:keys [format-str formatters]} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
-  (apply string/replace (formatter dt)))
+  (apply string/replace ((formatter-fn format-str formatters) dt)))
 
 (defn unparse-local
   "Returns a string representing the given LocalDateTime instance in the
   form determined by the given formatter."
-  [{:keys [formatter] :as fmt} dt]
+  [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
   (apply string/replace
-         (formatter dt (assoc date-formatters
-                         "Z" (constantly "")
-                         "ZZ" (constantly "")))))
+         ((formatter-fn format-str formatters) dt (assoc date-formatters
+                                                    "Z" (constantly "")
+                                                    "ZZ" (constantly "")))))
 
 (defn unparse-local-date
   "Returns a string representing the given LocalDate instance in the form
   determined by the given formatter."
-  [{:keys [formatter] :as fmt} dt]
+  [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
   (apply string/replace
-         (formatter dt (assoc date-formatters
-                         "Z" (constantly "")
-                         "ZZ" (constantly "")))))
+         ((formatter-fn format-str formatters) dt (assoc date-formatters
+                                                    "Z" (constantly "")
+                                                    "ZZ" (constantly "")))))
 
 (defn show-formatters
   "Shows how a given DateTime, or by default the current time, would be
