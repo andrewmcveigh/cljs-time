@@ -65,7 +65,7 @@
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
-   [cljs-time.internal.core :refer [leap-year? format]]
+   [cljs-time.internal.core :as internal :refer [leap-year? format]]
    [goog.date.Date]
    [goog.date.DateTime]
    [goog.date.UtcDateTime]
@@ -89,7 +89,20 @@
   (after? [this that] "Returns true if ReadableDateTime 'this' is strictly after date/time 'that'.")
   (before? [this that] "Returns true if ReadableDateTime 'this' is strictly before date/time 'that'.")
   (plus- [this period] "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
-  (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s).")) 
+  (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s).")
+  (first-day-of-the-month- [this] "Returns the first day of the month")
+  (last-day-of-the-month- [this] "Returns the last day of the month"))
+
+(defprotocol InTimeUnitProtocol
+  "Interface for in-<time unit> functions"
+  (in-millis [this] "Return the time in milliseconds.")
+  (in-seconds [this] "Return the time in seconds.")
+  (in-minutes [this] "Return the time in minutes.")
+  (in-hours [this] "Return the time in hours.")
+  (in-days [this] "Return the time in days.")
+  (in-weeks [this] "Return the time in weeks")
+  (in-months [this] "Return the time in months")
+  (in-years [this] "Return the time in years"))
 
 (defrecord Interval [start end])
 
@@ -162,6 +175,12 @@
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
   (minus- [this period] ((period-fn period) - this))
+  (first-day-of-the-month- [this]
+    (goog.date.UtcDateTime. (.getYear this) (.getMonth this) 1 0 0 0 0))
+  (last-day-of-the-month- [this]
+    (minus-
+     (goog.date.UtcDateTime. (.getYear this) (inc (.getMonth this)) 1 0 0 0 0)
+     (period :days 1)))
 
   goog.date.DateTime
   (year [this] (.getYear this))
@@ -176,6 +195,12 @@
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
   (minus- [this period] ((period-fn period) - this))
+  (first-day-of-the-month- [this]
+    (goog.date.DateTime. (.getYear this) (.getMonth this) 1 0 0 0 0))
+  (last-day-of-the-month- [this]
+    (minus-
+     (goog.date.DateTime. (.getYear this) (inc (.getMonth this)) 1 0 0 0 0)
+     (period :days 1)))
 
   goog.date.Date
   (year [this] (.getYear this))
@@ -185,7 +210,13 @@
   (after? [this that] (> (.getTime this) (.getTime that)))
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
-  (minus- [this period] ((period-fn period) - this)))
+  (minus- [this period] ((period-fn period) - this))
+  (first-day-of-the-month- [this]
+    (goog.date.Date. (.getYear this) (.getMonth this) 1))
+  (last-day-of-the-month- [this]
+    (minus-
+     (goog.date.Date. (.getYear this) (inc (.getMonth this)) 1)
+     (period :days 1))))
 
 (def utc (goog.i18n.TimeZone/createTimeZone
            (clj->js {:id "UTC"
@@ -460,43 +491,13 @@ Specify the year, month, and day. Does not deal with timezones."
   [in & by]
   (assoc in :end (apply plus (end in) by)))
 
-(defn in-millis
-  "Returns the number of milliseconds in the given Interval."
-  [{:keys [start end]}]
-  (- (.getTime end) (.getTime start)))
-
-(defn in-seconds
-  "Returns the number of standard seconds in the given Interval."
-  [in]
-  (int (/ (in-millis in) 1000)))
-
-(defn in-minutes
-  "Returns the number of standard minutes in the given Interval."
-  [in]
-  (int (/ (in-seconds in) 60)))
-
-(defn in-hours
-  "Returns the number of standard hours in the given Interval."
-  [in]
-  (int (/ (in-minutes in) 60)))
-
-(defn in-days
-  "Returns the number of standard days in the given Interval."
-  [in]
-  (int (/ (in-hours in) 24)))
-
-(defn in-weeks
-  "Returns the number of standard weeks in the given Interval."
-  [in]
-  (int (/ (in-days in) 7)))
-
-(defn month-range [{:keys [start end]}]
+(defn- month-range [{:keys [start end]}]
   (take-while #(before? % end) (map #(plus start (months (inc %))) (range))))
 
-(defn total-days-in-whole-months [interval]
+(defn- total-days-in-whole-months [interval]
   (map #(.getNumberOfDaysInMonth %) (month-range interval)))
 
-(defn in-months
+(defn- in-months-
   "Returns the number of months in the given Interval.
 
   For example, the interval 2nd Jan 2012 midnight to 2nd Feb 2012 midnight,
@@ -510,7 +511,7 @@ Specify the year, month, and day. Does not deal with timezones."
   [{:keys [start end] :as interval}]
   (count (total-days-in-whole-months interval)))
 
-(defn in-years
+(defn- in-years-
   "Returns the number of standard years in the given Interval."
   [{:keys [start end]}]
   (let [sm (month start) sd (day start)
@@ -522,6 +523,25 @@ Specify the year, month, and day. Does not deal with timezones."
                          (date-time (year start) em ed)) 1
                  :else-is-same-date 0)]
     (- (year end) (year start) d1)))
+(extend-protocol InTimeUnitProtocol
+  cljs-time.core.Period
+  (in-millis [this] (internal/in-millis this))
+  (in-seconds [this] (internal/in-seconds this))
+  (in-minutes [this] (internal/in-minutes this))
+  (in-hours [this] (internal/in-hours this))
+  (in-days [this] (internal/in-days this))
+  (in-weeks [this] (internal/in-weeks this))
+  (in-months [this] (in-months- this))
+  (in-years [this] (in-years- this))
+  cljs-time.core.Interval
+  (in-millis [this] (internal/in-millis this))
+  (in-seconds [this] (internal/in-seconds this))
+  (in-minutes [this] (internal/in-minutes this))
+  (in-hours [this] (internal/in-hours this))
+  (in-days [this] (internal/in-days this))
+  (in-weeks [this] (internal/in-weeks this))
+  (in-months [this] (in-months- this))
+  (in-years [this] (in-years- this)))
 
 (defn within?
   "With 2 arguments: Returns true if the given Interval contains the given
@@ -611,9 +631,9 @@ Specify the year, month, and day. Does not deal with timezones."
 
 (defn last-day-of-the-month
   ([dt]
-   (last-day-of-the-month (year dt) (month dt)))
+   (last-day-of-the-month- dt))
   ([year month]
-   (minus (date-time year (inc month) 1) (days 1))))
+   (last-day-of-the-month- (date-time year month))))
 
 (defn number-of-days-in-the-month
   ([dt]
@@ -623,9 +643,9 @@ Specify the year, month, and day. Does not deal with timezones."
 
 (defn first-day-of-the-month
   ([dt]
-   (first-day-of-the-month (year dt) (month dt)))
+   (first-day-of-the-month- dt))
   ([year month]
-   (-> (date-time year month 1))))
+   (first-day-of-the-month- (date-time year month))))
 
 (defmulti ->period type)
 
