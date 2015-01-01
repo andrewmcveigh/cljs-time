@@ -1,18 +1,20 @@
 # cljs-time [![Build Status](https://travis-ci.org/andrewmcveigh/cljs-time.png?branch=master)](https://travis-ci.org/andrewmcveigh/cljs-time)
 
-A date and time library for ClojureScript, immitating the
+A date and time library for ClojureScript, immitating the API of the
 [clj-time](https://github.com/clj-time/clj-time) library.
 
-Cljs-time is an attempt at replicating the functionality in clj-time. **This is
-not a drop-in clojurescript replacement for clj-time**, however the goal is that
-over time enough functionality of the clj-time API can be replicated to make
-this library "good enough" for other projects.
+Cljs-time is an attempt at replicating the functionality and API of
+clj-time.  **This is not a drop-in clojurescript replacement for
+clj-time**, however the goal is that over time enough functionality of
+the clj-time API can be replicated to make this library "good enough"
+for other projects.
 
-This library is currently leaning on the [Google Closure goog.date](http://docs.closure-library.googlecode.com/git/namespace_goog_date.html)
-library for basic date/time functionality. **The date objects in this library
-are mutable**, however any operations that **alter** a date object return a
-copy, leaving the referenced date object alone. In the future, immutable date
-objects will be preferred.
+This library is currently leaning on the
+[Google Closure goog.date](http://docs.closure-library.googlecode.com/git/namespace_goog_date.html)
+library for basic date/time functionality. **The date objects in this
+library are mutable**, however any operations that **alter** a date
+object return a copy, leaving the referenced date object alone. In the
+future, immutable date objects will be preferred.
 
 ## Artifacts
 
@@ -40,15 +42,16 @@ With Leiningen:
 Please open issues against the
 [cljs-time repo on Github](https://github.com/andrewmcveigh/cljs-time/issues).
 
-**Note: version 0.2.* follows the API of clj-time 0.8.0.**
+**Note: version 0.3.* follows the API of clj-time 0.9.0.**
 
 ## API
 
 Most of the clj-time API has been implemented. Some of the parts that
 don't make sense in clojurescript, such as Java interop, and
-java.sql.* have been left out.
+java.sql.* have been left out. Timezone functionality in javascript is
+minimal, and therefore so is cljs-time's.
 
-The majority of the tests from clj-time have been copied over, and are
+The majority of the tests from clj-time have been ported, and are
 passing.
 
 [API documentation](http://andrewmcveigh.github.io/cljs-time/uberdoc.html) is
@@ -58,13 +61,15 @@ available.
 
 ### cljs-time.core
 
-The main namespace for date-time operations in the `cljs-time` library is `cljs-time.core`.
+The main namespace for date-time operations in the `cljs-time` library
+is `cljs-time.core`.
 
 ``` clj
 => (use 'cljs-time.core)
 ```
 
-Create a DateTime instance with date-time, specifying the year, month, day, hour, minute, second, and millisecond:
+Create a DateTime instance with date-time, specifying the year, month,
+day, hour, minute, second, and millisecond:
 
 ``` clj
 => (date-time 1986 10 14 4 3 27 456)
