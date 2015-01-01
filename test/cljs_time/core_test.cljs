@@ -477,7 +477,10 @@
         d5 (date-time 2012 5 31)
         d6 (date-time 2012 6 30)
         d7 (date-time 2013 2 28)
-        d8 (date-time 2016 2 29)]
+        d8 (date-time 2016 2 29)
+        d9 (local-date 2014 1 31)
+        d10 (local-date 2014 1 5)
+        d11 (local-date 2014 1 29)]
     (is (= d1 (last-day-of-the-month 2012 1)))
     (is (= d1 (last-day-of-the-month (date-time 2012 1 13))))
     (is (= d2 (last-day-of-the-month 2012 2)))
@@ -487,7 +490,10 @@
     (is (= d5 (last-day-of-the-month 2012 5)))
     (is (= d6 (last-day-of-the-month 2012 6)))
     (is (= d7 (last-day-of-the-month 2013 2)))
-    (is (= d8 (last-day-of-the-month 2016 2)))))
+    (is (= d8 (last-day-of-the-month 2016 2)))
+    (is (= d9 (last-day-of-the-month d9)))
+    (is (= d9 (last-day-of-the-month d10)))
+    (is (= d9 (last-day-of-the-month d11)))))
 
 (deftest test-number-of-days-in-the-month
   (is (= 31 (number-of-days-in-the-month 2012 1)))
@@ -510,7 +516,10 @@
         d5 (date-time 2012 5 1)
         d6 (date-time 2012 6 1)
         d7 (date-time 2013 2 1)
-        d8 (date-time 2016 2 1)]
+        d8 (date-time 2016 2 1)
+        d9 (local-date 2014 1 1)
+        d10 (local-date 2014 1 2)
+        d11 (local-date 2014 1 31)]
     (is (= d1 (first-day-of-the-month 2012 1)))
     (is (= d1 (first-day-of-the-month (date-time 2012 1 24))))
     (is (= d2 (first-day-of-the-month 2012 2)))
@@ -520,7 +529,10 @@
     (is (= d5 (first-day-of-the-month 2012 5)))
     (is (= d6 (first-day-of-the-month 2012 6)))
     (is (= d7 (first-day-of-the-month 2013 2)))
-    (is (= d8 (first-day-of-the-month 2016 2)))))
+    (is (= d8 (first-day-of-the-month 2016 2)))
+    (is (= d9 (first-day-of-the-month d9)))
+    (is (= d9 (first-day-of-the-month d10)))
+    (is (= d9 (first-day-of-the-month d11)))))
 
 (deftest test-today-at
   (let [n  (now)

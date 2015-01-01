@@ -125,7 +125,7 @@
 (def periods
   (let [fixed-time-fn (fn [f set-fn op date value]
                         (let [date (.clone date)]
-                          (set-fn date (op (f date) value))
+                          (when value (set-fn date (op (f date) value)))
                           date))]
     {:millis (partial fixed-time-fn milli #(.setMilliseconds %1 %2))
      :seconds (partial fixed-time-fn second #(.setSeconds %1 %2))
@@ -208,6 +208,10 @@
   (month [this] (inc (.getMonth this)))
   (day [this] (.getDate this))
   (day-of-week [this] (let [d (.getDay this)] (if (= d 0) 7 d)))
+  (hour [this] nil)
+  (minute [this] nil)
+  (second [this] nil)
+  (milli [this] nil)
   (after? [this that] (> (.getTime this) (.getTime that)))
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
