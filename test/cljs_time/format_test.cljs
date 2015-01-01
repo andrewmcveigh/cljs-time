@@ -14,7 +14,7 @@
              formatter-local
              parse-local parse-local-date
              unparse-local unparse-local-date
-             ]]))
+             with-default-year]]))
 
 (defn utc-int-vec [d]
   [(time/year d) (time/month d) (time/day d)
@@ -239,7 +239,7 @@
 ;;     (is (= "13:14:15.167"
 ;;            (unparse-local-time fmt (local-time 13 14 15 167))))))
 
-;(deftest test-formatter-modifiers
+(deftest test-formatter-modifiers
 ;(let [fmt (formatter "YYYY-MM-dd HH:mm z" (time-zone-for-id "America/Chicago"))]
 ;(is (= "2010-03-11 11:49 CST"
 ;(unparse fmt (date-time 2010 3 11 17 49 20 881)))))
@@ -252,6 +252,9 @@
 ;(let [fmt (with-pivot-year (formatter "YY") 2050)]
 ;(is (= (date-time 2075 1 1)
 ;(parse fmt "75")))))
+  (let [fmt (with-default-year (formatter "MM dd") 2010)]
+    (is (= (date-time 2010 3 11)
+           (parse fmt "03 11")))))
 
 ;(deftest test-multi-parser
 ;(let [fmt (formatter utc "YYYY-MM-dd HH:mm" "YYYY/MM/dd@HH:mm" "YYYYMMddHHmm")]

@@ -229,8 +229,8 @@
      "Z" ["((?:(?:\\+|-)\\d{2}:?\\d{2})|Z+)" tz]
      "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" tz]}))
 
-(defn- date-setters [& default-year]
-  {:years #(.setYear %1 (or %2 default-year))
+(def date-setters
+  {:years #(.setYear %1 %2)
    :months #(.setMonth %1 %2)
    :days #(.setDate %1 %2)
    :hours #(.setHours %1 %2)
@@ -293,7 +293,7 @@
 (defn with-default-year
   "Return a copy of a formatter that uses the given default year."
   [f default-year]
-  (vary-meta f assoc :default-year default-year))
+  (assoc f :default-year default-year))
 
 (def ^{:doc "Map of ISO 8601 and a single RFC 822 formatters that can be used
 for parsing and, in most cases, printing.
@@ -387,8 +387,8 @@ time if supplied."}
                               (parse-fn s)))]
       (if (>= (count parse-seq) min-parts)
         (let [d (new constructor 0 0 0 0 0 0 0)
-              empty (date-map d)
-              setters (select-keys (date-setters default-year) (keys empty))]
+              empty (assoc (date-map d) :years (or default-year 0))
+              setters (select-keys date-setters (keys empty))]
           (->> parse-seq
                (reduce (fn [date [part do-parse]] (do-parse date part)) empty)
                valid-date?
