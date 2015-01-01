@@ -1,3 +1,17 @@
+## v0.3.0
+
+- Update periodic, fix plus months bug
+- Correct and test with-default-year impl
+- Add extra core-tests
+- Implement period in-xxxx, test
+- Add v0.9.0 changes to core
+- Use data-oriented formatter impl, add with-default-year
+- Implement Interval and Period with defrecord
+- Use built-in UTC->local, add from-default-time-zone
+- Bugfix: coercion/DST correction
+- Update cljs, bump version
+- Use js/Date setUTC* for to-default-time-zone
+
 ## v0.2.4
 
 - Correct to-default-time-zone/today implementation
