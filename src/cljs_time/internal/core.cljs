@@ -59,33 +59,3 @@
      (str n)
      (str (string/join (take (- zeros (count (str n))) (repeat "0")))
           n))))
-
-(defn in-millis
-  "Returns the number of milliseconds in the given Interval."
-  [{:keys [start end]}]
-  (- (.getTime end) (.getTime start)))
-
-(defn in-seconds
-  "Returns the number of standard seconds in the given Interval."
-  [in]
-  (int (/ (in-millis in) 1000)))
-
-(defn in-minutes
-  "Returns the number of standard minutes in the given Interval."
-  [in]
-  (int (/ (in-seconds in) 60)))
-
-(defn in-hours
-  "Returns the number of standard hours in the given Interval."
-  [in]
-  (int (/ (in-minutes in) 60)))
-
-(defn in-days
-  "Returns the number of standard days in the given Interval."
-  [in]
-  (int (/ (in-hours in) 24)))
-
-(defn in-weeks
-  "Returns the number of standard weeks in the given Interval."
-  [in]
-  (int (/ (in-days in) 7)))

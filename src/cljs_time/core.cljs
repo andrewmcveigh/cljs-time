@@ -66,6 +66,7 @@
   (:refer-clojure :exclude [= extend second])
   (:require
    [cljs-time.internal.core :as internal :refer [leap-year? format]]
+   [clojure.string :as string]
    [goog.date.Date]
    [goog.date.DateTime]
    [goog.date.UtcDateTime]
@@ -523,23 +524,55 @@ Specify the year, month, and day. Does not deal with timezones."
                          (date-time (year start) em ed)) 1
                  :else-is-same-date 0)]
     (- (year end) (year start) d1)))
+
+(defn conversion-error [from to]
+  (let [from (string/capitalize (name from))
+        to (name to)]
+    (throw
+     (ex-info (format "%s cannot be converted to %s" from to)
+              {:type :unsupported-operation}))))
+
 (extend-protocol InTimeUnitProtocol
   cljs-time.core.Period
-  (in-millis [this] (internal/in-millis this))
-  (in-seconds [this] (internal/in-seconds this))
-  (in-minutes [this] (internal/in-minutes this))
-  (in-hours [this] (internal/in-hours this))
-  (in-days [this] (internal/in-days this))
-  (in-weeks [this] (internal/in-weeks this))
-  (in-months [this] (in-months- this))
-  (in-years [this] (in-years- this))
+  (in-millis [{:keys [millis seconds minutes hours days weeks months years]}]
+    (cond months (conversion-error :months :millis)
+          years (conversion-error :years :millis)
+          :default (+ millis
+                      (* seconds 1000)
+                      (* minutes 60 1000)
+                      (* hours 60 60 1000)
+                      (* days 24 60 60 1000)
+                      (* weeks 7 24 60 60 1000))))
+  (in-seconds [this] (int (/ (in-millis this) 1000)))
+  (in-minutes [this] (int (/ (in-seconds this) 60)))
+  (in-hours [this] (int (/ (in-minutes this) 60)))
+  (in-days [this] (int (/ (in-hours this) 24)))
+  (in-weeks [this] (int (/ (in-days this) 7)))
+  (in-months [{:keys [millis seconds minutes hours days weeks months years]}]
+    (cond millis (conversion-error :millis :months)
+          seconds (conversion-error :seconds :months)
+          minutes (conversion-error :minutes :months)
+          hours (conversion-error :hours :months)
+          days (conversion-error :days :months)
+          weeks (conversion-error :weeks :months)
+          months (+ months (* (or years 0) 12))
+          years (* years 12)))
+  (in-years [{:keys [millis seconds minutes hours days weeks months years]}]
+    (cond millis (conversion-error :millis :years)
+          seconds (conversion-error :seconds :years)
+          minutes (conversion-error :minutes :years)
+          hours (conversion-error :hours :years)
+          days (conversion-error :days :years)
+          weeks (conversion-error :weeks :years)
+          months (int (+ (/ months 12) years))
+          years years))
   cljs-time.core.Interval
-  (in-millis [this] (internal/in-millis this))
-  (in-seconds [this] (internal/in-seconds this))
-  (in-minutes [this] (internal/in-minutes this))
-  (in-hours [this] (internal/in-hours this))
-  (in-days [this] (internal/in-days this))
-  (in-weeks [this] (internal/in-weeks this))
+  (in-millis [{:keys [start end]}] (- (.getTime end) (.getTime start)))
+  (in-seconds [this] (int (/ (in-millis this) 1000)))
+  (in-minutes [this] (int (/ (in-seconds this) 60)))
+  (in-hours [this] (int (/ (in-minutes this) 60)))
+  (in-days [this] (int (/ (in-hours this) 24)))
+  (in-weeks [this] (int (/ (in-days this) 7)))
   (in-months [this] (in-months- this))
   (in-years [this] (in-years- this)))
 
