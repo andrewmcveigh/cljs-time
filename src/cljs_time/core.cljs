@@ -134,28 +134,34 @@
      :days (partial fixed-time-fn day #(.setDate %1 %2))
      :weeks (fn [op date value]
               (let [date (.clone date)]
-                (.setDate date (op (day date) (* 7 value)))
+                (when value (.setDate date (op (day date) (* 7 value))))
                 date))
      :months (fn [op date value]
-               (let [date (.clone date)
-                     m (op (month date) value)
-                     y (year date)
-                     y (cond (> m 12) (+ y 1)
-                             (< m 1) (- y 1)
-                             :else y)
-                     m (cond (> m 12) (mod m 12)
-                             (< m 1) (+ m 12)
-                             :else m)]
-                 (.setMonth date (dec m))
-                 (.setYear date y)
+               (let [date (.clone date)]
+                 (when value
+                   (let [m (op (month date) value)
+                         y (year date)
+                         y (cond (> m 12) (+ y 1)
+                                 (< m 1) (- y 1)
+                                 :else y)
+                         m (cond (> m 12) (mod m 12)
+                                 (< m 1) (+ m 12)
+                                 :else m)
+                         ldom (day (last-day-of-the-month-
+                                    (goog.date.Date. y (dec m) 1)))]
+                     (when (< ldom (day date))
+                       (.setDate date ldom))
+                     (.setMonth date (dec m))
+                     (.setYear date y)))
                  date))
      :years (fn [op date value]
               (let [date (.clone date)]
-                (if (and (leap-year? (year date))
-                         (= 2 (month date))
-                         (= 29 (day date)))
-                  (.setDate date 28))
-                (.setYear date (op (year date) value))
+                (when value
+                  (if (and (leap-year? (year date))
+                          (= 2 (month date))
+                          (= 29 (day date)))
+                    (.setDate date 28))
+                  (.setYear date (op (year date) value)))
                 date))}))
 
 (defn period-fn [p]
@@ -712,6 +718,8 @@ Specify the year, month, and day. Does not deal with timezones."
             :seconds seconds
             :millis (- (in-millis interval)
                        (* 1000 (+ seconds seconds-to-remove))))))
+
+(defmethod ->period cljs-time.core.Period [period] period)
 
 (defn today-at
   ([hours minutes seconds millis]

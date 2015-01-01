@@ -77,7 +77,7 @@
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
          (format/parse (formatter "dd/MM/yyyy") "30/09/2013")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 6))
-         (format/parse (formatter "dd/MM/yyyy") "02/03/2014")))
+         (format/parse (formatter "dd/MM/yyyy") "28/02/2014")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 8))
          (format/parse (formatter "dd/MM/yyyy") "30/12/2012")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))

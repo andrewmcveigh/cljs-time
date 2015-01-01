@@ -58,3 +58,17 @@
      (str n)
      (str (string/join (take (- zeros (count (str n))) (repeat "0")))
           n))))
+
+(defn multiplied-by [period scalar]
+  (letfn [(scale-fn [field]
+            (when field
+              (* field scalar)))]
+    (-> period
+        (update-in [:millis] scale-fn)
+        (update-in [:seconds] scale-fn)
+        (update-in [:minutes] scale-fn)
+        (update-in [:hours] scale-fn)
+        (update-in [:days] scale-fn)
+        (update-in [:weeks] scale-fn)
+        (update-in [:months] scale-fn)
+        (update-in [:years] scale-fn))))
