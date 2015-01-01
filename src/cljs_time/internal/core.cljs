@@ -34,17 +34,10 @@
                (>< 0 60 seconds)
                (>< 0 999 millis))
         d
-        (throw (ex-info "Date is not valid" {:type :invalid-date
-                                             :date d}))))))
+        (throw (ex-info "Date is not valid" {:type :invalid-date :date d}))))))
 
 (defn index-of [coll x]
   (first (keep-indexed #(when (= %2 x) %1) coll)))
-
-(defn period
-  ([period value]
-   (with-meta {period value} {:type :cljs-time.core/period}))
-  ([p1 v1 & kvs]
-   (apply assoc (period p1 v1) kvs)))
 
 (defn format
   "Formats a string using goog.string.format."
@@ -66,3 +59,16 @@
      (str (string/join (take (- zeros (count (str n))) (repeat "0")))
           n))))
 
+(defn multiplied-by [period scalar]
+  (letfn [(scale-fn [field]
+            (when field
+              (* field scalar)))]
+    (-> period
+        (update-in [:millis] scale-fn)
+        (update-in [:seconds] scale-fn)
+        (update-in [:minutes] scale-fn)
+        (update-in [:hours] scale-fn)
+        (update-in [:days] scale-fn)
+        (update-in [:weeks] scale-fn)
+        (update-in [:months] scale-fn)
+        (update-in [:years] scale-fn))))

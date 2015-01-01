@@ -8,14 +8,13 @@
     [cljs-time.internal.core :refer [=]]
     [cljs-time.core :as time
      :refer [date-time interval utc within?
-             local-date local-date-time
-             ]]
+             local-date local-date-time period]]
     [cljs-time.format :as format
      :refer [formatter formatters instant->map parse unparse
              formatter-local
              parse-local parse-local-date
              unparse-local unparse-local-date
-             ]]))
+             with-default-year]]))
 
 (defn utc-int-vec [d]
   [(time/year d) (time/month d) (time/day d)
@@ -78,7 +77,7 @@
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
          (format/parse (formatter "dd/MM/yyyy") "30/09/2013")))
   (is (= (time/plus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 6))
-         (format/parse (formatter "dd/MM/yyyy") "02/03/2014")))
+         (format/parse (formatter "dd/MM/yyyy") "28/02/2014")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 8))
          (format/parse (formatter "dd/MM/yyyy") "30/12/2012")))
   (is (= (time/minus (format/parse (formatter "dd/MM/yyyy") "30/08/2013") (time/months 1))
@@ -240,7 +239,7 @@
 ;;     (is (= "13:14:15.167"
 ;;            (unparse-local-time fmt (local-time 13 14 15 167))))))
 
-;(deftest test-formatter-modifiers
+(deftest test-formatter-modifiers
 ;(let [fmt (formatter "YYYY-MM-dd HH:mm z" (time-zone-for-id "America/Chicago"))]
 ;(is (= "2010-03-11 11:49 CST"
 ;(unparse fmt (date-time 2010 3 11 17 49 20 881)))))
@@ -253,6 +252,9 @@
 ;(let [fmt (with-pivot-year (formatter "YY") 2050)]
 ;(is (= (date-time 2075 1 1)
 ;(parse fmt "75")))))
+  (let [fmt (with-default-year (formatter "MM dd") 2010)]
+    (is (= (date-time 2010 3 11)
+           (parse fmt "03 11")))))
 
 ;(deftest test-multi-parser
 ;(let [fmt (formatter utc "YYYY-MM-dd HH:mm" "YYYY/MM/dd@HH:mm" "YYYYMMddHHmm")]
@@ -296,14 +298,13 @@
 (deftest test-instant->map-from-interval
   (let [it (interval (date-time 1986 9 2 0 0 2)  (date-time 1986 11 30 2 5 12))]
     (is (= (instant->map it)
-           {:years 0
-            :months 2
-            :days 28
-            :hours 2
-            :minutes 5
-            :seconds 10
-            :millis 0
-            }))))
+           (period :years 0
+                   :months 2
+                   :days 28
+                   :hours 2
+                   :minutes 5
+                   :seconds 10
+                   :millis 0)))))
 
 (deftest test-instant->map-from-date-time
   (let [dt (date-time 1986 9 2 0 0 2)]

@@ -17,7 +17,8 @@
       day-of-week after? before? ago from-now
       years months weeks days hours minutes seconds millis
       years? months? weeks? days? hours? minutes? seconds?
-      extend start end mins-ago default-time-zone to-default-time-zone]]))
+      extend start end mins-ago default-time-zone
+      to-default-time-zone from-default-time-zone]]))
 
 (deftest test-now
   (is (= (date-time 2010 1 1)
@@ -108,10 +109,44 @@
 ;;          (do-at (from-time-zone (date-time 2013 4 20) (default-time-zone))
 ;;                 (today)))))
 
+(deftest test-to-default-time-zone
+  (let [dt1 (date-time 1986 10 14 6)
+        cest? (re-find #"\(CEST\)$" (str (js/Date. (.getTime dt1))))
+        dt2 (to-default-time-zone dt1)]
+    (when cest?
+      (is (= 8 (hour dt2))))
+    (is (= (.getTime dt1) (.getTime dt2)))))
+
+(deftest test-from-default-time-zone
+  (let [dt1 (date-time 1986 10 14 6)
+        cest? (re-find #"\(CEST\)$" (str (js/Date. (.getTime dt1))))
+        dt2 (from-default-time-zone dt1)]
+    (when cest?
+      (is (= 6 (hour dt2))))
+    (cond (zero? (.getTimezoneOffset dt2))
+          (is (= (.getTime dt1) (.getTime dt2)))
+          (< (.getTimezoneOffset dt2) 0)
+          (is (> (.getTime dt1) (.getTime dt2)))
+          (> (.getTimezoneOffset dt2) 0)
+          (is (< (.getTime dt1) (.getTime dt2))))))
+
 (deftest test-today-default
   (is (= (local-date 2013 4 20)
          (do-at (to-default-time-zone (date-time 2013 4 20))
                 (today)))))
+
+(deftest test-dst-time-default
+  (let [summer-time-change (js/Date. (.getTime (local-date-time 2013 3 31 3)))
+        cest? (re-find #"\(CEST\)$" (str summer-time-change))]
+    (when cest?
+      (is (= (local-date-time 2013 3 30 1)
+             (to-default-time-zone (date-time 2013 3 30 0))))
+      (is (= (local-date-time 2013 3 31 3)
+             (to-default-time-zone (date-time 2013 3 31 1))))
+      (is (= (local-date-time 2013 10 26 2)
+             (to-default-time-zone (date-time 2013 10 26 0))))
+      (is (= (local-date-time 2013 10 27 2)
+             (to-default-time-zone (date-time 2013 10 27 1)))))))
 
 (deftest test-day-of-week
   (let [d (date-time 2010 4 24)]
@@ -284,6 +319,78 @@
     (is (= 385     (in-days p)))
     (is (= 9249    (in-hours p)))))
 
+(deftest test-period-in-millis
+  (is (= 30000      (-> 30 seconds in-millis)))
+  (is (= 240000     (-> 4 minutes in-millis)))
+  (is (= 43200000   (-> 12 hours in-millis)))
+  (is (= 777600000  (-> 9 days in-millis)))
+  (is (= 1814400000 (-> 3 weeks in-millis)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 months in-millis)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 years in-millis))))
+
+(deftest test-period-in-seconds
+  (is (= 30      (-> 30 seconds in-seconds)))
+  (is (= 240     (-> 4 minutes in-seconds)))
+  (is (= 43200   (-> 12 hours in-seconds)))
+  (is (= 777600  (-> 9 days in-seconds)))
+  (is (= 1814400 (-> 3 weeks in-seconds)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 months in-seconds)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 years in-seconds))))
+
+(deftest test-period-in-minutes
+  (is (= 0     (-> 30 seconds in-minutes)))
+  (is (= 4     (-> 4 minutes in-minutes)))
+  (is (= 720   (-> 12 hours in-minutes)))
+  (is (= 12960 (-> 9 days in-minutes)))
+  (is (= 30240 (-> 3 weeks in-minutes)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 months in-minutes)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 years in-minutes))))
+
+(deftest test-period-in-hours
+  (is (= 0   (-> 30 seconds in-hours)))
+  (is (= 0   (-> 4 minutes in-hours)))
+  (is (= 12  (-> 12 hours in-hours)))
+  (is (= 216 (-> 9 days in-hours)))
+  (is (= 504 (-> 3 weeks in-hours)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 months in-hours)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 years in-hours))))
+
+(deftest test-period-in-days
+  (is (= 0  (-> 30 seconds in-days)))
+  (is (= 0  (-> 4 minutes in-days)))
+  (is (= 0  (-> 12 hours in-days)))
+  (is (= 9  (-> 9 days in-days)))
+  (is (= 21 (-> 3 weeks in-days)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 months in-days)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 years in-days))))
+
+(deftest test-period-in-weeks
+  (is (= 0  (-> 30 seconds in-weeks)))
+  (is (= 0  (-> 4 minutes in-weeks)))
+  (is (= 0  (-> 12 hours in-weeks)))
+  (is (= 1  (-> 9 days in-weeks)))
+  (is (= 3  (-> 3 weeks in-weeks)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 months in-weeks)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 years in-weeks))))
+
+(deftest test-period-in-months
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 seconds in-months)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 minutes in-months)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 hours in-months)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 days in-months)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 weeks in-months)))
+  (is (= 7  (-> 7 months in-months)))
+  (is (= 36 (-> 3 years in-months))))
+
+(deftest test-period-in-years
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 seconds in-years)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 minutes in-years)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 hours in-years)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 days in-years)))
+  (is (thrown? cljs.core/ExceptionInfo (-> 2 weeks in-years)))
+  (is (= 1 (-> 14 months in-years)))
+  (is (= 3 (-> 3 years in-years))))
+
 (deftest test-within?
   (let [d1 (date-time 1985)
         d2 (date-time 1986)
@@ -370,7 +477,10 @@
         d5 (date-time 2012 5 31)
         d6 (date-time 2012 6 30)
         d7 (date-time 2013 2 28)
-        d8 (date-time 2016 2 29)]
+        d8 (date-time 2016 2 29)
+        d9 (local-date 2014 1 31)
+        d10 (local-date 2014 1 5)
+        d11 (local-date 2014 1 29)]
     (is (= d1 (last-day-of-the-month 2012 1)))
     (is (= d1 (last-day-of-the-month (date-time 2012 1 13))))
     (is (= d2 (last-day-of-the-month 2012 2)))
@@ -380,7 +490,10 @@
     (is (= d5 (last-day-of-the-month 2012 5)))
     (is (= d6 (last-day-of-the-month 2012 6)))
     (is (= d7 (last-day-of-the-month 2013 2)))
-    (is (= d8 (last-day-of-the-month 2016 2)))))
+    (is (= d8 (last-day-of-the-month 2016 2)))
+    (is (= d9 (last-day-of-the-month d9)))
+    (is (= d9 (last-day-of-the-month d10)))
+    (is (= d9 (last-day-of-the-month d11)))))
 
 (deftest test-number-of-days-in-the-month
   (is (= 31 (number-of-days-in-the-month 2012 1)))
@@ -403,7 +516,10 @@
         d5 (date-time 2012 5 1)
         d6 (date-time 2012 6 1)
         d7 (date-time 2013 2 1)
-        d8 (date-time 2016 2 1)]
+        d8 (date-time 2016 2 1)
+        d9 (local-date 2014 1 1)
+        d10 (local-date 2014 1 2)
+        d11 (local-date 2014 1 31)]
     (is (= d1 (first-day-of-the-month 2012 1)))
     (is (= d1 (first-day-of-the-month (date-time 2012 1 24))))
     (is (= d2 (first-day-of-the-month 2012 2)))
@@ -413,7 +529,10 @@
     (is (= d5 (first-day-of-the-month 2012 5)))
     (is (= d6 (first-day-of-the-month 2012 6)))
     (is (= d7 (first-day-of-the-month 2013 2)))
-    (is (= d8 (first-day-of-the-month 2016 2)))))
+    (is (= d8 (first-day-of-the-month 2016 2)))
+    (is (= d9 (first-day-of-the-month d9)))
+    (is (= d9 (first-day-of-the-month d10)))
+    (is (= d9 (first-day-of-the-month d11)))))
 
 (deftest test-today-at
   (let [n  (now)
