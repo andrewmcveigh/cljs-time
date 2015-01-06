@@ -11,8 +11,7 @@
   (:refer-clojure :exclude [extend second])
   (:require
     [cljs-time.core :refer [date-time year month day hour minute second milli]]
-    [cljs-time.format :as time-fmt]
-    [goog.date :as date]))
+    [cljs-time.format :as time-fmt]))
 
 (defprotocol ICoerce
   (to-date-time [obj] "Convert `obj` to a goog.date.DateTime instance."))
@@ -21,7 +20,7 @@
   "Returns a DateTime instance in the UTC time zone corresponding to the given
   number of milliseconds after the Unix epoch."
   [millis]
-  (doto (date/UtcDateTime.) (.setTime millis)))
+  (doto (goog.date.UtcDateTime.) (.setTime millis)))
 
 (defn from-string
   "Returns DateTime instance from string using formatters in clj-time.format,
