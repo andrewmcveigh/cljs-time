@@ -196,7 +196,7 @@ The namespace `cljs-time.coerce` contains utility functions for coercing Google 
 => (use 'cljs-time.coerce)
 ```
 
-For example, to convert a Joda `DateTime` to and from a Java `long`:
+For example, to convert a goog.date `DateTime` to and from a js `Number`:
 
 ``` clj
 => (to-long (date-time 1998 4 25))
