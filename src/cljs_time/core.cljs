@@ -168,27 +168,6 @@
   (fn [operator date]
     (reduce #((periods (key %2)) operator %1 (val %2)) date p)))
 
-(extend-type goog.date.Date
-  IEquiv
-  (-equiv [o other]
-    (and (instance? goog.date.Date other)
-         (identical? (.getTime o) (.getTime other))
-         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other)))))
-
-(extend-type goog.date.DateTime
-  IEquiv
-  (-equiv [o other]
-    (and (instance? goog.date.Date other)
-         (identical? (.getTime o) (.getTime other))
-         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other)))))
-
-(extend-type goog.date.UtcDateTime
-  IEquiv
-  (-equiv [o other]
-    (and (instance? goog.date.Date other)
-         (identical? (.getTime o) (.getTime other))
-         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other)))))
-
 (extend-protocol DateTimeProtocol
   goog.date.UtcDateTime
   (year [this] (.getYear this))

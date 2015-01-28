@@ -18,7 +18,8 @@
       years months weeks days hours minutes seconds millis
       years? months? weeks? days? hours? minutes? seconds?
       extend start end mins-ago default-time-zone
-      to-default-time-zone from-default-time-zone]]))
+      to-default-time-zone from-default-time-zone]]
+    [cljs-time.extend]))
 
 (deftest test-now
   (is (= (date-time 2010 1 1)
