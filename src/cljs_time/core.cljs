@@ -1,14 +1,14 @@
 (ns cljs-time.core
   "### The core namespace for date-time operations in the cljs-time library.
 
-  Create a DateTime instance with date-time (or a LocalDateTime instance with local-date-time),
+  Create a DateTime instance with date-time (or a local DateTime instance with local-date-time),
   specifying the year, month, day, hour, minute, second, and millisecond:
 
     => (date-time 1986 10 14 4 3 27 456)
     #<DateTime 1986-10-14T04:03:27.456Z>
 
     => (local-date-time 1986 10 14 4 3 27 456)
-    #<LocalDateTime 1986-10-14T04:03:27.456>
+    #<DateTime 1986-10-14T04:03:27.456>
 
   Less-significant fields can be omitted:
 
@@ -16,7 +16,7 @@
     #<DateTime 1986-10-14T00:00:00.000Z>
 
     => (local-date-time 1986 10 14)
-    #<LocalDateTime 1986-10-14T00:00:00.000>
+    #<DateTime 1986-10-14T00:00:00.000>
 
   Get the current time with (now) and the start of the Unix epoch with (epoch).
 
@@ -45,7 +45,7 @@
     #<DateTime 1986-12-05T00:00:00.000Z>
 
     => (plus (local-date-time 1986 10 14) (months 1) (weeks 3))
-    #<LocalDateTime 1986-12-05T00:00:00.000Z>
+    #<DateTime 1986-12-05T00:00:00.000Z>
 
   An Interval is used to represent the span of time between two DateTime
   instances. Construct one using interval, then query them using within?,
@@ -87,8 +87,8 @@
   (sec [this] "Return the second of minute component of the given date/time.")
   (second [this] "Return the second of minute component of the given date/time.")
   (milli [this] "Return the millisecond of second component of the given date/time.")
-  (after? [this that] "Returns true if ReadableDateTime 'this' is strictly after date/time 'that'.")
-  (before? [this that] "Returns true if ReadableDateTime 'this' is strictly before date/time 'that'.")
+  (after? [this that] "Returns true if DateTime 'this' is strictly after date/time 'that'.")
+  (before? [this that] "Returns true if DateTime 'this' is strictly before date/time 'that'.")
   (plus- [this period] "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
   (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s).")
   (first-day-of-the-month- [this] "Returns the first day of the month")
@@ -108,7 +108,7 @@
 (defrecord Interval [start end])
 
 (defn interval
-  "Returns an interval representing the span between the two given ReadableDateTimes.
+  "Returns an interval representing the span between the two given DateTime.
   Note that intervals are closed on the left and open on the right."
   [start end]
   {:pre [(<= (.getTime start) (.getTime end))]}
@@ -241,7 +241,7 @@
   (if *sys-time* *sys-time* (goog.date.UtcDateTime.)))
 
 (defn time-now
-  "Returns a LocalTime for the current instant without date or time zone
+  "Returns a local DateTime for the current instant without date or time zone
   using ISOChronology in the current time zone."
   []
   (goog.date.DateTime.))
@@ -302,7 +302,7 @@
    (goog.date.UtcDateTime. year (dec month) day hour minute second millis)))
 
 (defn local-date-time
-  "Constructs and returns a new LocalDateTime.
+  "Constructs and returns a new local DateTime.
 Specify the year, month of year, day of month, hour of day, minute of hour,
 second of minute, and millisecond of second. Note that month and day are
 1-indexed while hour, second, minute, and millis are 0-indexed.
@@ -324,14 +324,14 @@ they will default to 1 or 0 as appropriate."
    (goog.date.DateTime. year (dec month) day hour minute second millis)))
 
 (defn local-date
-  "Constructs and returns a new LocalDate.
+  "Constructs and returns a new local DateTime.
 Specify the year, month, and day. Does not deal with timezones."
   [year month day]
   (goog.date.Date. year (dec month) day))
 
 (defn today
-  "Constructs and returns a new LocalDate representing today's date.
-  LocalDate objects do not deal with timezones at all."
+  "Constructs and returns a new local DateTime representing today's date.
+  local DateTime objects do not deal with timezones at all."
   []
   (if *sys-time*
     (let [d *sys-time*]
@@ -497,7 +497,7 @@ Specify the year, month, and day. Does not deal with timezones."
   (:end in))
 
 (defn extend
-  "Returns an Interval with an end ReadableDateTime the specified Period after the end
+  "Returns an Interval with an end DateTime the specified Period after the end
   of the given Interval"
   [in & by]
   (assoc in :end (apply plus (end in) by)))
@@ -588,12 +588,12 @@ Specify the year, month, and day. Does not deal with timezones."
 
 (defn within?
   "With 2 arguments: Returns true if the given Interval contains the given
-  ReadableDateTime. Note that if the ReadableDateTime is exactly equal to the
+  DateTime. Note that if the DateTime is exactly equal to the
   end of the interval, this function returns false.
 
-  With 3 arguments: Returns true if the start ReadablePartial is
-  equal to or before and the end ReadablePartial is equal to or after the test
-  ReadablePartial."
+  With 3 arguments: Returns true if the start DateTime is
+  equal to or before and the end DateTime is equal to or after the test
+  DateTime."
   ([{:keys [start end]} date]
    (within? start end date))
   ([start end date]

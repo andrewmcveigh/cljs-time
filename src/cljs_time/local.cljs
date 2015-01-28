@@ -38,7 +38,8 @@
   (time/time-now))
 
 (defprotocol ILocalCoerce
-  (to-local-date-time [obj] "convert `obj` to a local Joda DateTime instance retaining time fields."))
+  (to-local-date-time [obj] "convert `obj` to a local goog.date
+                             DateTime instance retaining time fields."))
 
 (defn- as-local-date-time-from-time-zone
   "Coerce to date-time in the default time zone retaining time fields."

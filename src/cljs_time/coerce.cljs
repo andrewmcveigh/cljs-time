@@ -1,7 +1,8 @@
 (ns cljs-time.coerce
-  "### Utilites to coerce Joda DateTime instances to and from various other types.
+  "### Utilites to coerce goog.data DateTime instances to and from
+  various other types.
 
-  For example, to convert a Joda DateTime to and from a Java long:
+  For example, to convert a goog.date DateTime to and from a js number:
 
     => (to-long (date-time 1998 4 25))
     893462400000
@@ -33,7 +34,7 @@
 
 (defn from-date
   "Returns a DateTime instance in the UTC time zone corresponding to the given
-  Java Date object."
+  js Date object."
   [date]
   (from-long (.getTime date)))
 
