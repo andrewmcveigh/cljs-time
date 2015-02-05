@@ -1,3 +1,10 @@
+## v0.3.1
+
+- Add note to README.md/docs about equality
+- Move IEquiv extension into extend ns
+  Ref #19, ref #22
+- Implement IEquiv for goog.date, fix #19
+
 ## v0.3.0
 
 - Update periodic, fix plus months bug
