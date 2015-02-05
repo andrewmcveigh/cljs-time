@@ -1,14 +1,13 @@
 (ns cljs-time.format-test
-  (:refer-clojure :exclude [=])
   (:require-macros
     [cemerick.cljs.test :refer [is deftest]])
   (:require
     [cemerick.cljs.test :as t]
     [cljs-time.coerce :refer [from-date to-date]]
-    [cljs-time.internal.core :refer [=]]
     [cljs-time.core :as time
      :refer [date-time interval utc within?
              local-date local-date-time period]]
+    [cljs-time.extend]
     [cljs-time.format :as format
      :refer [formatter formatters instant->map parse unparse
              formatter-local

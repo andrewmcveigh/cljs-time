@@ -1,12 +1,12 @@
 (ns cljs-time.core-test
-  (:refer-clojure :exclude [= extend second])
+  (:refer-clojure :exclude [extend second])
   (:require-macros
     [cemerick.cljs.test :refer [is deftest]]
     [cljs-time.macros :refer [do-at]]
     [cljs-time.core-test :refer [try= when-available when-not-available]])
   (:require
     [cemerick.cljs.test :as t]
-    [cljs-time.internal.core :refer [=]]
+    [cljs-time.coerce :refer [from-long to-long]]
     [cljs-time.core :refer
      [date-time epoch year month day date-midnight today-at-midnight hour
       minute second milli abuts? interval overlaps? last-day-of-the-month
@@ -18,7 +18,8 @@
       years months weeks days hours minutes seconds millis
       years? months? weeks? days? hours? minutes? seconds?
       extend start end mins-ago default-time-zone
-      to-default-time-zone from-default-time-zone]]))
+      to-default-time-zone from-default-time-zone]]
+    [cljs-time.extend]))
 
 (deftest test-now
   (is (= (date-time 2010 1 1)
@@ -542,3 +543,17 @@
         d1 (date-time y m d 13 0)]
     (is (= d1 (today-at 13 0)))
     (is (= d1 (today-at 13 0 0)))))
+
+(deftest group-by-equiv-test
+  (is (= {(date-midnight 2015 6 1) '[(a 1433152980000) (b 1433196180000)]
+          (date-midnight 2015 6 2) '[(c 1433239380000) (d 1433282580000)]
+          (date-midnight 2015 6 3) '[(e 1433325780000) (f 1433368980000)]}
+         (->> (date-time 2015 6 1 10 3)
+              (to-long)
+              (iterate #(+ % (* 12 60 60 1000)))
+              (interleave '[a b c d e f])
+              (partition 2)
+              (group-by
+               (fn [[_ t]]
+                 (let [d (from-long t)]
+                   (date-midnight (year d) (month d) (day d)))))))))

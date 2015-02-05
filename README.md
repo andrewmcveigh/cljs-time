@@ -59,6 +59,15 @@ available.
 
 ## Usage
 
+**Note:** Equality in goog.date.* (and also with plain javascript
+dates) is not the same as in Joda/clj-time. Two date objects
+representing the same instant in time in goog.date.* are not equal.
+
+If you need to test for equality use either `cljs-time.core/=`, or
+optionally you can require the `cljs-time.extend` namespace which will
+extend the goog.date.* datatypes, so that clojure.core/= works as
+expected.
+
 ### cljs-time.core
 
 The main namespace for date-time operations in the `cljs-time` library
