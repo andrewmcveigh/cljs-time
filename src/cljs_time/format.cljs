@@ -125,7 +125,7 @@
         dow    #(.getDay %)]
     {"d" d
      "dd" #(zero-pad (d %))
-     "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
+     "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" 21 "st" 22 "nd" 23 "rd" 31 "st" "th")))
      "dow" #(days (dow %))
      "D" doy
      "DD" doy
