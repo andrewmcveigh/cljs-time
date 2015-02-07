@@ -1,3 +1,11 @@
+## v0.3.2
+
+- Remove Java/Joda refs from docs, fix #20
+- Merge pull request #25 from astine/master
+  Added missing numbers to date formatter
+- Added missing numbers to date formatter
+  Covered 21, 22, 23, and 31 for the ordinal date formatter
+
 ## v0.3.1
 
 - Add note to README.md/docs about equality
