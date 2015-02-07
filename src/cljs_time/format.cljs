@@ -125,7 +125,7 @@
         dow    #(.getDay %)]
     {"d" d
      "dd" #(zero-pad (d %))
-     "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" "th")))
+     "dth" #(let [d (d %)] (str d (case d 1 "st" 2 "nd" 3 "rd" 21 "st" 22 "nd" 23 "rd" 31 "st" "th")))
      "dow" #(days (dow %))
      "D" doy
      "DD" doy
@@ -410,7 +410,7 @@ time if supplied."}
             :when d] d))))
 
 (defn parse-local
-  "Returns a LocalDateTime instance obtained by parsing the
+  "Returns a local DateTime instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
      (parse* goog.date.DateTime fmt s))
@@ -421,7 +421,7 @@ time if supplied."}
             :when d] d))))
 
 (defn parse-local-date
-  "Returns a LocalDate instance obtained by parsing the
+  "Returns a local Date instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
      (parse* goog.date.Date fmt s))
@@ -439,7 +439,7 @@ form determined by the given formatter."
   (apply string/replace ((formatter-fn format-str formatters) dt)))
 
 (defn unparse-local
-  "Returns a string representing the given LocalDateTime instance in the
+  "Returns a string representing the given local DateTime instance in the
   form determined by the given formatter."
   [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
@@ -449,7 +449,7 @@ form determined by the given formatter."
                                                     "ZZ" (constantly "")))))
 
 (defn unparse-local-date
-  "Returns a string representing the given LocalDate instance in the form
+  "Returns a string representing the given local Date instance in the form
   determined by the given formatter."
   [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
