@@ -406,7 +406,7 @@ time if supplied."}
   ([s]
      (first
       (for [f (vals formatters)
-            :let [d (try (parse f s) (catch js/Error _))]
+            :let [d (try (parse f s) (catch :default _))]
             :when d] d))))
 
 (defn parse-local
