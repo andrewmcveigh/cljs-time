@@ -1,3 +1,7 @@
+## v0.3.3
+
+- Catch ex-info thrown error
+
 ## v0.3.2
 
 - Remove Java/Joda refs from docs, fix #20
