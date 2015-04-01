@@ -31,6 +31,7 @@
     [clojure.set :refer [difference]]
     [clojure.string :as string]
     [goog.date :as date]
+<<<<<<< HEAD
     [goog.date.duration :as duration]
     [goog.string :as gstring]
     [goog.string.format]))
@@ -44,6 +45,11 @@
 
 (defn abbreviate [n s]
   (subs s 0 n))
+=======
+    [goog.i18n.DateTimeParse]
+    [goog.string :as gstring]
+    [goog.string.format]))
+>>>>>>> Replace parser with closure parser
 
 (def ^{:doc "**Note: not all formatters have been implemented yet.**
 
@@ -171,63 +177,7 @@
         (.setTime d (.getTime adjusted))))
     d))
 
-(def date-parsers
-  (let [parse-int #(js/parseInt % 10)
-        assoc-fn (fn [kw] #(assoc %1 kw (parse-int %2)))
-        y (assoc-fn :years)
-        d (assoc-fn :days)
-        M #(assoc %1 :months (dec (parse-int %2)))
-        h #(assoc %1 :hours (mod (parse-int %2) 12))
-        a (fn [{:keys [hours] :as date} x]
-            (if (#{"pm" "p"} (string/lower-case x))
-              (assoc date :hours (let [hours (+ 12 hours)]
-                                   (if (= hours 24) 0 hours)))
-              date))
-        H (assoc-fn :hours)
-        m (assoc-fn :minutes)
-        s (assoc-fn :seconds)
-        S (assoc-fn :millis)
-        MMM #(let [full (first (filter (fn [m]
-                                         (re-seq (re-pattern (str "^" %2)) m))
-                                       months))]
-               (M %1 (str (inc (index-of months full)))))
-        MMMM #(M %1 (str (inc (index-of months %2))))
-        skip (fn [x & args] x)
-        tz #(assoc %1 :time-zone %2)]
-    {"d" ["(\\d{1,2})" d]
-     "dd" ["(\\d{2})" d]
-     "D" ["(\\d{1,3})" d]
-     "DD" ["(\\d{2,3})" d]
-     "DDD" ["(\\d{3})" d]
-     "dth" ["(\\d{1,2})(?:st|nd|rd|th)" d]
-     "M" ["(\\d{1,2})" M]
-     "MM" ["((?:\\d{2})|(?:\\b\\d{1,2}\\b))" M]
-     "y" ["(\\d{1,4})" y]
-     "yy" ["(\\d{2,4})" y]
-     "yyyy" ["(\\d{4})" y]
-     "Y" ["(\\d{1,4})" y]
-     "YY" ["(\\d{2,4})" y]
-     "YYYY" ["(\\d{4})" y]
-     "MMM" [(str \( (string/join \| (map (partial abbreviate 3) months)) \)) MMM]
-     "MMMM" [(str \( (string/join \| months) \)) MMMM]
-     "E" [(str \( (string/join \| (map (partial abbreviate 3) days)) \)) skip]
-     "EEE" [(str \( (string/join \| (map (partial abbreviate 3) days)) \)) skip]
-     "EEEE" [(str \( (string/join \| days) \)) skip]
-     "dow" [(str \( (string/join \| days) \)) skip]
-     "a" ["(am|pm|a|p|AM|PM|A|P)" a]
-     "A" ["(am|pm|a|p|AM|PM|A|P)" a]
-     "m" ["(\\d{1,2})" m]
-     "s" ["(\\d{1,2})" s]
-     "S" ["(\\d{1,2})" S]
-     "h" ["(\\d{1,2})" h]
-     "H" ["(\\d{1,2})" H]
-     "hh" ["(\\d{2})" h]
-     "HH" ["(\\d{2})" H]
-     "mm" ["(\\d{2})" m]
-     "ss" ["(\\d{2})" s]
-     "SSS" ["(\\d{3})" S]
-     "Z" ["((?:(?:\\+|-)\\d{2}:?\\d{2})|Z+)" tz]
-     "ZZ" ["((?:(?:\\+|-)\\d{2}:\\d{2})|Z+)" tz]}))
+(def date-parsers int-fmt/date-parsers)
 
 (def date-setters
   {:years #(.setYear %1 %2)
@@ -364,56 +314,35 @@ time if supplied."}
 (def ^{:private true} printers
   (difference (set (keys formatters)) parsers))
 
-(def part-splitter-regex
-  #"(?:(?!(?:\+|-)\d{2}):(?!\d{2}$))|[^\w:]+|.[TW]|'[^']+'")
-
-(defmulti date-map type)
-
-(defmethod date-map goog.date.Date [d]
-  {:years 0 :months 0 :days 1})
-
-(defmethod date-map goog.date.DateTime [d]
-  {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0})
-
-(defmethod date-map goog.date.UtcDateTime [d]
-  {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0
-   :time-zone nil})
-
-(defn parse* [constructor {:keys [format-str default-year] :as fmt} s]
-  {:pre [(seq s)]}
-  (let [min-parts (count (string/split s part-splitter-regex))]
-    (let [parse-fn (parser-fn format-str)
-          parse-seq (seq (map (fn [[a b]] [a (second (date-parsers b))])
-                              (parse-fn s)))]
-      (if (>= (count parse-seq) min-parts)
-        (let [d (new constructor 0 0 0 0 0 0 0)
-              empty (assoc (date-map d) :years (or default-year 0))
-              setters (select-keys date-setters (keys empty))]
-          (->> parse-seq
-               (reduce (fn [date [part do-parse]] (do-parse date part)) empty)
-               valid-date?
-               (merge-with #(%1 d %2) setters))
-          d)
-        (throw
-         (ex-info "The parser could not match the input string."
-                  {:type :parser-no-match}))))))
-
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
-  ([fmt s]
-     (parse* goog.date.UtcDateTime fmt s))
+  ([{:keys [format-str default-year constructor]
+     :or {constructor goog.date.UtcDateTime}} s]
+   (let [d (new constructor (or default-year 0))
+         parser (goog.i18n.DateTimeParse. format-str)
+         parsed-count (.strictParse parser s d)
+         success? #(and (seq s)
+                        (= (count (string/replace s #"Z$" ""))
+                           %))]
+     (when (zero? parsed-count)
+       (when (success? (.parse parser s d))
+         (throw (ex-info "Date is not valid" {:type :invalid-date :date d})))
+       (throw
+        (ex-info "The parser could not match the input string."
+                 {:type :parser-no-match})))
+     (when (success? parsed-count) d)))
   ([s]
-     (first
-      (for [f (vals formatters)
-            :let [d (try (parse f s) (catch :default _))]
-            :when d] d))))
+   (first
+    (for [f (vals formatters)
+          :let [d (try (parse f s) (catch :default _))]
+          :when d] d))))
 
 (defn parse-local
   "Returns a local DateTime instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-     (parse* goog.date.DateTime fmt s))
+     (parse (assoc fmt :constructor goog.date.DateTime) s))
   ([s]
      (first
       (for [f (vals formatters)
@@ -424,7 +353,7 @@ time if supplied."}
   "Returns a local Date instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-     (parse* goog.date.Date fmt s))
+     (parse (assoc fmt :constructor goog.date.Date) s))
   ([s]
      (first
       (for [f (vals formatters)
