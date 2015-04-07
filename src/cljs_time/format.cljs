@@ -190,7 +190,11 @@
        {:format-str fmts
         :formatters date-formatters
         :pre-format {#"dow" "EEEE"}
-        :post-format {#"dth" dth}}
+        :post-format {#"dth" dth
+                      #"ZZ?" (fn [_ dt]
+                               (if (zero? (.getTimezoneOffset dt))
+                                 "Z"
+                                 (.getTimezoneOffsetString dt)))}}
        {:type ::formatter})))
 
 (defn formatter-local [fmts]
@@ -198,7 +202,9 @@
     {:format-str fmts
      :formatters (assoc date-formatters
                    "Z" (constantly "")
-                   "ZZ" (constantly ""))}
+                   "ZZ" (constantly ""))
+     :pre-format {#"dow" "EEEE"
+                  #"Z" ""}}
     {:type ::formatter}))
 
 (defn not-implemented [sym]
@@ -330,13 +336,18 @@ time if supplied."}
   form determined by the given formatter."
   [{:keys [format-str default-year constructor pre-format post-format]
     :or {constructor goog.date.UtcDateTime}} dt]
-  {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
+  {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
   (let [post-replace-atom (atom {})
         post-replace (fn [init k v]
-                       (let [i (or (apply (fnil max 0) (keys @post-replace-atom)) 0)
-                             sym (str "##" i "##")]
-                         (swap! post-replace-atom assoc i [(re-pattern sym) v])
-                         (string/replace init k sym)))
+                       (let [i (->> (apply (fnil max 0)
+                                           (keys @post-replace-atom))
+                                    (or 0)
+                                    inc)
+                             sym (str "##" i "##")
+                             s (string/replace init k sym)]
+                         (when (not= s init)
+                           (swap! post-replace-atom assoc i [(re-pattern sym) v]))
+                         s))
         format-str (reduce-kv string/replace format-str pre-format)
         format-str (reduce-kv post-replace format-str post-format)
         formatter (goog.i18n.DateTimeFormat. format-str)]
@@ -345,31 +356,25 @@ time if supplied."}
                (.format formatter dt)
                @post-replace-atom)))
 
-;; (prn (unparse 
-;;       (formatter "dd/MM/yyyy")
-;;       (time/date-time 2010 3 11 17 49 20 881)))
-
 (defn unparse-local
   "Returns a string representing the given local DateTime instance in the
   form determined by the given formatter."
-  [{:keys [format-str default-year constructor]
-    :or {constructor goog.date.UtcDateTime}} dt]
+  [fmt dt]
   {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
-  
-  (apply string/replace
-         ((formatter-fn format-str formatters) dt (assoc date-formatters
-                                                         "Z" (constantly "")
-                                                         "ZZ" (constantly "")))))
+  (-> fmt
+      (assoc :constructor goog.date.DateTime)
+      (assoc-in [:pre-format #"Z"] "")
+      (unparse dt)))
 
 (defn unparse-local-date
   "Returns a string representing the given local Date instance in the form
   determined by the given formatter."
-  [{:keys [format-str formatters] :as fmt} dt]
+  [fmt dt]
   {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
-  (apply string/replace
-         ((formatter-fn format-str formatters) dt (assoc date-formatters
-                                                    "Z" (constantly "")
-                                                    "ZZ" (constantly "")))))
+    (-> fmt
+      (assoc :constructor goog.date.Date)
+      (assoc-in [:pre-format #"Z"] "")
+      (unparse dt)))
 
 (defn show-formatters
   "Shows how a given DateTime, or by default the current time, would be
