@@ -65,7 +65,8 @@
         (format/parse (:rfc822 formatters)
                       "Wed, 02 Oct 2002 15:00:00 +0200")))
     (catch js/Error e
-      (.log js/console 'e e))))
+      (prn (ex-data e)))))
+(prn (parse-test))
 
 (deftest unparse-test
   (let [date (from-date #inst "2013-08-29T00:00:00.000-00:00")]
