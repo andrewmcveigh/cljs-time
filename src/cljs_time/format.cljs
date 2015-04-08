@@ -81,7 +81,13 @@
                       #"ZZ?" (fn [_ dt]
                                (if (zero? (.getTimezoneOffset dt))
                                  "Z"
-                                 (.getTimezoneOffsetString dt)))}}
+                                 (.getTimezoneOffsetString dt)))}
+        
+        :pre-parse {#"dow" "EEEE"}
+        :post-parse {#"(\d{1,2})(?:st|nd|rd|th)"
+                     (fn [s dt]
+                              (prn s dt)
+                              )}}
        {:type ::formatter})))
 
 (defn formatter-local [fmts]
@@ -172,9 +178,10 @@ time if supplied."}
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
-  ([{:keys [format-str default-year constructor]
+  ([{:keys [format-str pre-parse post-parse default-year constructor]
      :or {constructor goog.date.UtcDateTime}} s]
    (let [d (new constructor (or default-year 0))
+         format-str (reduce-kv string/replace format-str pre-parse)
          parser (goog.i18n.DateTimeParse. format-str)
          parsed-count (.strictParse parser s d)
          success? #(and (seq s)
@@ -185,11 +192,12 @@ time if supplied."}
          (throw (ex-info "Date is not valid" {:type :invalid-date :date d})))
        (throw
         (ex-info "The parser could not match the input string."
-                 {:type :parser-no-match})))
+                 {:type :parser-no-match
+                  :format-str format-str})))
      (when (success? parsed-count) d)))
   ([s]
    (first
-    (for [f (vals formatters)
+    (for [f (->> formatters (sort-by key) (map val))
           :let [d (try (parse f s) (catch :default _))]
           :when d] d))))
 
@@ -197,23 +205,29 @@ time if supplied."}
   "Returns a local DateTime instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-     (parse (assoc fmt :constructor goog.date.DateTime) s))
+   (-> fmt
+       (assoc :constructor goog.date.DateTime
+              :pre-parse {#"ZZ?" ""})
+       (parse s)))
   ([s]
-     (first
-      (for [f (vals formatters)
-            :let [d (try (parse-local f s) (catch js/Error _ nil))]
-            :when d] d))))
+   (first
+    (for [f (->> formatters (sort-by key) (map val))
+          :let [d (try (parse-local f s) (catch js/Error _ nil))]
+          :when d] d))))
 
 (defn parse-local-date
   "Returns a local Date instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-     (parse (assoc fmt :constructor goog.date.Date) s))
+   (-> fmt
+       (assoc :constructor goog.date.Date
+              :pre-parse {#"ZZ?" ""})
+       (parse s)))
   ([s]
-     (first
-      (for [f (vals formatters)
-            :let [d (try (parse-local-date f s) (catch js/Error _ nil))]
-            :when d] d))))
+   (first
+    (for [f (->> formatters (sort-by key) (map val))
+          :let [d (try (parse-local-date f s) (catch js/Error _ nil))]
+          :when d] d))))
 
 (defn unparse
   "Returns a string representing the given DateTime instance in UTC and in the

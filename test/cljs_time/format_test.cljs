@@ -32,37 +32,40 @@
       (try
         (format/parse (formatter "dd/MM/yyyy") "32/04/2013")
         (catch ExceptionInfo e (:type (ex-data e))))))
-  (let [date (format/parse (formatter "dd/MM/yyyy") "12/08/1938")]
-    (is (= 1938 (.getYear date)))
-    (is (= 12   (.getDate date)))
-    (is (= 7    (.getMonth date))))
-  (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "28th August 2013 14:26")]
-    (is (= 2013 (.getYear date)))
-    (is (= 28   (.getDate date)))
-    (is (= 7    (.getMonth date)))
-    (is (= 14   (.getHours date)))
-    (is (= 26   (.getMinutes date))))
-  (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "29th February 2012 14:26")]
-    (is (= 2012 (.getYear date)))
-    (is (= 29   (.getDate date)))
-    (is (= 1    (.getMonth date)))
-    (is (= 14   (.getHours date)))
-    (is (= 26   (.getMinutes date))))
-  (is (= [2014 04 01 18 54 0 0]
-         (utc-int-vec
-          (format/parse (formatter "DD-MM-YYYY HH:mm") "01-04-2014 18:54"))))
-  (is (= [2014 4 1 13 57 0 0]
-         (utc-int-vec
-          (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ssZZ")
-                        "2014-04-01T14:57:00+01:00"))))
-  (is (= [2014 04 1 23 27 0 0]
-         (utc-int-vec
-          (format/parse (:basic-date-time-no-ms format/formatters)
-                        "20140401T145700-08:30"))))
-  (is (= [2002 10 2 13 0 0 0]
-         (utc-int-vec
-          (format/parse (:rfc822 formatters)
-                        "Wed, 02 Oct 2002 15:00:00 +0200")))))
+  (try
+    (let [date (format/parse (formatter "dd/MM/yyyy") "12/08/1938")]
+      (is (= 1938 (.getYear date)))
+      (is (= 12   (.getDate date)))
+      (is (= 7    (.getMonth date))))
+    (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "28th August 2013 14:26")]
+      (is (= 2013 (.getYear date)))
+      (is (= 28   (.getDate date)))
+      (is (= 7    (.getMonth date)))
+      (is (= 14   (.getHours date)))
+      (is (= 26   (.getMinutes date))))
+    (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "29th February 2012 14:26")]
+      (is (= 2012 (.getYear date)))
+      (is (= 29   (.getDate date)))
+      (is (= 1    (.getMonth date)))
+      (is (= 14   (.getHours date)))
+      (is (= 26   (.getMinutes date))))
+    (= [2014 04 01 18 54 0 0]
+       (utc-int-vec
+        (format/parse (formatter "DD-MM-YYYY HH:mm") "01-04-2014 18:54")))
+    (= [2014 4 1 13 57 0 0]
+       (utc-int-vec
+        (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ssZZ")
+                      "2014-04-01T14:57:00+01:00")))
+    (= [2014 04 1 23 27 0 0]
+       (utc-int-vec
+        (format/parse (:basic-date-time-no-ms format/formatters)
+                      "20140401T145700-08:30")))
+    (= [2002 10 2 13 0 0 0]
+       (utc-int-vec
+        (format/parse (:rfc822 formatters)
+                      "Wed, 02 Oct 2002 15:00:00 +0200")))
+    (catch js/Error e
+      (.log js/console 'e e))))
 
 (deftest unparse-test
   (let [date (from-date #inst "2013-08-29T00:00:00.000-00:00")]
@@ -196,6 +199,10 @@
     (is (= (local-date-time 2010 3 11 17 49 20 881)
            (parse-local fmt "20100311T174920.881Z")))))
 
+;; (let [fmt (formatters :basic-date-time)]
+;;   (prn (local-date-time 2010 3 11 17 49 20 881)
+;;        (parse-local fmt "20100311T174920.881Z")))
+
 (deftest test-local-unparse
   (let [fmt (formatters :date)]
     (is (= "2010-03-11"
@@ -293,6 +300,9 @@
     (is (= "7:40"    (unparse f2 (parse f2 "7:40"))))
     (is (= "16:19"   (unparse f2 (parse f2 "16:19"))))
     (is (= "5:00 PM" (unparse f3 (parse f3 "5:00 PM"))))))
+
+;; (= (local-date 2010 10 11)
+;;    (parse-local-date "2010-10-11T00:00:00"))
 
 (deftest test-instant->map-from-interval
   (let [it (interval (date-time 1986 9 2 0 0 2)  (date-time 1986 11 30 2 5 12))]
