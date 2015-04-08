@@ -70,31 +70,28 @@
   (let [d (.getDate dt)]
     (str d (case d 1 "st" 2 "nd" 3 "rd" 21 "st" 22 "nd" 23 "rd" 31 "st" "th"))))
 
+(defn consistent-tz-str [_ dt]
+  (if (zero? (.getTimezoneOffset dt))
+    "Z"
+    (.getTimezoneOffsetString dt)))
+
+(def formatter-defaults
+  {:pre-format {#"dow" "EEEE"}
+   :post-format {#"dth" dth #"ZZ?" consistent-tz-str}
+   :pre-parse {#"dth" ["d" #"(\d{1,2})(?:st|nd|rd|th)" "$1"]}})
+
 (defn formatter
   ([fmts]
      (formatter fmts time/utc))
   ([fmts dtz]
      (with-meta
-       {:format-str fmts
-        :pre-format {#"dow" "EEEE"}
-        :post-format {#"dth" dth
-                      #"ZZ?" (fn [_ dt]
-                               (if (zero? (.getTimezoneOffset dt))
-                                 "Z"
-                                 (.getTimezoneOffsetString dt)))}
-        
-        :pre-parse {#"dow" "EEEE"}
-        :post-parse {#"(\d{1,2})(?:st|nd|rd|th)"
-                     (fn [s dt]
-                              (prn s dt)
-                              )}}
+       {:format-str fmts}
        {:type ::formatter})))
 
 (defn formatter-local [fmts]
   (with-meta
     {:format-str fmts
-     :pre-format {#"dow" "EEEE"
-                  #"Z" ""}}
+     :pre-format {#"Z" ""}}
     {:type ::formatter}))
 
 (defn not-implemented [sym]
@@ -178,10 +175,17 @@ time if supplied."}
 (defn parse
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
-  ([{:keys [format-str pre-parse post-parse default-year constructor]
+  ([{:keys [format-str pre-parse default-year constructor]
      :or {constructor goog.date.UtcDateTime}} s]
-   (let [d (new constructor (or default-year 0))
-         format-str (reduce-kv string/replace format-str pre-parse)
+   (let [pre-parse (merge (:pre-parse formatter-defaults) pre-parse)
+         d (new constructor (or default-year 0))
+         [s format-str] (reduce-kv (fn [[s format-str] k [v regex repl]]
+                                     [(if (and regex repl)
+                                        (string/replace s regex repl)
+                                        s)
+                                      (string/replace format-str k v)])
+                                   [s format-str]
+                                   pre-parse)
          parser (goog.i18n.DateTimeParse. format-str)
          parsed-count (.strictParse parser s d)
          success? #(and (seq s)
@@ -207,7 +211,7 @@ time if supplied."}
   ([fmt s]
    (-> fmt
        (assoc :constructor goog.date.DateTime
-              :pre-parse {#"ZZ?" ""})
+              :pre-parse {#"ZZ?" [""]})
        (parse s)))
   ([s]
    (first
@@ -235,7 +239,9 @@ time if supplied."}
   [{:keys [format-str default-year constructor pre-format post-format]
     :or {constructor goog.date.UtcDateTime}} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
-  (let [post-replace-atom (atom {})
+  (let [pre-format (merge (:pre-format formatter-defaults) pre-format)
+        post-format (merge (:post-format formatter-defaults) post-format)
+        post-replace-atom (atom {})
         post-replace (fn [init k v]
                        (let [i (->> (apply (fnil max 0)
                                            (keys @post-replace-atom))
