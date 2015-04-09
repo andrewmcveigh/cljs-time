@@ -78,14 +78,16 @@
 (def formatter-defaults
   {:pre-format {#"dow" "EEEE"}
    :post-format {#"dth" dth #"ZZ?" consistent-tz-str}
-   :pre-parse {#"dth" ["d" #"(\d{1,2})(?:st|nd|rd|th)" "$1"]}})
+   :pre-parse {"dth" ["d" "(\\d{1,2})(?:st|nd|rd|th)" "$1"]
+               "([^Z])Z$" ["$1Z" "([^Z])Z$" "$1+0000"]}})
 
 (defn formatter
   ([fmts]
      (formatter fmts time/utc))
   ([fmts dtz]
      (with-meta
-       {:format-str fmts}
+       {:format-str fmts
+        :constructor goog.date.UtcDateTime}
        {:type ::formatter})))
 
 (defn formatter-local [fmts]
@@ -181,9 +183,9 @@ time if supplied."}
          d (new constructor (or default-year 0))
          [s format-str] (reduce-kv (fn [[s format-str] k [v regex repl]]
                                      [(if (and regex repl)
-                                        (string/replace s regex repl)
+                                        (string/replace s (re-pattern regex) repl)
                                         s)
-                                      (string/replace format-str k v)])
+                                      (string/replace format-str (re-pattern k) v)])
                                    [s format-str]
                                    pre-parse)
          parser (goog.i18n.DateTimeParse. format-str)
@@ -211,7 +213,8 @@ time if supplied."}
   ([fmt s]
    (-> fmt
        (assoc :constructor goog.date.DateTime
-              :pre-parse {#"ZZ?" [""]})
+              :pre-parse {"ZZ?" [""]
+                          "([^Z])Z$" ["$1Z"]})
        (parse s)))
   ([s]
    (first
@@ -225,7 +228,8 @@ time if supplied."}
   ([fmt s]
    (-> fmt
        (assoc :constructor goog.date.Date
-              :pre-parse {#"ZZ?" ""})
+              :pre-parse {#"ZZ?" ""
+                          #"([^Z])Z$" ["$1Z"]})
        (parse s)))
   ([s]
    (first
