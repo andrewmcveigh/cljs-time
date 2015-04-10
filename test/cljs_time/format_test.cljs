@@ -20,7 +20,7 @@
 (deftest parse-test
   (is (= :parser-no-match
          (try
-           (format/parse (formatter "dth MMM yyyy HH:mm") "28th August 2013 14:26")
+           (format/parse (formatter "dth xMMM yyyy HH:mm") "28th August 2013 14:26")
            (catch ExceptionInfo e (:type (ex-data e))))))
   (is
    (= :invalid-date

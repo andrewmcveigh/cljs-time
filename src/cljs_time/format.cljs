@@ -79,7 +79,9 @@
   {:pre-format {#"dow" "EEEE"}
    :post-format {#"dth" dth #"ZZ?" consistent-tz-str}
    :pre-parse {"dth" ["d" "(\\d{1,2})(?:st|nd|rd|th)" "$1"]
-               "([^Z])Z$" ["$1Z" "([^Z])Z$" "$1+0000"]}})
+               "([^Z])Z$" ["$1Z" "([^Z])Z$" "$1+0000"]
+               "YYYY" ["yyyy"]
+               "DD" ["dd"]}})
 
 (defn formatter
   ([fmts]
@@ -195,11 +197,11 @@ time if supplied."}
                            %))]
      (when (zero? parsed-count)
        (when (success? (.parse parser s d))
-         (throw (ex-info "Date is not valid" {:type :invalid-date :date d})))
+         (throw
+          (ex-info "Date is not valid" {:type :invalid-date :date d})))
        (throw
         (ex-info "The parser could not match the input string."
-                 {:type :parser-no-match
-                  :format-str format-str})))
+                 {:type :parser-no-match :format-str format-str})))
      (when (success? parsed-count) d)))
   ([s]
    (first
@@ -213,8 +215,8 @@ time if supplied."}
   ([fmt s]
    (-> fmt
        (assoc :constructor goog.date.DateTime
-              :pre-parse {"ZZ?" [""]
-                          "([^Z])Z$" ["$1Z"]})
+              :pre-parse {"ZZ?$" [""]
+                          "([^Z])Z$" [""]})
        (parse s)))
   ([s]
    (first
@@ -228,8 +230,8 @@ time if supplied."}
   ([fmt s]
    (-> fmt
        (assoc :constructor goog.date.Date
-              :pre-parse {#"ZZ?" ""
-                          #"([^Z])Z$" ["$1Z"]})
+              :pre-parse {"ZZ?$" [""]
+                          "([^Z])Z$" [""]})
        (parse s)))
   ([s]
    (first
