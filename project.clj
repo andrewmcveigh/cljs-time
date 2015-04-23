@@ -1,4 +1,4 @@
-(defproject com.andrewmcveigh/cljs-time "0.3.3"
+(defproject com.andrewmcveigh/cljs-time "0.3.4-SNAPSHOT"
   :description "A clj-time inspired date library for clojurescript."
   :url "https://github.com/andrewmcveigh/cljs-time"
   :license {:name "Eclipse Public License"
@@ -8,10 +8,7 @@
                  [org.clojure/clojurescript "0.0-2511"]]
 
   :plugins [[com.cemerick/clojurescript.test "0.3.3"]
-            [lein-cljsbuild "1.0.3"]
-            [lein-marginalia "0.8.0"]
-            [com.cemerick/austin "0.1.5"]
-            [com.andrewmcveigh/lein-auto-release "0.1.10"]]
+            [lein-cljsbuild "1.0.3"]]
 
   :jvm-opts ["-Djava.awt.headless=true"]
   :clojurescript? true
