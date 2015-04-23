@@ -1,3 +1,7 @@
+## v0.3.4
+
+- Remove dev plugins from project.clj
+
 ## v0.3.3
 
 - Catch ex-info thrown error
