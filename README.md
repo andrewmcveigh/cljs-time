@@ -152,7 +152,7 @@ If you need to parse or print date-times, use `cljs-time.format`:
 => (use 'cljs-time.format)
 ```
 
-Printing and printing are controlled by formatters. You can either use one of the built in ISO8601 formatters or define your own, e.g.:
+Printing and parsing are controlled by formatters. You can either use one of the built in ISO8601 formatters or define your own, e.g.:
 
 ``` clj
 (def built-in-formatter (formatters :basic-date-time))
