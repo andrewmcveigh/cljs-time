@@ -276,6 +276,7 @@
 (deftest test-hour-meridiem-formatter
   (let [f1 (formatter "h:mma")
         f2 (formatter "H:mm")
+        f3 (formatter "h:mm A")
         morning (date-time 0 0 0  7 40 10 123)
         evening (date-time 0 0 0 16 19 49 877)
         midnight (date-time 0 0 0 0 0 0 0)
@@ -292,7 +293,8 @@
     (is (= "7:40am"  (unparse f1 (parse f1 "7:40am"))))
     (is (= "4:19pm"  (unparse f1 (parse f1 "4:19pm"))))
     (is (= "7:40"    (unparse f2 (parse f2 "7:40"))))
-    (is (= "16:19"   (unparse f2 (parse f2 "16:19"))))))
+    (is (= "16:19"   (unparse f2 (parse f2 "16:19"))))
+    (is (= "5:00 PM" (unparse f3 (parse f3 "5:00 PM"))))))
 
 (deftest test-instant->map-from-interval
   (let [it (interval (date-time 1986 9 2 0 0 2)  (date-time 1986 11 30 2 5 12))]

@@ -242,7 +242,7 @@
 (defn parser-sort-order-pred [parser]
   (index-of
     ["YYYY" "YY" "Y" "yyyy" "yy" "y" "d" "dd" "D" "DD" "DDD" "dth"
-     "M" "MM" "MMM" "MMMM" "dow" "h" "H" "m" "s" "S" "hh" "HH" "mm" "ss" "a"
+     "M" "MM" "MMM" "MMMM" "dow" "h" "H" "m" "s" "S" "hh" "HH" "mm" "ss" "a" "A"
      "SSS" "Z" "ZZ"]
     parser))
 
