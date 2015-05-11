@@ -1,3 +1,10 @@
+## v0.3.5
+
+- Add 'A' meridiem parser to parser-order, test. Fix #30
+- Merge pull request #29 from nblumoe/patch-1
+  Update README.md
+- Update README.md
+
 ## v0.3.4
 
 - Remove dev plugins from project.clj
