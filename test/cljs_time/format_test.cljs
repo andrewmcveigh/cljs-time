@@ -294,6 +294,7 @@
     (is (= "16:19"  (unparse f2 evening)))
 
     (is (= "12:00AM" (unparse f1 (parse f1 "12:00am"))))
+    (is (= "5:00PM" (unparse f1 (parse f1 "5:00pm"))))
     (is (= "12:00PM" (unparse f1 (parse f1 "12:00pm"))))
     (is (= "7:40AM"  (unparse f1 (parse f1 "7:40am"))))
     (is (= "4:19PM"  (unparse f1 (parse f1 "4:19pm"))))
