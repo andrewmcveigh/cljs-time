@@ -26,6 +26,13 @@
          (do-at (date-time 2010 1 1)
                 (now)))))
 
+(deftest test-now-skew
+  (set! now (fn []
+              (plus (goog.date.UtcDateTime.)
+                    (minutes 5)
+                    (seconds 6))))
+  (prn "test-now-skew-2" (pr-str (now))))
+
 (deftest test-today-at-midnight
   (is (= (date-midnight 2010 1 1)
           (do-at (date-midnight 2010 1 1)
@@ -557,3 +564,11 @@
                (fn [[_ t]]
                  (let [d (from-long t)]
                    (date-midnight (year d) (month d) (day d)))))))))
+
+(deftest long-interval-test
+  (let [start (date-time 2015 6 5)
+        end (date-time 2017 5 5)
+        i (interval start end)]
+    (in-months i)))
+
+(enable-console-print!)
