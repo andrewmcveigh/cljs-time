@@ -1,3 +1,8 @@
+## v0.3.6
+
+- Correctly calculate month-add when > 12, fix #33
+- Add test for long-interval hanging bug, ref #33
+
 ## v0.3.5
 
 - Add 'A' meridiem parser to parser-order, test. Fix #30
