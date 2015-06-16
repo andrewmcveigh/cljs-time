@@ -4,11 +4,11 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :scm {:url "git@github.com:andrewmcveigh/cljs-time.git"}
-  :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-3165"]]
+  :dependencies [[org.clojure/clojure "1.7.0-RC1"]
+                 [org.clojure/clojurescript "0.0-3308" :scope "provided"]]
 
   :plugins [[com.cemerick/clojurescript.test "0.3.3"]
-            [lein-cljsbuild "1.0.5"]]
+            [lein-cljsbuild "1.0.6"]]
 
   :jvm-opts ["-Djava.awt.headless=true"]
   :clojurescript? true

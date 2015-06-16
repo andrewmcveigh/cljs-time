@@ -150,7 +150,7 @@ expected."}
                  (when value
                    (let [m (op (month date) value)
                          y (year date)
-                         y (cond (> m 12) (+ y 1)
+                         y (cond (> m 12) (+ y (int (/ m 12)))
                                  (< m 1) (- y 1)
                                  :else y)
                          m (cond (> m 12) (mod m 12)
@@ -175,7 +175,7 @@ expected."}
 
 (defn period-fn [p]
   (fn [operator date]
-    (reduce #((periods (key %2)) operator %1 (val %2)) date p)))
+    (reduce (fn [d [k v]] ((periods k) operator d v)) date p)))
 
 (extend-protocol DateTimeProtocol
   goog.date.UtcDateTime
@@ -512,7 +512,9 @@ Specify the year, month, and day. Does not deal with timezones."
   (assoc in :end (apply plus (end in) by)))
 
 (defn- month-range [{:keys [start end]}]
-  (take-while #(before? % end) (map #(plus start (months (inc %))) (range))))
+  (->> (range)
+       (map #(plus start (months (inc %))))
+       (take-while #(before? % end))))
 
 (defn- total-days-in-whole-months [interval]
   (map #(.getNumberOfDaysInMonth %) (month-range interval)))

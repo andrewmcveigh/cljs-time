@@ -7,7 +7,7 @@
   (:require
     [cemerick.cljs.test :as t]
     [cljs-time.coerce :refer [from-long to-long]]
-    [cljs-time.core :refer
+    [cljs-time.core :as time :refer
      [date-time epoch year month day date-midnight today-at-midnight hour
       minute second milli abuts? interval overlaps? last-day-of-the-month
       number-of-days-in-the-month first-day-of-the-month today-at now within?
@@ -26,7 +26,7 @@
          (do-at (date-time 2010 1 1)
                 (now)))))
 
-(deftest test-now-skew
+#_(deftest test-now-skew
   (set! now (fn []
               (plus (goog.date.UtcDateTime.)
                     (minutes 5)
