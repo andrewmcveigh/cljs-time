@@ -1,11 +1,10 @@
 (ns cljs-time.core-test
   (:refer-clojure :exclude [extend second])
   (:require-macros
-    [cemerick.cljs.test :refer [is deftest]]
     [cljs-time.macros :refer [do-at]]
     [cljs-time.core-test :refer [try= when-available when-not-available]])
   (:require
-    [cemerick.cljs.test :as t]
+    [cljs.test :refer-macros [deftest is are]]
     [cljs-time.coerce :refer [from-long to-long]]
     [cljs-time.core :as time :refer
      [date-time epoch year month day date-midnight today-at-midnight hour

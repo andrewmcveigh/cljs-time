@@ -7,8 +7,7 @@
   :dependencies [[org.clojure/clojure "1.7.0-RC1"]
                  [org.clojure/clojurescript "0.0-3308" :scope "provided"]]
 
-  :plugins [[com.cemerick/clojurescript.test "0.3.3"]
-            [lein-cljsbuild "1.0.6"]]
+  :plugins [[lein-cljsbuild "1.0.6"]]
 
   :jvm-opts ["-Djava.awt.headless=true"]
   :clojurescript? true
@@ -20,9 +19,9 @@
                      :pretty-print true}}
     :test {:source-paths ["src" "test"]
            :incremental? true
-           :notify-command ["phantomjs" :cljs.test/runner "target/unit-test.js"]
+           :notify-command ["node" "target/unit-test.js"]
            :compiler {:output-to "target/unit-test.js"
-                      :optimizations :whitespace
+                      :optimizations :simple
                       :pretty-print true}}}}
   :profiles
   {:prod
@@ -41,12 +40,8 @@
                                     :optimizations :advanced
                                     :pretty-print true}}}
      :test-commands
-     {"phantom-whitespace"
-      ["phantomjs" "resources/runner.js" "target/cljs/whitespace.js"]
-      "phantom-simple"
-      ["phantomjs" "resources/runner.js" "target/cljs/simple.js"]
-      "phantom-advanced"
-      ["phantomjs" "resources/runner.js" "target/cljs/advanced.js"]}}}}
+     {"simple" ["node" "target/cljs/simple.js"]
+      "advanced" ["node" "target/cljs/advanced.js"]}}}}
 
   :aliases {"test-all" ["with-profile" "prod" "test"]}
 
