@@ -1,8 +1,6 @@
 (ns cljs-time.periodic-test
-  (:require-macros
-    [cemerick.cljs.test :refer [is are deftest]])
   (:require
-    [cemerick.cljs.test :as t]
+    [cljs.test :refer-macros [deftest is are]]
     [cljs-time.core :refer [date-time hours months]]
     [cljs-time.extend]
     [cljs-time.periodic :refer [periodic-seq]]))

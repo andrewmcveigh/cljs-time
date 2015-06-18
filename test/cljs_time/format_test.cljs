@@ -1,8 +1,6 @@
 (ns cljs-time.format-test
-  (:require-macros
-    [cemerick.cljs.test :refer [is deftest]])
   (:require
-    [cemerick.cljs.test :as t]
+    [cljs.test :refer-macros [deftest is]]
     [cljs-time.coerce :refer [from-date to-date]]
     [cljs-time.core :as time
      :refer [date-time interval utc within?
