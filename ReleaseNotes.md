@@ -1,3 +1,8 @@
+## v0.3.7
+
+- Correctly calculate (properly) month-add, tested. fix #34
+- Update cljs-build, use cljs.test
+
 ## v0.3.6
 
 - Correctly calculate month-add when > 12, fix #33
