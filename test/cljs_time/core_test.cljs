@@ -564,10 +564,11 @@
                  (let [d (from-long t)]
                    (date-midnight (year d) (month d) (day d)))))))))
 
+
 (deftest long-interval-test
-  (let [start (date-time 2015 6 5)
-        end (date-time 2017 5 5)
-        i (interval start end)]
-    (in-months i)))
+  (are [n x y] (= n (in-months (interval x y)))
+    108 (date-time 2015 5 5) (date-time 2024 5 5)
+    107 (date-time 2015 5 5) (date-time 2024 5 4)
+    106 (date-time 2015 5 5) (date-time 2024 4 4)))
 
 (enable-console-print!)

@@ -150,10 +150,11 @@ expected."}
                  (when value
                    (let [m (op (month date) value)
                          y (year date)
-                         y (cond (> m 12) (+ y (int (/ m 12)))
-                                 (< m 1) (- y 1)
-                                 :else y)
-                         m (cond (> m 12) (mod m 12)
+                         y (cond (pos? m) (+ y (int (/ (dec m) 12)))
+                                 (neg? m) (+ y (int (/ (dec m) 12)))
+                                 (zero? m) (dec y))
+                         m (cond (> m 12) (let [m (mod m 12)]
+                                            (if (zero? m) 12 m))
                                  (< m 1) (+ m 12)
                                  :else m)
                          ldom (day (last-day-of-the-month-
@@ -514,7 +515,7 @@ Specify the year, month, and day. Does not deal with timezones."
 (defn- month-range [{:keys [start end]}]
   (->> (range)
        (map #(plus start (months (inc %))))
-       (take-while #(before? % end))))
+       (take-while #(not (after? % end)))))
 
 (defn- total-days-in-whole-months [interval]
   (map #(.getNumberOfDaysInMonth %) (month-range interval)))
