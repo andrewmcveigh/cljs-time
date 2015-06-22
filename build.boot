@@ -71,6 +71,9 @@
 (require '[cljs.repl.rhino :as rhino])
 (require '[cemerick.piggieback])
 
+(boot/deftask run-all-tests []
+  (compile-run-tests :simple :advanced))
+
 (boot/deftask node-repl []
   (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))
 

@@ -196,8 +196,8 @@
     (is (= (local-date-time 2010 3 11 17 49 20 881)
            (parse-local fmt "20100311T174920.881Z")))))
 
-(let [fmt (formatters :basic-date-time)]
-  (prn (parse-local fmt "20100311T174920.881Z")))
+;; (let [fmt (formatters :basic-date-time)]
+;;   (prn (parse-local fmt "20100311T174920.881Z")))
 
 ;; (let [fmt (formatters :basic-date-time)]
 ;;   (prn (local-date-time 2010 3 11 17 49 20 881)

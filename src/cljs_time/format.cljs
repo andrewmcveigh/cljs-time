@@ -31,27 +31,11 @@
     [clojure.set :refer [difference]]
     [clojure.string :as string]
     [goog.date :as date]
-<<<<<<< HEAD
     [goog.date.duration :as duration]
-    [goog.string :as gstring]
-    [goog.string.format]))
-
-(def months
-  ["January" "February" "March" "April" "May" "June" "July" "August"
-   "September" "October" "November" "December"])
-
-(def days
-  ["Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday"])
-
-(defn abbreviate [n s]
-  (subs s 0 n))
-=======
     [goog.i18n.DateTimeParse]
     [goog.i18n.DateTimeFormat]
     [goog.string :as gstring]
     [goog.string.format]))
->>>>>>> Replace parser with closure parser
-
 
 (defn timezone-adjustment [d timezone-string]
   (let [[_ sign hh mm] (string/split timezone-string
@@ -76,9 +60,10 @@
     (.getTimezoneOffsetString dt)))
 
 (def formatter-defaults
-  {:pre-format {#"dow" "EEEE"}
+  {:pre-format {#"dow" "EEEE" #"A" "a"}
    :post-format {#"dth" dth #"ZZ?" consistent-tz-str}
-   :pre-parse {"dth" ["d" "(\\d{1,2})(?:st|nd|rd|th)" "$1"]
+   :pre-parse {"A" ["a"]
+               "dth" ["d" "(\\d{1,2})(?:st|nd|rd|th)" "$1"]
                "([^Z])Z$" ["$1Z" "([^Z])Z$" "$1+0000"]
                "YYYY" ["yyyy"]
                "DD" ["dd"]}})
