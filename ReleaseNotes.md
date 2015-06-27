@@ -1,3 +1,7 @@
+## v0.3.9
+
+- Ensure to-date inconsistency, fix #32
+
 ## v0.3.8
 
 - Support millisecont provider function, fix #31
