@@ -72,8 +72,6 @@
    [goog.date.UtcDateTime]
    [goog.i18n.TimeZone]))
 
-(def ^:dynamic *sys-time* nil)
-
 (def ^{:doc "**Note:** Equality in goog.date.* (and also with plain
 javascript dates) is not the same as in Joda/clj-time. Two date
 objects representing the same instant in time in goog.date.* are not
@@ -245,16 +243,29 @@ expected."}
                      :names ["UTC"]
                      :transitions []})))
 
+(defn default-ms-fn []
+  (fn [] (js/Date.now)))
+
+(defn offset-ms-fn
+  [offset]
+  (fn [] (+ (js/Date.now) offset)))
+
+(defn static-ms-fn
+  [ms]
+  (fn [] ms))
+
+(def ^:dynamic *ms-fn* (default-ms-fn))
+
 (defn now
   "Returns a DateTime for the current instant in the UTC time zone."
   []
-  (if *sys-time* *sys-time* (goog.date.UtcDateTime.)))
+  (doto (goog.date.UtcDateTime.) (.setTime (*ms-fn*))))
 
 (defn time-now
   "Returns a local DateTime for the current instant without date or time zone
   in the current time zone."
   []
-  (goog.date.DateTime.))
+  (doto (goog.date.DateTime.) (.setTime (*ms-fn*))))
 
 (defn at-midnight [datetime]
   (let [datetime (.clone datetime)]
@@ -343,10 +354,7 @@ Specify the year, month, and day. Does not deal with timezones."
   "Constructs and returns a new local DateTime representing today's date.
   local DateTime objects do not deal with timezones at all."
   []
-  (if *sys-time*
-    (let [d *sys-time*]
-      (goog.date.Date. (.getYear d) (.getMonth d) (.getDate d)))
-    (goog.date.Date.)))
+  (doto (goog.date.Date.) (.setTime (*ms-fn*))))
 
 (defn time-zone-for-offset
   "Returns a timezone map for the given offset, specified either in hours or
@@ -370,7 +378,9 @@ Specify the year, month, and day. Does not deal with timezones."
 (defn default-time-zone
   "Returns the default timezone map for the current environment."
   []
-  (let [hours (/ (* -1 (.getTimezoneOffset (goog.date.DateTime.))) 60)]
+  (let [offset (.getTimezoneOffset
+                (doto (goog.date.DateTime.) (.setTime (*ms-fn*))))
+        hours (/ (* -1 offset) 60)]
     (time-zone-for-offset (int hours) (mod hours 1))))
 
 (defn to-default-time-zone
@@ -735,7 +745,7 @@ Specify the year, month, and day. Does not deal with timezones."
 
 (defn today-at
   ([hours minutes seconds millis]
-   (let [midnight (goog.date.Date.)]
+   (let [midnight (doto (goog.date.Date.) (.setTime (*ms-fn*)))]
      (doto (goog.date.UtcDateTime. 0)
        (.setYear (.getYear midnight))
        (.setMonth (.getMonth midnight))
@@ -750,5 +760,5 @@ Specify the year, month, and day. Does not deal with timezones."
    (today-at hours minutes 0)))
 
 (defn do-at* [base-date-time body-fn]
-  (binding [*sys-time* base-date-time]
+  (binding [*ms-fn* (static-ms-fn (.getTime base-date-time))]
     (body-fn)))

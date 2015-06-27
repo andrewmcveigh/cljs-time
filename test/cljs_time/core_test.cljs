@@ -34,8 +34,8 @@
 
 (deftest test-today-at-midnight
   (is (= (date-midnight 2010 1 1)
-          (do-at (date-midnight 2010 1 1)
-                 (today-at-midnight)))))
+         (do-at (date-midnight 2010 1 1)
+                (today-at-midnight)))))
 
 (deftest test-epoch
   (let [e (epoch)]
@@ -139,7 +139,7 @@
 
 (deftest test-today-default
   (is (= (local-date 2013 4 20)
-         (do-at (to-default-time-zone (date-time 2013 4 20))
+         (do-at (from-default-time-zone (date-time 2013 4 20))
                 (today)))))
 
 (deftest test-dst-time-default
