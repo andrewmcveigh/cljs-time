@@ -6,6 +6,8 @@
    [cljs-time.coerce :refer
     [from-date from-long from-string to-date to-date-time to-epoch to-long
      to-string to-local-date to-local-date-time]]
+   [cljs-time.local]
+   [cljs-time.format :refer [instant->map]]
    [cljs-time.extend]
    [goog.date :as date]))
 
@@ -112,3 +114,8 @@
   (is (= (date/DateTime. 1970 0 1 0 0) (to-local-date-time 0)))
   (is (= (date/DateTime. 1998 3 25 0 0 55 0) (to-local-date-time 893462455000)))
   (is (= (date/DateTime. 1998 3 25 10 20 30 400) (to-local-date-time "1998-04-25T10:20:30.400Z"))))
+
+(deftest test-to-date-2
+  (is (apply = (map #(instant->map (from-date %))
+                    [(to-date (cljs-time.core/now))
+                     (to-date (cljs-time.core/time-now))]))))
