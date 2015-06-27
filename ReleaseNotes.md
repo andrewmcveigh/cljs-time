@@ -1,3 +1,12 @@
+## v0.3.8
+
+- Support millisecont provider function, fix #31
+  Add a ^:dynamic `cljs-time.core/*ms-fn*` which returns a function that 
+  provides milliseconds for the now/today/local-now/etc., functions.
+  Fix test failing due to timezone offset, now uses correct
+  `from-default-time-zone` function. Ref #34
+- Add 'boot' build file
+
 ## v0.3.7
 
 - Correctly calculate (properly) month-add, tested. fix #34
