@@ -1,3 +1,8 @@
+## v0.3.10
+
+- Remove marginalia from auto-release, as broken
+- Add #'cljs-time.format/unparse-duration, close #36
+
 ## v0.3.9
 
 - Ensure to-date inconsistency, fix #32
