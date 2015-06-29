@@ -3,10 +3,13 @@
 
 (set-env!
  :source-paths #{"src" "test"}
- :dependencies '[[org.clojure/clojure "1.7.0-RC2"]
-                 [org.clojure/clojurescript "0.0-3308" :scope "provided"]
+ :dependencies '[[org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojurescript "0.0-SNAPSHOT" :scope "provided"]
                  [org.clojure/tools.nrepl "0.2.10" :scope "test"]
-                 [com.cemerick/piggieback "0.2.1" :scope "test"]])
+                 [com.cemerick/piggieback "0.2.1" :scope "test"]
+                 [funcool/codeina "0.1.0"
+                  :scope "test"
+                  :exclusions [org.clojure/clojure]]])
 
 (require 'cemerick.piggieback)
 
@@ -73,3 +76,13 @@
 
 (boot/deftask rhino-repl []
   (cemerick.piggieback/cljs-repl (rhino/repl-env)))
+
+(require '[codeina.main :as codeina])
+
+(merge-env! :source-paths #{"checkouts/codeina/src"})
+
+(require '[cljs.analyzer :as ana])
+(require '[clojure.java.io :as io])
+
+(boot/deftask gen-docs []
+  (codeina/generate-docs {:language :clojurescript}))
