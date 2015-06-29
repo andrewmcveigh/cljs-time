@@ -31,9 +31,9 @@
     [clojure.set :refer [difference]]
     [clojure.string :as string]
     [goog.date :as date]
+    [goog.date.duration :as duration]
     [goog.string :as gstring]
-    [goog.string.format]
-    ))
+    [goog.string.format]))
 
 (def months
   ["January" "February" "March" "April" "May" "June" "July" "August"
@@ -471,6 +471,13 @@ formatted with each of the available printing formatters."
   (instant->map [instant] "Returns a map representation of the given instant.
                           It will contain the following keys: :years, :months,
                           :days, :hours, :minutes and :seconds."))
+
+(defn unparse-duration
+  "Accepts a Period or Interval and outputs an absolute duration time
+  in form of \"1 day\", \"2 hours\", \"20 minutes\", \"2 days 1 hour
+  15 minutes\" etc."
+  [duration]
+  (-> duration time/in-millis duration/format))
 
 (defn- to-map [years months days hours minutes seconds millis]
   {:years years

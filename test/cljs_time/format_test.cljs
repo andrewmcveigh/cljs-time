@@ -1,6 +1,6 @@
 (ns cljs-time.format-test
   (:require
-    [cljs.test :refer-macros [deftest is]]
+    [cljs.test :refer-macros [deftest is are]]
     [cljs-time.coerce :refer [from-date to-date]]
     [cljs-time.core :as time
      :refer [date-time interval utc within?
@@ -315,3 +315,11 @@
             :minutes 0
             :seconds 2
             :millis 0}))))
+
+(deftest format-duration-test
+  (are [a b] (= a (format/unparse-duration b))
+    "2 days" (time/days 2)
+    "367 days" (time/days 367)
+    "5 days 2 hours 1 minute" (time/period :days 5 :hours 2 :seconds 60)
+    "5 days 2 hours 1 minute" (time/millis 439260000)
+    "1 hour 45 minutes" (time/seconds 6300)))

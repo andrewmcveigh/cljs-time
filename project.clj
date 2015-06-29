@@ -1,4 +1,4 @@
-(defproject com.andrewmcveigh/cljs-time "0.3.9"
+(defproject com.andrewmcveigh/cljs-time "0.3.10-SNAPSHOT"
   :description "A clj-time inspired date library for clojurescript."
   :url "https://github.com/andrewmcveigh/cljs-time"
   :license {:name "Eclipse Public License"
@@ -62,6 +62,7 @@
                   ["change" "version" "leiningen.release/bump-version"]
                   ["vcs" "commit"]
                   ["vcs" "push"]
-                  ["auto-release" "checkout-latest-tag"]
-                  ["marg"]
-                  ["auto-release" "update-marginalia-gh-pages"]])
+                  ;; ["auto-release" "checkout-latest-tag"]
+                  ;; ["marg"]
+                  ;; ["auto-release" "update-marginalia-gh-pages"]
+                  ])
