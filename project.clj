@@ -62,6 +62,7 @@
                   ["change" "version" "leiningen.release/bump-version"]
                   ["vcs" "commit"]
                   ["vcs" "push"]
-                  ["auto-release" "checkout-latest-tag"]
-                  ["marg"]
-                  ["auto-release" "update-marginalia-gh-pages"]])
+                  ;; ["auto-release" "checkout-latest-tag"]
+                  ;; ["marg"]
+                  ;; ["auto-release" "update-marginalia-gh-pages"]
+                  ])
