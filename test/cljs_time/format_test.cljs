@@ -304,14 +304,24 @@
                    :minutes 5
                    :seconds 10
                    :millis 0))))
-  #_(let [it (interval (date-time 1986 9 2 0 0 2) (date-time 1987 11 30 2 5 12))]
+  (let [it (interval (date-time 1986 9 2 0 0 2) (date-time 1987 11 30 2 5 12))]
     (is (= (instant->map it)
-           (period :years 0
+           (period :years 1
                    :months 2
                    :days 28
                    :hours 2
                    :minutes 5
                    :seconds 10
+                   :millis 0))))
+  (let [it (interval (date-time 1980  1  1  0  0  0)
+                     (date-time 2015 12 31 23 59 59))]
+    (is (= (instant->map it)
+           (period :years 35
+                   :months 11
+                   :days 30
+                   :hours 23
+                   :minutes 59
+                   :seconds 59
                    :millis 0)))))
 
 (deftest test-instant->map-from-date-time
