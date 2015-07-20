@@ -149,7 +149,7 @@ expected."}
                    (let [m (op (month date) value)
                          y (year date)
                          y (cond (pos? m) (+ y (int (/ (dec m) 12)))
-                                 (neg? m) (+ y (int (/ (dec m) 12)))
+                                 (neg? m) (+ y (dec (int (/ (dec m) 12))))
                                  (zero? m) (dec y))
                          m (cond (> m 12) (let [m (mod m 12)]
                                             (if (zero? m) 12 m))

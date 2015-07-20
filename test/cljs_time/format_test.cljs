@@ -295,7 +295,16 @@
     (is (= "5:00 PM" (unparse f3 (parse f3 "5:00 PM"))))))
 
 (deftest test-instant->map-from-interval
-  (let [it (interval (date-time 1986 9 2 0 0 2)  (date-time 1986 11 30 2 5 12))]
+  (let [it (interval (date-time 1986 9 2 0 0 2) (date-time 1986 11 30 2 5 12))]
+    (is (= (instant->map it)
+           (period :years 0
+                   :months 2
+                   :days 28
+                   :hours 2
+                   :minutes 5
+                   :seconds 10
+                   :millis 0))))
+  #_(let [it (interval (date-time 1986 9 2 0 0 2) (date-time 1987 11 30 2 5 12))]
     (is (= (instant->map it)
            (period :years 0
                    :months 2

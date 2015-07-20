@@ -571,4 +571,12 @@
     107 (date-time 2015 5 5) (date-time 2024 5 4)
     106 (date-time 2015 5 5) (date-time 2024 4 4)))
 
+(deftest minus-months-test
+  (is (= (date-time 2014 3 2)
+         (minus (date-time 2015 4 2) (months 13))))
+  (is (= (date-time 2013 2 2)
+         (minus (date-time 2015 4 2) (months 26))))
+  (is (= (date-time 2009 12 2)
+         (minus (date-time 2018 4 2) (months 100)))))
+
 (enable-console-print!)
