@@ -85,4 +85,5 @@
 (require '[clojure.java.io :as io])
 
 (boot/deftask gen-docs []
-  (codeina/generate-docs {:language :clojurescript}))
+  (codeina/generate-docs
+   {:language :clojurescript :name project :version version}))
