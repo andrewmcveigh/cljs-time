@@ -1,3 +1,9 @@
+## v0.3.11
+
+- Correct ->period calculation for months > 12 or years > 1, fix #38
+- Fix minus months when months > 12, close #39
+- Add codina project info
+
 ## v0.3.10
 
 - Remove marginalia from auto-release, as broken
