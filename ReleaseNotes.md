@@ -1,3 +1,7 @@
+## v0.3.12
+
+- Use cljs's old string/replace until closure branch merged
+
 ## v0.3.11
 
 - Correct ->period calculation for months > 12 or years > 1, fix #38
