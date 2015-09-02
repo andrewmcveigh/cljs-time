@@ -250,11 +250,14 @@
   (re-pattern
     (str "(" (string/join ")|(" (reverse (sort-by count (keys date-formatters)))) ")")))
 
+(defn old-string-replace [s match replacement]
+  (.replace s (js/RegExp. (.-source match) "g") replacement))
+
 (defn date-parse-pattern [formatter]
-  (re-pattern
-    (string/replace (string/replace formatter #"'([^']+)'" "$1")
-                    date-format-pattern
-                    #(first (date-parsers %)))))
+  (-> formatter
+      (old-string-replace #"'([^']+)'" "$1")
+      (old-string-replace date-format-pattern #(first (date-parsers %)))
+      re-pattern))
 
 (defn- parser-fn [fmts]
   (fn [s]
@@ -265,7 +268,7 @@
 
 (defn- formatter-fn [fmts formatters]
   (fn [date & [formatter-overrides]]
-    [(string/replace fmts #"'([^']+)'" "$1")
+    [(old-string-replace fmts #"'([^']+)'" "$1")
      date-format-pattern
      #(((or formatter-overrides formatters) %) date)]))
 
@@ -436,14 +439,14 @@ time if supplied."}
 form determined by the given formatter."
   [{:keys [format-str formatters]} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
-  (apply string/replace ((formatter-fn format-str formatters) dt)))
+  (apply old-string-replace ((formatter-fn format-str formatters) dt)))
 
 (defn unparse-local
   "Returns a string representing the given local DateTime instance in the
   form determined by the given formatter."
   [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
-  (apply string/replace
+  (apply old-string-replace
          ((formatter-fn format-str formatters) dt (assoc date-formatters
                                                     "Z" (constantly "")
                                                     "ZZ" (constantly "")))))
@@ -453,7 +456,7 @@ form determined by the given formatter."
   determined by the given formatter."
   [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
-  (apply string/replace
+  (apply old-string-replace
          ((formatter-fn format-str formatters) dt (assoc date-formatters
                                                     "Z" (constantly "")
                                                     "ZZ" (constantly "")))))
