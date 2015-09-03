@@ -1,3 +1,7 @@
+## v0.3.13
+
+- Extend types with IComparable interface, close #42
+
 ## v0.3.12
 
 - Use cljs's old string/replace until closure branch merged
