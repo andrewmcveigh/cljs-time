@@ -18,18 +18,27 @@
   (-equiv [o other]
     (and (instance? goog.date.Date other)
          (identical? (.getTime o) (.getTime other))
-         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other)))))
+         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other))))
+  IComparable
+  (-compare [o other]
+    (- (.getTime o) (.getTime other))))
 
 (extend-type goog.date.DateTime
   IEquiv
   (-equiv [o other]
     (and (instance? goog.date.Date other)
          (identical? (.getTime o) (.getTime other))
-         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other)))))
+         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other))))
+  IComparable
+  (-compare [o other]
+    (- (.getTime o) (.getTime other))))
 
 (extend-type goog.date.UtcDateTime
   IEquiv
   (-equiv [o other]
     (and (instance? goog.date.Date other)
          (identical? (.getTime o) (.getTime other))
-         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other)))))
+         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other))))
+  IComparable
+  (-compare [o other]
+    (- (.getTime o) (.getTime other))))
