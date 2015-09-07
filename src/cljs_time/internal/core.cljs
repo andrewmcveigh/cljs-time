@@ -25,16 +25,15 @@
 (defn valid-date?
   [{:keys [years months days hours minutes seconds millis] :as d}]
   (let [months (inc months)]
-    (letfn [(>< [a b x] (and (>= x a) (<= x b)))]
-      (if (and years
-               (>< 1 12 months)
-               (>< 1 (year-corrected-dim years months) days)
-               (>< 0 23 hours)
-               (>< 0 59 minutes)
-               (>< 0 60 seconds)
-               (>< 0 999 millis))
-        d
-        (throw (ex-info "Date is not valid" {:type :invalid-date :date d}))))))
+    (if (and years
+             (<= 1 months 12)
+             (<= 1 days (year-corrected-dim years months))
+             (<= 0 hours 23)
+             (<= 0 minutes 59)
+             (<= 0 seconds 60)
+             (<= 0 millis 999))
+      d
+      (throw (ex-info "Date is not valid" {:type :invalid-date :date d})))))
 
 (defn index-of [coll x]
   (first (keep-indexed #(when (= %2 x) %1) coll)))
