@@ -7,7 +7,7 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.122" :scope "provided"]]
 
-  :plugins [[lein-cljsbuild "1.0.6"]]
+  :plugins [[lein-cljsbuild "1.1.0"]]
 
   :jvm-opts ["-Djava.awt.headless=true"]
   :clojurescript? true
@@ -27,11 +27,7 @@
   {:prod
    {:hooks [leiningen.cljsbuild]
     :cljsbuild
-    {:builds {:whitespace {:source-paths ["src" "test"]
-                           :compiler {:output-to "target/cljs/whitespace.js"
-                                      :optimizations :whitespace
-                                      :pretty-print true}}
-              :simple {:source-paths ["src" "test"]
+    {:builds {:simple {:source-paths ["src" "test"]
                        :compiler {:output-to "target/cljs/simple.js"
                                   :optimizations :simple
                                   :pretty-print true}}
