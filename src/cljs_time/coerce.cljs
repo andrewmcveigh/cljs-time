@@ -23,63 +23,64 @@
   "Returns a DateTime instance in the UTC time zone corresponding to the given
   number of milliseconds after the Unix epoch."
   [millis]
-  (UtcDateTime.fromTimestamp millis))
+  (some-> millis UtcDateTime.fromTimestamp))
 
 (defn from-string
   "Returns DateTime instance from string using formatters in cljs-time.format,
   returning first which parses"
   [s]
-  (first
-    (for [f (vals time-fmt/formatters)
-          :let [d (try (time-fmt/parse f s) (catch js/Error _))]
-          :when d] d)))
+  (when s
+    (first
+     (for [f (vals time-fmt/formatters)
+           :let [d (try (time-fmt/parse f s) (catch js/Error _))]
+           :when d] d))))
 
 (defn from-date
   "Returns a DateTime instance in the UTC time zone corresponding to the given
   js Date object."
   [date]
-  (from-long (.getTime date)))
+  (some-> date .getTime from-long))
 
 (defn to-long
   "Convert `obj` to the number of milliseconds after the Unix epoch."
   [obj]
-  (if-let [dt (to-date-time obj)]
-    (.getTime dt)))
+  (some-> obj to-date-time .getTime))
 
 (defn to-epoch
   "Convert `obj` to Unix epoch."
   [obj]
-  (let [millis (to-long obj)]
-    (and millis (/ millis 1000))))
+  (some-> obj to-long (/ 1000)))
 
 (defn to-date
   "Convert `obj` to a JavaScript Date instance."
   [obj]
-  (if-let [dt (to-date-time obj)]
-    (js/Date. (.getTime dt))))
+  (some-> obj .getTime js/Date.))
 
 (defn to-string
   "Returns a string representation of obj in UTC time-zone
   using \"yyyy-MM-dd'T'HH:mm:ss.SSSZZ\" date-time representation."
   [obj]
-  (if-let [dt (to-date-time obj)]
-    (time-fmt/unparse (:date-time time-fmt/formatters) dt)))
+  (some->> obj
+           to-date-time
+           (time-fmt/unparse (:date-time time-fmt/formatters))))
 
 (defn to-local-date
   "Convert `obj` to a goog.date.Date instance"
   [obj]
-  (if-let [dt (to-date-time obj)]
-    (goog.date.Date. (.getYear dt) (.getMonth dt) (.getDate dt))))
+  (when obj
+    (if-let [dt (to-date-time obj)]
+      (goog.date.Date. (.getYear dt) (.getMonth dt) (.getDate dt)))))
 
 (defn to-local-date-time
   "Convert `obj` to a goog.date.DateTime instance"
   [obj]
-  (if-let [dt (to-date-time obj)]
-    (doto (goog.date.DateTime. (.getYear dt) (.getMonth dt) (.getDate dt))
-      (.setHours (.getHours dt))
-      (.setMinutes (.getMinutes dt))
-      (.setSeconds (.getSeconds dt))
-      (.setMilliseconds (.getMilliseconds dt)))))
+  (when obj
+    (if-let [dt (to-date-time obj)]
+      (doto (goog.date.DateTime. (.getYear dt) (.getMonth dt) (.getDate dt))
+        (.setHours (.getHours dt))
+        (.setMinutes (.getMinutes dt))
+        (.setSeconds (.getSeconds dt))
+        (.setMilliseconds (.getMilliseconds dt))))))
 
 (extend-protocol ICoerce
   nil
@@ -92,11 +93,12 @@
 
   goog.date.Date
   (to-date-time [local-date]
-    (doto (goog.date.UtcDateTime.) (.set local-date)))
+    (when local-date (doto (goog.date.UtcDateTime.) (.set local-date))))
 
   goog.date.DateTime
   (to-date-time [local-date-time]
-    (doto (goog.date.UtcDateTime.) (.setTime (.getTime local-date-time))))
+    (when local-date-time
+      (doto (goog.date.UtcDateTime.) (.setTime (.getTime local-date-time)))))
 
   goog.date.UtcDateTime
   (to-date-time [date-time]
