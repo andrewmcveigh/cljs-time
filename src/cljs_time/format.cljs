@@ -268,9 +268,24 @@
 
 (defn- formatter-fn [fmts formatters]
   (fn [date & [formatter-overrides]]
-    [(old-string-replace fmts #"'([^']+)'" "$1")
-     date-format-pattern
-     #(((or formatter-overrides formatters) %) date)]))
+    (let [a (atom {:c 0})]
+      [(old-string-replace
+        fmts
+        #"'([^']+)'"
+        (fn [x s]
+          (if (and (seq s) (= \' (first x)) (= \' (last x)))
+            (let [{:keys [c]} @a
+                  k (str "&&&&" c)]
+              (swap! a assoc-in [:replace k] (constantly s))
+              (swap! a update-in [:c] inc)
+              k)
+            x)))
+       (-> (.-source date-format-pattern)
+           (cond->>
+             (:replace @a)
+             (str "(" (string/join ")|(" (keys (:replace @a))) ")|"))
+           (re-pattern))
+       #(((merge formatters formatter-overrides (:replace @a)) %) date)])))
 
 (defn formatter
   ([fmts]
