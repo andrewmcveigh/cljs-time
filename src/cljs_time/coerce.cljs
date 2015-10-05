@@ -54,7 +54,7 @@
 (defn to-date
   "Convert `obj` to a JavaScript Date instance."
   [obj]
-  (some-> obj .getTime js/Date.))
+  (some-> obj to-date-time .getTime js/Date.))
 
 (defn to-string
   "Returns a string representation of obj in UTC time-zone
