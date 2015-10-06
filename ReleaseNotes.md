@@ -1,3 +1,20 @@
+## v0.3.14
+
+- Fix to-date-test
+- Pre-mark & post-replace quoted text. Fix #44
+- Merge pull request #48 from bjeanes/patch-1
+  Fix Google Closure goog.date link
+- Fix Google Closure goog.date link
+  The authoritative docs linked from
+  https://developers.google.com/closure/library/ now point to the gh-pages
+  site.
+- Manually check test report, do node/exit 1 on fail. Fix #46
+- Change coerce/from-long to use static function
+  UtcDateTime.fromTimestamp is a constructor for a UtcDateTime that accepts
+  the number of milliseconds since Epoch.
+- Use built-in fn for testing value betwen two bounds
+- Add failing test for quoted text, ref #44
+
 ## v0.3.13
 
 - Extend types with IComparable interface, close #42
