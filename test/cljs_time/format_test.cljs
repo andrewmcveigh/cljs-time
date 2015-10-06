@@ -342,3 +342,8 @@
     "5 days 2 hours 1 minute" (time/period :days 5 :hours 2 :seconds 60)
     "5 days 2 hours 1 minute" (time/millis 439260000)
     "1 hour 45 minutes" (time/seconds 6300)))
+
+(deftest escape-unparse-test
+  (let [fmt (format/formatter "'Yesterday:' MMMM dd")]
+    (is (= "Yesterday: August 01"
+           (format/unparse fmt (time/date-time 2015 8 1))))))

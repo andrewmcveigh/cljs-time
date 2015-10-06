@@ -8,4 +8,9 @@
    cljs-time.predicates-test
    [cljs.test :refer-macros [run-all-tests]]))
 
+(defmethod cljs.test/report [:cljs.test/default :end-run-tests]
+  [{:keys [fail error]}]
+  (when-not (and (zero? fail) (zero? error))
+    ((aget js/process "exit") 1)))
+
 (run-all-tests)
