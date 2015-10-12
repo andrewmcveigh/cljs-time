@@ -1,6 +1,6 @@
 # cljs-time [![Build Status](https://travis-ci.org/andrewmcveigh/cljs-time.png?branch=master)](https://travis-ci.org/andrewmcveigh/cljs-time)
 
-A date and time library for ClojureScript, immitating the API of the
+A date and time library for ClojureScript, imitating the API of the
 [clj-time](https://github.com/clj-time/clj-time) library.
 
 Cljs-time is an attempt at replicating the functionality and API of
