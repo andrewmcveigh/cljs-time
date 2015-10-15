@@ -1,6 +1,6 @@
 # cljs-time [![Build Status](https://travis-ci.org/andrewmcveigh/cljs-time.png?branch=master)](https://travis-ci.org/andrewmcveigh/cljs-time)
 
-A date and time library for ClojureScript, immitating the API of the
+A date and time library for ClojureScript, imitating the API of the
 [clj-time](https://github.com/clj-time/clj-time) library.
 
 Cljs-time is an attempt at replicating the functionality and API of
@@ -67,6 +67,9 @@ If you need to test for equality use either `cljs-time.core/=`, or
 optionally you can require the `cljs-time.extend` namespace which will
 extend the goog.date.* datatypes, so that clojure.core/= works as
 expected.
+
+If you want your goog.date.* serializable with `pr-str`, require
+`cljs-time.instant` namespace.
 
 ### cljs-time.core
 
