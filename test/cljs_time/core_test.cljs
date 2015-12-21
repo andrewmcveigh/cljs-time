@@ -194,7 +194,11 @@
   (is (= (date-time 1986 10 14 4)
          (minus (date-time 1986 10 14 6) (hours 2))))
   (is (= (date-time 1986 10 14 4 2)
-         (minus (date-time 1986 10 14 6 5) (hours 2) (minutes 3)))))
+         (minus (date-time 1986 10 14 6 5) (hours 2) (minutes 3))))
+  (is (= (date-time 2014 04)
+         (minus (date-time 2015 10) (months 18))))
+  (is (= (date-time 2014 01)
+         (minus (date-time 2015 10) (months 21)))))
 
 (deftest test-after?-local
   (is (after? (local-date-time 1987) (local-date-time 1986)))
