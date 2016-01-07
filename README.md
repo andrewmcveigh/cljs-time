@@ -68,6 +68,9 @@ optionally you can require the `cljs-time.extend` namespace which will
 extend the goog.date.* datatypes, so that clojure.core/= works as
 expected.
 
+If you want your goog.date.* serializable with `pr-str`, require
+`cljs-time.instant` namespace.
+
 ### cljs-time.core
 
 The main namespace for date-time operations in the `cljs-time` library

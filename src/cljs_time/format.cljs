@@ -155,7 +155,7 @@
      "SSS" #(zero-pad (S %) 3)
      "Z" Z
      "ZZ" Z
-     "ww" #(zero-pad (Math/ceil (/ (doy %) 7)))
+     "ww" #(zero-pad (.getWeekNumber %))
      "e" dow}))
 
 (defn timezone-adjustment [d timezone-string]
