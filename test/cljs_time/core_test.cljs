@@ -13,7 +13,7 @@
       in-years in-months in-weeks in-days in-hours in-minutes in-seconds
       in-millis minus plus earliest latest
       local-date local-date-time today
-      day-of-week after? before? ago from-now
+      day-of-week equal? after? before? ago from-now
       years months weeks days hours minutes seconds millis
       years? months? weeks? days? hours? minutes? seconds?
       extend start end mins-ago default-time-zone
@@ -160,6 +160,12 @@
     (is (= 6 (day-of-week d))))
   (let [d (date-time 1918 11 11)]
     (is (= 1 (day-of-week d)))))
+
+(deftest test-equal?
+  (is (equal? (date-time 2013 01 01 01) (date-time 2013 01 01 01)))
+  (is (equal? (date-time 1987) (date-time 1987)))
+  (is (not (equal? (date-time 1986) (date-time 1987))))
+  (is (not (equal? (date-time 1987) (date-time 1986)))))
 
 (deftest test-after?
   (is (after? (date-time 1987) (date-time 1986)))
