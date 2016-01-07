@@ -66,7 +66,8 @@
   (:refer-clojure :exclude [= extend second])
   (:require
    [cljs-time.internal.core :as internal :refer [leap-year? format]]
-   [clojure.string :as string])
+   [clojure.string :as string]
+   goog.date.Interval)
   (:import
    goog.date.Date
    goog.date.DateTime
@@ -146,28 +147,16 @@ expected."}
      :months (fn [op date value]
                (let [date (.clone date)]
                  (when value
-                   (let [m (op (month date) value)
-                         y (year date)
-                         y (cond (pos? m) (+ y (int (/ (dec m) 12)))
-                                 (neg? m) (+ y (dec (int (/ (dec m) 12))))
-                                 (zero? m) (dec y))
-                         m (cond (> m 12) (let [m (mod m 12)]
-                                            (if (zero? m) 12 m))
-                                 (< m 1) (+ m 12)
-                                 :else m)
-                         ldom (day (last-day-of-the-month-
-                                    (goog.date.Date. y (dec m) 1)))]
-                     (when (< ldom (day date))
-                       (.setDate date ldom))
-                     (.setMonth date (dec m))
-                     (.setYear date y)))
+                   (let [m (op 0 value)
+                         i (goog.date.Interval. goog.date.Interval.MONTHS m)]
+                     (.add date i)))
                  date))
      :years (fn [op date value]
               (let [date (.clone date)]
                 (when value
                   (if (and (leap-year? (year date))
-                          (= 2 (month date))
-                          (= 29 (day date)))
+                           (= 2 (month date))
+                           (= 29 (day date)))
                     (.setDate date 28))
                   (.setYear date (op (year date) value)))
                 date))}))
