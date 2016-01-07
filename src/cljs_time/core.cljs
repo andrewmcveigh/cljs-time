@@ -70,7 +70,6 @@
   (:import
    goog.date.Date
    goog.date.DateTime
-   goog.i18n.TimeZone
    goog.date.UtcDateTime))
 
 (def ^{:doc "**Note:** Equality in goog.date.* (and also with plain
@@ -238,11 +237,7 @@ expected."}
      (goog.date.Date. (.getYear this) (inc (.getMonth this)) 1)
      (period :days 1))))
 
-(def utc (goog.i18n.TimeZone/createTimeZone
-           (clj->js {:id "UTC"
-                     :std_offset 0
-                     :names ["UTC"]
-                     :transitions []})))
+(def utc #js {:id "UTC" :std_offset 0 :names ["UTC"] :transitions []})
 
 (defn default-ms-fn []
   (fn [] (js/Date.now)))
