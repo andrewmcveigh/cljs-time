@@ -66,11 +66,11 @@
   (:refer-clojure :exclude [= extend second])
   (:require
    [cljs-time.internal.core :as internal :refer [leap-year? format]]
-   [clojure.string :as string])
+   [clojure.string :as string]
+   goog.date.Interval)
   (:import
    goog.date.Date
    goog.date.DateTime
-   goog.i18n.TimeZone
    goog.date.UtcDateTime))
 
 (def ^{:doc "**Note:** Equality in goog.date.* (and also with plain
@@ -95,6 +95,7 @@ expected."}
   (sec [this] "Return the second of minute component of the given date/time.")
   (second [this] "Return the second of minute component of the given date/time.")
   (milli [this] "Return the millisecond of second component of the given date/time.")
+  (equal? [this that] "Returns true if DateTime 'this' is strictly equal to date/time 'that'.")
   (after? [this that] "Returns true if DateTime 'this' is strictly after date/time 'that'.")
   (before? [this that] "Returns true if DateTime 'this' is strictly before date/time 'that'.")
   (plus- [this period] "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
@@ -147,28 +148,16 @@ expected."}
      :months (fn [op date value]
                (let [date (.clone date)]
                  (when value
-                   (let [m (op (month date) value)
-                         y (year date)
-                         y (cond (pos? m) (+ y (int (/ (dec m) 12)))
-                                 (neg? m) (+ y (dec (int (/ (dec m) 12))))
-                                 (zero? m) (dec y))
-                         m (cond (> m 12) (let [m (mod m 12)]
-                                            (if (zero? m) 12 m))
-                                 (< m 1) (+ m 12)
-                                 :else m)
-                         ldom (day (last-day-of-the-month-
-                                    (goog.date.Date. y (dec m) 1)))]
-                     (when (< ldom (day date))
-                       (.setDate date ldom))
-                     (.setMonth date (dec m))
-                     (.setYear date y)))
+                   (let [m (op 0 value)
+                         i (goog.date.Interval. goog.date.Interval.MONTHS m)]
+                     (.add date i)))
                  date))
      :years (fn [op date value]
               (let [date (.clone date)]
                 (when value
                   (if (and (leap-year? (year date))
-                          (= 2 (month date))
-                          (= 29 (day date)))
+                           (= 2 (month date))
+                           (= 29 (day date)))
                     (.setDate date 28))
                   (.setYear date (op (year date) value)))
                 date))}))
@@ -187,6 +176,7 @@ expected."}
   (minute [this] (.getMinutes this))
   (second [this] (.getSeconds this))
   (milli [this] (.getMilliseconds this))
+  (equal? [this that] (== (.getTime this) (.getTime that)))
   (after? [this that] (> (.getTime this) (.getTime that)))
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
@@ -207,6 +197,7 @@ expected."}
   (minute [this] (.getMinutes this))
   (second [this] (.getSeconds this))
   (milli [this] (.getMilliseconds this))
+  (equal? [this that] (== (.getTime this) (.getTime that)))
   (after? [this that] (> (.getTime this) (.getTime that)))
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
@@ -227,6 +218,7 @@ expected."}
   (minute [this] nil)
   (second [this] nil)
   (milli [this] nil)
+  (equal? [this that] (== (.getTime this) (.getTime that)))
   (after? [this that] (> (.getTime this) (.getTime that)))
   (before? [this that] (< (.getTime this) (.getTime that)))
   (plus- [this period] ((period-fn period) + this))
@@ -238,11 +230,7 @@ expected."}
      (goog.date.Date. (.getYear this) (inc (.getMonth this)) 1)
      (period :days 1))))
 
-(def utc (goog.i18n.TimeZone/createTimeZone
-           (clj->js {:id "UTC"
-                     :std_offset 0
-                     :names ["UTC"]
-                     :transitions []})))
+(def utc #js {:id "UTC" :std_offset 0 :names ["UTC"] :transitions []})
 
 (defn default-ms-fn []
   (fn [] (js/Date.now)))

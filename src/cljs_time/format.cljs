@@ -385,17 +385,22 @@ time if supplied."}
 (def part-splitter-regex
   #"(?:(?!(?:\+|-)\d{2}):(?!\d{2}$))|[^\w:]+|.[TW]|'[^']+'")
 
-(defmulti date-map type)
+(defprotocol IDateMap
+  (date-map [date]))
 
-(defmethod date-map goog.date.Date [d]
-  {:years 0 :months 0 :days 1})
+(extend-protocol IDateMap
+  goog.date.Date
+  (date-map [date]
+    {:years 0 :months 0 :days 1})
 
-(defmethod date-map goog.date.DateTime [d]
-  {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0})
+  goog.date.DateTime
+  (date-map [date]
+    {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0})
 
-(defmethod date-map goog.date.UtcDateTime [d]
-  {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0
-   :time-zone nil})
+  goog.date.UtcDateTime
+  (date-map [date]
+    {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0
+     :time-zone nil}))
 
 (defn parse* [constructor {:keys [format-str default-year] :as fmt} s]
   {:pre [(seq s)]}

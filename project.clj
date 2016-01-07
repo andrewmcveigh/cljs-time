@@ -1,4 +1,4 @@
-(defproject com.andrewmcveigh/cljs-time "0.3.15"
+(defproject com.andrewmcveigh/cljs-time "0.4.0-SNAPSHOT"
   :description "A clj-time inspired date library for clojurescript."
   :url "https://github.com/andrewmcveigh/cljs-time"
   :license {:name "Eclipse Public License"
@@ -25,8 +25,7 @@
                       :pretty-print true}}}}
   :profiles
   {:prod
-   {:hooks [leiningen.cljsbuild]
-    :cljsbuild
+   {:cljsbuild
     {:builds {:simple {:source-paths ["src" "test"]
                        :compiler {:output-to "target/cljs/simple.js"
                                   :optimizations :simple
@@ -39,7 +38,7 @@
      {"simple" ["node" "target/cljs/simple.js"]
       "advanced" ["node" "target/cljs/advanced.js"]}}}}
 
-  :aliases {"test-all" ["with-profile" "prod" "test"]}
+  :aliases {"test-all" ["with-profile" "prod" "cljsbuild" "test"]}
 
   :release-tasks [["vcs" "assert-committed"]
                   ["clean"]

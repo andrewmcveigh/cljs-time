@@ -13,7 +13,7 @@
       in-years in-months in-weeks in-days in-hours in-minutes in-seconds
       in-millis minus plus earliest latest
       local-date local-date-time today
-      day-of-week after? before? ago from-now
+      day-of-week equal? after? before? ago from-now
       years months weeks days hours minutes seconds millis
       years? months? weeks? days? hours? minutes? seconds?
       extend start end mins-ago default-time-zone
@@ -161,6 +161,12 @@
   (let [d (date-time 1918 11 11)]
     (is (= 1 (day-of-week d)))))
 
+(deftest test-equal?
+  (is (equal? (date-time 2013 01 01 01) (date-time 2013 01 01 01)))
+  (is (equal? (date-time 1987) (date-time 1987)))
+  (is (not (equal? (date-time 1986) (date-time 1987))))
+  (is (not (equal? (date-time 1987) (date-time 1986)))))
+
 (deftest test-after?
   (is (after? (date-time 1987) (date-time 1986)))
   (is (not (after? (date-time 1986) (date-time 1987))))
@@ -194,7 +200,23 @@
   (is (= (date-time 1986 10 14 4)
          (minus (date-time 1986 10 14 6) (hours 2))))
   (is (= (date-time 1986 10 14 4 2)
-         (minus (date-time 1986 10 14 6 5) (hours 2) (minutes 3)))))
+         (minus (date-time 1986 10 14 6 5) (hours 2) (minutes 3))))
+  (is (= (date-time 2014 04)
+         (minus (date-time 2015 10) (months 18))))
+  (is (= (date-time 2014 03)
+         (minus (date-time 2015 10) (months 19))))
+  (is (= (date-time 2014 02)
+         (minus (date-time 2015 10) (months 20))))
+  (is (= (date-time 2014 01)
+         (minus (date-time 2015 10) (months 21))))
+  (is (= (date-time 2013 12)
+         (minus (date-time 2015 10) (months 22))))
+  (is (= (date-time 2013 11)
+         (minus (date-time 2015 10) (months 23))))
+  (is (= (date-time 2013 10)
+         (minus (date-time 2015 10) (months 24))))
+  (is (= (date-time 2013 9)
+         (minus (date-time 2015 10) (months 25)))))
 
 (deftest test-after?-local
   (is (after? (local-date-time 1987) (local-date-time 1986)))
