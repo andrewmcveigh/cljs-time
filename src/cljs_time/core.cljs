@@ -66,11 +66,12 @@
   (:refer-clojure :exclude [= extend second])
   (:require
    [cljs-time.internal.core :as internal :refer [leap-year? format]]
-   [clojure.string :as string]
-   [goog.date.Date]
-   [goog.date.DateTime]
-   [goog.date.UtcDateTime]
-   [goog.i18n.TimeZone]))
+   [clojure.string :as string])
+  (:import
+   goog.date.Date
+   goog.date.DateTime
+   goog.i18n.TimeZone
+   goog.date.UtcDateTime))
 
 (def ^{:doc "**Note:** Equality in goog.date.* (and also with plain
 javascript dates) is not the same as in Joda/clj-time. Two date
@@ -712,36 +713,42 @@ Specify the year, month, and day. Does not deal with timezones."
   ([year month]
    (first-day-of-the-month- (date-time year month))))
 
-(defmulti ->period type)
 
-(defmethod ->period cljs-time.core.Interval [{:keys [start end] :as interval}]
-  (let [years (in-years interval)
-        start-year (year start)
-        leap-years (count
-                     (remove false?
-                             (map leap-year?
-                                  (range start-year (+ start-year years)))))
-        start-month  (month start)
-        days-in-months (total-days-in-whole-months interval)
-        months (- (count days-in-months) (* years 12))
-        days-to-remove (reduce + days-in-months)
-        days (- (in-days interval) days-to-remove)
-        hours-to-remove (* 24 (+ days days-to-remove))
-        hours (- (in-hours interval) hours-to-remove)
-        minutes-to-remove (* 60 (+ hours hours-to-remove))
-        minutes (- (in-minutes interval) minutes-to-remove)
-        seconds-to-remove (* 60 (+ minutes minutes-to-remove))
-        seconds (- (in-seconds interval) seconds-to-remove)]
-    (period :years years
-            :months months
-            :days days
-            :hours hours
-            :minutes minutes
-            :seconds seconds
-            :millis (- (in-millis interval)
-                       (* 1000 (+ seconds seconds-to-remove))))))
+(defprotocol IToPeriod
+  (->period [obj]))
 
-(defmethod ->period cljs-time.core.Period [period] period)
+(extend-protocol IToPeriod
+
+  cljs-time.core.Interval
+  (->period [{:keys [start end] :as interval}]
+    (let [years (in-years interval)
+          start-year (year start)
+          leap-years (count
+                      (remove false?
+                              (map leap-year?
+                                   (range start-year (+ start-year years)))))
+          start-month  (month start)
+          days-in-months (total-days-in-whole-months interval)
+          months (- (count days-in-months) (* years 12))
+          days-to-remove (reduce + days-in-months)
+          days (- (in-days interval) days-to-remove)
+          hours-to-remove (* 24 (+ days days-to-remove))
+          hours (- (in-hours interval) hours-to-remove)
+          minutes-to-remove (* 60 (+ hours hours-to-remove))
+          minutes (- (in-minutes interval) minutes-to-remove)
+          seconds-to-remove (* 60 (+ minutes minutes-to-remove))
+          seconds (- (in-seconds interval) seconds-to-remove)]
+      (period :years years
+              :months months
+              :days days
+              :hours hours
+              :minutes minutes
+              :seconds seconds
+              :millis (- (in-millis interval)
+                         (* 1000 (+ seconds seconds-to-remove))))))
+
+  cljs-time.core.Period
+  (->period [period] period))
 
 (defn today-at
   ([hours minutes seconds millis]
