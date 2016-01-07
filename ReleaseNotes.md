@@ -1,3 +1,10 @@
+## v0.4.0
+
+- Implement cljs-time.core/equal? Close #54
+- Use goog.date interval to add/sub months. Fix #55
+- Tests showing a problem subtracting months.
+- Use IDateMap over multi-method in internal format impl
+
 ## v0.3.15
 
 - Update cljs, cljsbuild
