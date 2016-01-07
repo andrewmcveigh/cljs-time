@@ -1,3 +1,13 @@
+## v0.3.15
+
+- Update cljs, cljsbuild
+- Use protocol for dispatching ->period
+- Fix bad format alias in instant.cljs
+- Don't test weekyears, as no support in goog.date
+- Fix 'ww' formatter, xxxx still failing. Ref #51
+- pr-str serialization for goog.date.*
+- Spelling
+
 ## v0.3.14
 
 - Fix to-date-test
