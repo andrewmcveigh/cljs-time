@@ -154,16 +154,11 @@ expected."}
           ->goog-interval (fn [op interval value]
                             (when (and interval value)
                               (goog.date.Interval. interval (op 0 value))))]
-      (reduce (fn [d [k v]]
-                (if-let [p' (periods k)]
-                  (if-let [i (->goog-interval operator (periods k) v)]
-                    (doto d (.add i))
-                    d)
-                  (if-let [f (period-fns k)]
-                    (do (f d operator v) d)
-                    d)))
-              date'
-              p))))
+      (doseq [[k v] p]
+        (if-let [period (periods k)]
+          (when-let [i (->goog-interval operator period v)] (.add date' i))
+          (when-let [f (period-fns k)] (f date' operator v))))
+      date')))
 
 (extend-protocol DateTimeProtocol
   goog.date.UtcDateTime
