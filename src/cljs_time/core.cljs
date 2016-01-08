@@ -131,40 +131,39 @@ expected."}
   ([p1 v1 & kvs]
    (apply assoc (period p1 v1) kvs)))
 
+(def period-fns
+  {:millis (fn [date op value]
+             (let [ms (op (.getTime date) value)]
+               (doto date (.setTime ms))))
+   :weeks  (fn [date op value]
+             (let [days (op 0 (* value 7))]
+               (doto date
+                 (.add (goog.date.Interval. goog.date.Interval.DAYS days)))))})
+
 (def periods
-  (let [fixed-time-fn (fn [f set-fn op date value]
-                        (let [date (.clone date)]
-                          (when value (set-fn date (op (f date) value)))
-                          date))]
-    {:millis (partial fixed-time-fn milli #(.setMilliseconds %1 %2))
-     :seconds (partial fixed-time-fn second #(.setSeconds %1 %2))
-     :minutes (partial fixed-time-fn minute #(.setMinutes %1 %2))
-     :hours (partial fixed-time-fn hour #(.setHours %1 %2))
-     :days (partial fixed-time-fn day #(.setDate %1 %2))
-     :weeks (fn [op date value]
-              (let [date (.clone date)]
-                (when value (.setDate date (op (day date) (* 7 value))))
-                date))
-     :months (fn [op date value]
-               (let [date (.clone date)]
-                 (when value
-                   (let [m (op 0 value)
-                         i (goog.date.Interval. goog.date.Interval.MONTHS m)]
-                     (.add date i)))
-                 date))
-     :years (fn [op date value]
-              (let [date (.clone date)]
-                (when value
-                  (if (and (leap-year? (year date))
-                           (= 2 (month date))
-                           (= 29 (day date)))
-                    (.setDate date 28))
-                  (.setYear date (op (year date) value)))
-                date))}))
+  {:seconds goog.date.Interval.SECONDS
+   :minutes goog.date.Interval.MINUTES
+   :hours   goog.date.Interval.HOURS
+   :days    goog.date.Interval.DAYS
+   :months  goog.date.Interval.MONTHS
+   :years   goog.date.Interval.YEARS})
 
 (defn period-fn [p]
   (fn [operator date]
-    (reduce (fn [d [k v]] ((periods k) operator d v)) date p)))
+    (let [date' (.clone date)
+          ->goog-interval (fn [op interval value]
+                            (when (and interval value)
+                              (goog.date.Interval. interval (op 0 value))))]
+      (reduce (fn [d [k v]]
+                (if-let [p' (periods k)]
+                  (if-let [i (->goog-interval operator (periods k) v)]
+                    (doto d (.add i))
+                    d)
+                  (if-let [f (period-fns k)]
+                    (do (f d operator v) d)
+                    d)))
+              date'
+              p))))
 
 (extend-protocol DateTimeProtocol
   goog.date.UtcDateTime
