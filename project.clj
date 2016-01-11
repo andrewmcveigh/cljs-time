@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :scm {:url "git@github.com:andrewmcveigh/cljs-time.git"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.170" :scope "provided"]]
+                 [org.clojure/clojurescript "1.7.228" :scope "provided"]]
 
   :plugins [[lein-cljsbuild "1.1.2"]]
 

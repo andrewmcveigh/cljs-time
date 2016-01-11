@@ -3,9 +3,9 @@
 
 (set-env!
  :source-paths #{"src" "test"}
- :dependencies '[[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-SNAPSHOT" :scope "provided"]
-                 [org.clojure/tools.nrepl "0.2.10" :scope "test"]
+ :dependencies '[[org.clojure/clojure "1.7.0"]
+                 [org.clojure/clojurescript "1.7.228" :scope "provided"]
+                 [org.clojure/tools.nrepl "0.2.12" :scope "test"]
                  [com.cemerick/piggieback "0.2.1" :scope "test"]
                  [funcool/codeina "0.1.0"
                   :scope "test"
