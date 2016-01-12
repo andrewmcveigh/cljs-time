@@ -1,5 +1,7 @@
 (ns cljs-time.internal.parse
+  (:refer-clojure :exclude [replace])
   (:require
+   [cljs-time.internal.core :refer [valid-date?]]
    [clojure.string :as string]))
 
 (defn replace [s match replacement]
@@ -108,9 +110,16 @@
    (fn [s] (parse-period s :timezone lower upper))))
 
 (defn parse-meridiem
-  ([limit] (parse-meridiem 1 limit))
-  ([lower upper]
-   (fn [s] (parse-period s :meridiem lower upper))))
+  ([]
+   (fn [s]
+     (let [[[m n :as meridiem] s] (split-at 2 s)
+           [meridiem s] (cond (#{"am" "pm" "AM" "PM"} meridiem)
+                                      [meridiem s]
+                                      (#{\a \p} m)
+                                      [({\a "am" \p "pm"} m) (str n s)]
+                                      (#{\A \P} m)
+                                      [({\A "am" \P "pm"} m) (str n s)])]
+       [[:meridiem (keyword meridiem)] s]))))
 
 (def months
   ["January" "February" "March" "April" "May" "June"
@@ -176,18 +185,46 @@
       "YYYY" (parse-year 4 4)
       "E"    (parse-day-name true)
       "EEE"  (parse-day-name true)
-      "EEEE" (parse-day-name false))
+      "EEEE" (parse-day-name false)
+      "a"    (parse-meridiem))
     (parse-quoted pattern)))
 
 (defn parse [pattern value]
   (loop [state value
          [parser & more] (map lookup (read-pattern pattern))
          out []]
-    (prn parser state)
     (let [[value state] (parser state)
           out (conj out value)]
       (if (seq state)
         (recur state more out)
         out))))
 
-;; (parse "yyyyMM'T'dd" "201401T31")
+(defprotocol IDateMap
+  (date-map [date]))
+
+(extend-protocol IDateMap
+  goog.date.Date
+  (date-map [date]
+    {:years 0 :months 0 :days 1})
+
+  goog.date.DateTime
+  (date-map [date]
+    {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0})
+
+  goog.date.UtcDateTime
+  (date-map [date]
+    {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0
+     :time-zone nil}))
+
+(defn compile [class values]
+  (let [{:keys [years months days hours HOURS minutes seconds millis meridiem]}
+        (->> values
+             (remove (comp #{:quoted} first))
+             (into {}))
+        hours (if meridiem
+                (if (#{:pm :PM} meridiem) (+ hours 12) hours)
+                HOURS)]
+    (if (and years months days)
+      (if (and hours minutes seconds millis)
+        (new class years (dec months) days hours minutes seconds millis)
+        (new class years (dec months) days)))))
