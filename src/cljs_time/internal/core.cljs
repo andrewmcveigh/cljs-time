@@ -58,7 +58,7 @@
   ([n] (if (<= 0 n 9) (str "0" n) (str n)))
   ([n zeros]
    ; No need to handle negative numbers
-   (if (> 1 zeros)
+   (if (< zeros 1)
      (str n)
      (str (string/join (take (- zeros (count (str n))) (repeat "0")))
           n))))

@@ -69,6 +69,16 @@
   ([lower upper]
    (fn [s] (parse-period s :years lower upper))))
 
+(defn parse-weekyear
+  ([limit] (parse-year 1 limit))
+  ([lower upper]
+   (fn [s] (parse-period s :weekyear lower upper))))
+
+(defn parse-weekyear-week
+  ([limit] (parse-year 1 limit))
+  ([lower upper]
+   (fn [s] (parse-period s :weekyear-week lower upper))))
+
 (defn parse-month
   ([limit] (parse-month 1 limit))
   ([lower upper]
@@ -112,14 +122,15 @@
 (defn parse-meridiem
   ([]
    (fn [s]
-     (let [[[m n :as meridiem] s] (split-at 2 s)
+     (let [[[m n] s] (split-at 2 s)
+           meridiem (str m n)
            [meridiem s] (cond (#{"am" "pm" "AM" "PM"} meridiem)
-                                      [meridiem s]
-                                      (#{\a \p} m)
-                                      [({\a "am" \p "pm"} m) (str n s)]
-                                      (#{\A \P} m)
-                                      [({\A "am" \P "pm"} m) (str n s)])]
-       [[:meridiem (keyword meridiem)] s]))))
+                              [meridiem s]
+                              (#{\a \p} m)
+                              [({\a "am" \p "pm"} m) (cons n s)]
+                              (#{\A \P} m)
+                              [({\A "am" \P "pm"} m) (cons n s)])]
+       [[:meridiem (keyword meridiem)] (string/join s)]))))
 
 (def months
   ["January" "February" "March" "April" "May" "June"
@@ -183,6 +194,11 @@
       "Y"    (parse-year 1 4)
       "YY"   (parse-year 2 2)
       "YYYY" (parse-year 4 4)
+      "x"    (parse-weekyear 1 4)
+      "xx"   (parse-weekyear 2 2)
+      "xxxx" (parse-weekyear 4 4)
+      "w"    (parse-weekyear-week 1 2)
+      "ww"   (parse-weekyear-week 2 2)
       "E"    (parse-day-name true)
       "EEE"  (parse-day-name true)
       "EEEE" (parse-day-name false)
@@ -190,41 +206,33 @@
     (parse-quoted pattern)))
 
 (defn parse [pattern value]
-  (loop [state value
+  (loop [s value
          [parser & more] (map lookup (read-pattern pattern))
          out []]
-    (let [[value state] (parser state)
-          out (conj out value)]
-      (if (seq state)
-        (recur state more out)
-        out))))
-
-(defprotocol IDateMap
-  (date-map [date]))
-
-(extend-protocol IDateMap
-  goog.date.Date
-  (date-map [date]
-    {:years 0 :months 0 :days 1})
-
-  goog.date.DateTime
-  (date-map [date]
-    {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0})
-
-  goog.date.UtcDateTime
-  (date-map [date]
-    {:years 0 :months 0 :days 1 :hours 0 :minutes 0 :seconds 0 :millis 0
-     :time-zone nil}))
+    (if (seq s)
+      (if (nil? parser)
+        (throw
+         (ex-info (str "Invalid format: " value " is malformed at " (pr-str s))
+                  {:type :parse-error :sub-type :invalid-format}))
+        (let [[value s] (parser s)]
+          (recur s more (conj out value))))
+      out)))
 
 (defn compile [class values]
-  (let [{:keys [years months days hours HOURS minutes seconds millis meridiem]}
+  (let [{:keys [years months days hours HOURS minutes seconds millis meridiem]
+         :as date-map}
         (->> values
              (remove (comp #{:quoted} first))
              (into {}))
         hours (if meridiem
                 (if (#{:pm :PM} meridiem) (+ hours 12) hours)
-                HOURS)]
+                HOURS)
+        date-map (-> date-map
+                     (assoc :hours hours)
+                     (dissoc :HOURS :meridiem))]
+    (valid-date? date-map)
     (if (and years months days)
       (if (and hours minutes seconds millis)
         (new class years (dec months) days hours minutes seconds millis)
         (new class years (dec months) days)))))
+
