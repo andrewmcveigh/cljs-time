@@ -1,14 +1,10 @@
 (ns cljs-time.internal.format
   (:require
    [cljs-time.internal.core :refer [zero-pad]]
+   [cljs-time.internal.parse :refer [read-pattern]]
    [goog.date])
   (:import
    [goog.date Date DateTime UtcDateTime Interval]))
-
-(def dd
-  [[:token "dd"] [:token "MM"] [:token "yyyy"]])
-
-(def d (DateTime. 2016 0 1 11 2 5))
 
 (defn unparse-period [s d num min max]
   (let [n (zero-pad num min)
@@ -75,7 +71,7 @@
 
 (defn unparse-quoted [quoted]
   (fn [s d]
-    [(str s quoted) d]))
+    [(apply str s quoted) d]))
 
 (defn unparse-period-name [s d n periods short?]
   (let [periods (vec (cond->> periods short? (map #(subs % 0 3))))]
@@ -168,15 +164,18 @@
       "A"    (unparse-meridiem true))
     (unparse-quoted pattern)))
 
-#_(defn unparse [pattern value]
+(defn unparse [pattern value]
   (loop [d value
          [unparser & more] (map lookup (read-pattern pattern))
-         out []]
-    (if (seq s)
-      (if (nil? parser)
-        (throw
-         (ex-info (str "Invalid format: " value " is malformed at " (pr-str s))
-                  {:type :parse-error :sub-type :invalid-format}))
-        (let [[value s] (parser s)]
-          (recur s more (conj out value))))
-      out)))
+         s ""]
+    (if (nil? unparser)
+      s
+      (let [[s d] (unparser s d)]
+        (recur d more s)))))
+
+(def dd
+  [[:token "dd"] [:token "MM"] [:token "yyyy"]])
+
+(def d (DateTime. 2016 5 1 11 2 5))
+
+(unparse "ddMMyyyy'T'HH:mm:ss.SSS" d)
