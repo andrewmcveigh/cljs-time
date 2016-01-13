@@ -5,6 +5,16 @@
    [goog.string :as gstring]
    [goog.string.format]))
 
+(def months
+  ["January" "February" "March" "April" "May" "June" "July" "August"
+   "September" "October" "November" "December"])
+
+(def days
+  ["Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday"])
+
+(defn abbreviate [n s]
+  (subs s 0 n))
+
 (defn = [& args]
   (cond (every? #(instance? goog.date.Date %) args)
         (apply cljs.core/= (map #(.getTime %) args))

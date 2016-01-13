@@ -1,7 +1,7 @@
 (ns cljs-time.internal.parse
   (:refer-clojure :exclude [replace])
   (:require
-   [cljs-time.internal.core :refer [valid-date?]]
+   [cljs-time.internal.core :as i]
    [clojure.string :as string]))
 
 (defn replace [s match replacement]
@@ -40,6 +40,7 @@
   (let [[h & more] s
         f (cond (= h \') read-quoted
                 (alpha? h) read-token
+                (#{\+ \-} read-timezone)
                 :else read-punctuation)]
     (f h more)))
 
@@ -115,9 +116,30 @@
    (fn [s] (parse-period s :millis lower upper))))
 
 (defn parse-timezone
-  ([limit] (parse-timezone 1 limit))
-  ([lower upper]
-   (fn [s] (parse-period s :timezone lower upper))))
+  ([fmt]
+   (fn [s]
+     (let [[h & more] s
+           err (ex-info
+                (str "Invalid timezone format: " s) {:type :parse-error})]
+       (if (#{\- \+} h)
+         (case fmt
+           :dddd (let [tz? (string/join (take 4 more))]
+                   (if-let [[_ & tz] (re-find #"^(\d{2})(\d{2})" tz?)]
+                     [[:timezone tz] (drop 4 more)]
+                     (throw err)))
+           :long (let [tz? (string/join (take 5 more))]
+                   (if-let [[_ & tz] (re-find #"^(\d{2}):(\d{2})" tz?)]
+                     [[:timezone tz] (drop 5 more)]
+                     (throw err))))
+         (case fmt
+           :abbr (let [tz? (take 3 s)
+                       [tz _] (read-while #(re-find #"[A-Z]" %) tz?)]
+                   (if (= (count tz) 3)
+                     [[:timezone (string/join tz)] (drop 3 s)]
+                     (throw err)))
+           :full (throw (ex-info (str "Cannot parse long form timezone:" s)
+                                 {:type :parse-error}))
+           (throw err)))))))
 
 (defn parse-meridiem
   ([]
@@ -132,31 +154,21 @@
                               [({\A "am" \P "pm"} m) (cons n s)])]
        [[:meridiem (keyword meridiem)] (string/join s)]))))
 
-(def months
-  ["January" "February" "March" "April" "May" "June"
-   "July" "August" "September" "October" "November" "December"])
-
-(defn index-of [coll x]
-  (first (keep-indexed #(when (= %2 x) %1) coll)))
-
 (defn parse-period-name [s period periods short?]
   (let [periods (cond->> periods short? (map #(subs % 0 3)))
         [m s] (->> periods
                    (map #(-> [% (replace s (re-pattern (str \^ %)) "")]))
                    (remove (comp (partial = s) second))
                    (first))]
-    [[period (index-of periods m)] s]))
+    [[period (i/index-of periods m)] s]))
 
 (defn parse-month-name [short?]
   (fn [s]
-    (-> (parse-period-name s :months months short?)
+    (-> (parse-period-name s :months i/months short?)
         (update-in [0 1] inc))))
 
-(def days
-  ["Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday"])
-
 (defn parse-day-name [short?]
-  (fn [s] (parse-period-name s :days days short?)))
+  (fn [s] (parse-period-name s :days i/days short?)))
 
 (defn parse-quoted [quoted]
   (fn [s]
@@ -165,6 +177,19 @@
         (throw (ex-info "Quoted text not found"
                         {:type :parse-error :where :parse-quoted}))
         [[:quoted quoted] s']))))
+
+(defn timezone-adjustment [d timezone-string]
+  (let [[_ sign hh mm] (string/split timezone-string
+                                     #"Z|(?:([-+])(\d{2})(?::?(\d{2}))?)$")]
+    (when (and sign hh mm)
+      (let [sign (cond (= sign "-") time/plus
+                       (= sign "+") time/minus)
+            [hh mm] (map #(js/parseInt % 10) [hh mm])
+            adjusted (-> d
+                         (sign (time/hours hh))
+                         (sign (time/minutes mm)))]
+        (.setTime d (.getTime adjusted))))
+    d))
 
 (defn lookup [[t pattern]]
   (if (= t :token)
@@ -202,7 +227,15 @@
       "E"    (parse-day-name true)
       "EEE"  (parse-day-name true)
       "EEEE" (parse-day-name false)
-      "a"    (parse-meridiem))
+      "a"    (parse-meridiem)
+      "Z"    (parse-timezone :dddd)
+      "ZZ"   (parse-timezone :long)
+      "ZZZ"  (parse-timezone :abbr)
+      "ZZZZ" (parse-timezone :abbr)
+      "z"    (parse-timezone :abbr)
+      "zz"   (parse-timezone :abbr)
+      "zzz"  (parse-timezone :abbr)
+      "zzzz" (parse-timezone :full))
     (parse-quoted pattern)))
 
 (defn parse [pattern value]
@@ -230,9 +263,8 @@
         date-map (-> date-map
                      (assoc :hours hours)
                      (dissoc :HOURS :meridiem))]
-    (valid-date? date-map)
+    (i/valid-date? date-map)
     (if (and years months days)
       (if (and hours minutes seconds millis)
         (new class years (dec months) days hours minutes seconds millis)
         (new class years (dec months) days)))))
-
