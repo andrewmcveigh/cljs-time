@@ -1,4 +1,4 @@
-(ns cljs-time.internal.format
+(ns cljs-time.internal.unparse
   (:require
    [cljs-time.internal.core :refer [zero-pad]]
    [cljs-time.internal.parse :refer [read-pattern]]
@@ -42,7 +42,6 @@
   ([min] (unparse-HOURS min min))
   ([min max]
    (fn [s d]
-     (prn s d)
      (unparse-period s d (.getHours d) min max))))
 
 (defn unparse-day
@@ -122,8 +121,6 @@
                      (if (< hours 12) "am" "pm"))]
       [(str s meridiem) d])))
 
-((unparse-meridiem false) "" d)
-
 (defn lookup [[t pattern]]
   (if (= t :token)
     (case pattern
@@ -172,10 +169,3 @@
       s
       (let [[s d] (unparser s d)]
         (recur d more s)))))
-
-(def dd
-  [[:token "dd"] [:token "MM"] [:token "yyyy"]])
-
-(def d (DateTime. 2016 5 1 11 2 5))
-
-(unparse "ddMMyyyy'T'HH:mm:ss.SSS" d)
