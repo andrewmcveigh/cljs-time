@@ -194,61 +194,55 @@
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-     (parse* goog.date.UtcDateTime fmt s))
+   (parse/compile goog.date.UtcDateTime (parse/parse (:format-str fmt) s)))
   ([s]
-     (first
-      (for [f (vals formatters)
-            :let [d (try (parse f s) (catch :default _))]
-            :when d] d))))
+   (first
+    (for [f (vals formatters)
+          :let [d (try (parse f s) (catch :default _))]
+          :when d] d))))
 
 (defn parse-local
   "Returns a local DateTime instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-     (parse* goog.date.DateTime fmt s))
+   (parse/compile goog.date.DateTime (parse/parse (:format-str fmt) s)))
   ([s]
-     (first
-      (for [f (vals formatters)
-            :let [d (try (parse-local f s) (catch js/Error _ nil))]
-            :when d] d))))
+   (first
+    (for [f (vals formatters)
+          :let [d (try (parse-local f s) (catch js/Error _ nil))]
+          :when d] d))))
 
 (defn parse-local-date
   "Returns a local Date instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-     (parse* goog.date.Date fmt s))
+   (parse/compile goog.date.Date (parse/parse (:format-str fmt) s)))
   ([s]
-     (first
-      (for [f (vals formatters)
-            :let [d (try (parse-local-date f s) (catch js/Error _ nil))]
-            :when d] d))))
+   (first
+    (for [f (vals formatters)
+          :let [d (try (parse-local-date f s) (catch js/Error _ nil))]
+          :when d] d))))
 
 (defn unparse
   "Returns a string representing the given DateTime instance in UTC and in the
 form determined by the given formatter."
   [{:keys [format-str formatters]} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
-  (apply old-string-replace ((formatter-fn format-str formatters) dt)))
+  (unparse/unparse format-str dt))
 
 (defn unparse-local
   "Returns a string representing the given local DateTime instance in the
   form determined by the given formatter."
   [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
-  (apply old-string-replace
-         ((formatter-fn format-str formatters) dt (assoc date-formatters
-                                                    "Z" (constantly "")
-                                                    "ZZ" (constantly "")))))
+  (unparse (assoc fmt :overrides (skip-timezone-formatter))))
 
 (defn unparse-local-date
   "Returns a string representing the given local Date instance in the form
   determined by the given formatter."
   [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
-  (apply old-string-replace
-         ((formatter-fn format-str formatters) dt (assoc date-formatters
-                                                    "Z" (constantly "")
-                                                    "ZZ" (constantly "")))))
+  (unparse (assoc fmt :overrides (skip-timezone-formatter))))
 
 (defn show-formatters
   "Shows how a given DateTime, or by default the current time, would be

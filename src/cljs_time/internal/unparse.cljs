@@ -1,13 +1,13 @@
 (ns cljs-time.internal.unparse
   (:require
-   [cljs-time.internal.core :refer [zero-pad]]
+   [cljs-time.internal.core :as i]
    [cljs-time.internal.parse :refer [read-pattern]]
    [goog.date])
   (:import
    [goog.date Date DateTime UtcDateTime Interval]))
 
 (defn unparse-period [s d num min max]
-  (let [n (zero-pad num min)
+  (let [n (i/zero-pad num min)
         c (count n)
         n (subs n (- c max))]
     [(str s n) d]))
@@ -76,20 +76,13 @@
   (let [periods (vec (cond->> periods short? (map #(subs % 0 3))))]
     [(str s (periods n)) d]))
 
-(def months
-  ["January" "February" "March" "April" "May" "June"
-   "July" "August" "September" "October" "November" "December"])
-
-(def days
-  ["Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday"])
-
 (defn unparse-month-name [short?]
   (fn [s d]
-    (unparse-period-name s d (.getMonth d) months short?)))
+    (unparse-period-name s d (.getMonth d) i/months short?)))
 
 (defn unparse-day-name [short?]
   (fn [s d]
-    (unparse-period-name s d (.getDay d) days short?)))
+    (unparse-period-name s d (.getDay d) i/days short?)))
 
 (defn unparse-weekyear
   ([min] (unparse-weekyear min min))

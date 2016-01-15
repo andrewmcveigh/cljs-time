@@ -40,7 +40,6 @@
   (let [[h & more] s
         f (cond (= h \') read-quoted
                 (alpha? h) read-token
-                (#{\+ \-} read-timezone)
                 :else read-punctuation)]
     (f h more)))
 
