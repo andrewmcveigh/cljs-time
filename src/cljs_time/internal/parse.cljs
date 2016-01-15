@@ -2,7 +2,9 @@
   (:refer-clojure :exclude [replace])
   (:require
    [cljs-time.internal.core :as i]
-   [clojure.string :as string]))
+   [clojure.string :as string])
+  (:import
+   [goog.date Interval]))
 
 (defn replace [s match replacement]
   (string/replace (if (string? s) s (string/join s)) match replacement))
@@ -178,15 +180,16 @@
         [[:quoted quoted] s']))))
 
 (defn timezone-adjustment [d timezone-string]
-  (let [[_ sign hh mm] (string/split timezone-string
+  (let [d (.clone d)
+        [_ sign hh mm] (string/split timezone-string
                                      #"Z|(?:([-+])(\d{2})(?::?(\d{2}))?)$")]
     (when (and sign hh mm)
-      (let [sign (cond (= sign "-") time/plus
-                       (= sign "+") time/minus)
+      (let [sign (cond (= sign "-") #(.add %1 (Interval. %2 (- %3)))
+                       (= sign "+") #(.add %1 (Interval. %2 %3)))
             [hh mm] (map #(js/parseInt % 10) [hh mm])
             adjusted (-> d
-                         (sign (time/hours hh))
-                         (sign (time/minutes mm)))]
+                         (sign (Interval.HOURS hh))
+                         (sign (Interval.MINUTES mm)))]
         (.setTime d (.getTime adjusted))))
     d))
 

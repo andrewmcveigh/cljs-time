@@ -43,10 +43,10 @@
 
 (defn formatter
   ([fmts] (formatter fmts time/utc))
-  ([fmts dtz] (->Formatter {:format-str fmts :timezone dtz})))
+  ([fmts dtz] (map->Formatter {:format-str fmts :timezone dtz})))
 
 (defn formatter-local [fmts]
-  (->Formatter {:format-str fmts :overrides (skip-timezone-formatter)}))
+  (map->Formatter {:format-str fmts :overrides (skip-timezone-formatter)}))
 
 (defn with-default-year
   "Return a copy of a formatter that uses the given default year."
@@ -235,14 +235,14 @@ form determined by the given formatter."
   form determined by the given formatter."
   [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
-  (unparse (assoc fmt :overrides (skip-timezone-formatter))))
+  (unparse (assoc fmt :overrides (skip-timezone-formatter)) dt))
 
 (defn unparse-local-date
   "Returns a string representing the given local Date instance in the form
   determined by the given formatter."
   [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
-  (unparse (assoc fmt :overrides (skip-timezone-formatter))))
+  (unparse (assoc fmt :overrides (skip-timezone-formatter)) dt))
 
 (defn show-formatters
   "Shows how a given DateTime, or by default the current time, would be
