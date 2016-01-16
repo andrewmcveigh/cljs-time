@@ -114,51 +114,96 @@
                      (if (< hours 12) "am" "pm"))]
       [(str s meridiem) d])))
 
+(defn unparse-timezone []
+  (fn [s d]
+    [(str s (.getTimezoneOffsetString d)) d]))
+
+(defn unparse-ordinal-suffix [getter]
+  (fn [s d]
+    (let [n (getter d)
+          o (case n 1 "st" 2 "nd" 3 "rd" 21 "st" 22 "nd" 23 "rd" 31 "st" "th")]
+      [(str s o) d])))
+
 (defn lookup [[t pattern]]
   (if (= t :token)
     (case pattern
-      "S"    (unparse-millis 1 2)
-      "SSS"  (unparse-millis 3 3)
-      "s"    (unparse-seconds 1 2)
-      "ss"   (unparse-seconds 2 2)
-      "m"    (unparse-minutes 1 2)
-      "mm"   (unparse-minutes 2 2)
-      "h"    (unparse-hours 1 2)
-      "hh"   (unparse-hours 2 2)
-      "H"    (unparse-HOURS 1 2)
-      "HH"   (unparse-HOURS 2 2)
-      "d"    (unparse-day 1 2)
-      "dd"   (unparse-day 2 2)
-      "D"    (unparse-day 1 3)
-      "DD"   (unparse-day 2 3)
-      "DDD"  (unparse-day 3 3)
-      "M"    (unparse-month 1 2)
-      "MM"   (unparse-month 2 2)
-      "MMM"  (unparse-month-name true)
-      "MMMM" (unparse-month-name false)
-      "y"    (unparse-year 1 4)
-      "yy"   (unparse-year 2 2)
-      "yyyy" (unparse-year 4 4)
-      "Y"    (unparse-year 1 4)
-      "YY"   (unparse-year 2 2)
-      "YYYY" (unparse-year 4 4)
-      "x"    (unparse-weekyear 1 4)
-      "xx"   (unparse-weekyear 2 2)
-      "xxxx" (unparse-weekyear 4 4)
-      "w"    (unparse-weekyear-week 1 2)
-      "ww"   (unparse-weekyear-week 2 2)
-      "E"    (unparse-day-name true)
-      "EEE"  (unparse-day-name true)
-      "EEEE" (unparse-day-name false)
-      "a"    (unparse-meridiem false)
-      "A"    (unparse-meridiem true))
-    (unparse-quoted pattern)))
+      "S"    [:millis 1 2]
+      "SSS"  [:millis 3 3]
+      "s"    [:seconds 1 2]
+      "ss"   [:seconds 2 2]
+      "m"    [:minutes 1 2]
+      "mm"   [:minutes 2 2]
+      "h"    [:hours 1 2]
+      "hh"   [:hours 2 2]
+      "H"    [:HOURS 1 2]
+      "HH"   [:HOURS 2 2]
+      "d"    [:day 1 2]
+      "dd"   [:day 2 2]
+      "D"    [:day 1 3]
+      "DD"   [:day 2 3]
+      "DDD"  [:day 3 3]
+      "M"    [:month 1 2]
+      "MM"   [:month 2 2]
+      "MMM"  [:month-name true]
+      "MMMM" [:month-name false]
+      "y"    [:year 1 4]
+      "yy"   [:year 2 2]
+      "yyyy" [:year 4 4]
+      "Y"    [:year 1 4]
+      "YY"   [:year 2 2]
+      "YYYY" [:year 4 4]
+      "x"    [:weekyear 1 4]
+      "xx"   [:weekyear 2 2]
+      "xxxx" [:weekyear 4 4]
+      "w"    [:weekyear-week 1 2]
+      "ww"   [:weekyear-week 2 2]
+      "E"    [:day-name true]
+      "EEE"  [:day-name true]
+      "EEEE" [:day-name false]
+      "a"    [:meridiem false]
+      "A"    [:meridiem true]
+      "Z"    [:timezone]
+      "ZZ"   [:timezone]
+      "o"    [:ordinal-suffix])
+    [:quoted pattern]))
+
+(defn lookup-getter [key]
+  (case key
+    :millis         #(.getMilliseconds %)
+    :seconds        #(.getSeconds %)
+    :minutes        #(.getMinutes %)
+    :hours          #(.getHours %)
+    :HOURS          #(.getHours %)
+    :day            #(.getDate %)
+    :month          #(.getMonth %)
+    :year           #(.getYear %)))
+
+(defn lookup-fn [syntax-list i [key & args]]
+  (case key
+    :millis         (apply unparse-millis args)
+    :seconds        (apply unparse-seconds args)
+    :minutes        (apply unparse-minutes args)
+    :hours          (apply unparse-hours args)
+    :HOURS          (apply unparse-HOURS args)
+    :day            (apply unparse-day args)
+    :month          (apply unparse-month args)
+    :month-name     (apply unparse-month-name args)
+    :year           (apply unparse-year args)
+    :weekyear       (apply unparse-weekyear args)
+    :weekyear-week  (apply unparse-weekyear-week args)
+    :day-name       (apply unparse-day-name args)
+    :meridiem       (apply unparse-meridiem args)
+    :timezone       (apply unparse-timezone args)
+    :ordinal-suffix (let [[k] (syntax-list (dec i))]
+                      (unparse-ordinal-suffix (lookup-getter k)))
+    :quoted         (apply unparse-quoted args)))
 
 (defn unparse [pattern value]
-  (loop [d value
-         [unparser & more] (map lookup (read-pattern pattern))
-         s ""]
-    (if (nil? unparser)
-      s
-      (let [[s d] (unparser s d)]
-        (recur d more s)))))
+  (let [syn-list (mapv lookup (read-pattern pattern))]
+    (loop [d value
+           [unparser & more] (map-indexed (partial lookup-fn syn-list) syn-list)
+           s ""]
+      (if (nil? unparser)
+        s
+        (let [[s d] (unparser s d)]
+          (recur d more s))))))

@@ -20,7 +20,7 @@
 (deftest parse-test
   (is (= :parser-no-match
          (try
-           (format/parse (formatter "dth MMM yyyy HH:mm") "28th August 2013 14:26")
+           (format/parse (formatter "do MMM yyyy HH:mm") "28th August 2013 14:26")
            (catch ExceptionInfo e (:type (ex-data e))))))
   (is
    (= :invalid-date
@@ -36,13 +36,13 @@
     (is (= 1938 (.getYear date)))
     (is (= 12   (.getDate date)))
     (is (= 7    (.getMonth date))))
-  (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "28th August 2013 14:26")]
+  (let [date (format/parse (formatter "do MMMM yyyy HH:mm") "28th August 2013 14:26")]
     (is (= 2013 (.getYear date)))
     (is (= 28   (.getDate date)))
     (is (= 7    (.getMonth date)))
     (is (= 14   (.getHours date)))
     (is (= 26   (.getMinutes date))))
-  (let [date (format/parse (formatter "dth MMMM yyyy HH:mm") "29th February 2012 14:26")]
+  (let [date (format/parse (formatter "do MMMM yyyy HH:mm") "29th February 2012 14:26")]
     (is (= 2012 (.getYear date)))
     (is (= 29   (.getDate date)))
     (is (= 1    (.getMonth date)))
@@ -66,8 +66,8 @@
 
 (deftest unparse-test
   (let [date (from-date #inst "2013-08-29T00:00:00.000-00:00")]
-    (is (= "Thursday 29th Aug 2013" (format/unparse (formatter "dow dth MMM yyyy") date)))
-    (is (= "Thursday 29th August 2013" (format/unparse (formatter "dow dth MMMM yyyy") date)))
+    (is (= "Thursday 29th Aug 2013" (format/unparse (formatter "EEEE do MMM yyyy") date)))
+    (is (= "Thursday 29th August 2013" (format/unparse (formatter "EEEE do MMMM yyyy") date)))
     (is (= "29/08/2013 00:00:00.000Z" (format/unparse (formatter "dd/MM/yyyy HH:mm:ss.SSSZ") date)))))
 
 (deftest arithmetic-test
@@ -352,7 +352,7 @@
   (let [fmt (format/formatter "'W'ww")]
     (is (= "W01" (format/unparse fmt (time/date-time 2014 12 29))))
     (is (= "W02" (format/unparse fmt (time/date-time 2015 1 5))))
-    (is (= "W02" (format/unparse fmt (time/date-time 2010 1 4))))
+    (is (= "W01" (format/unparse fmt (time/date-time 2010 1 4))))
     (is (= "W01" (format/unparse fmt (time/date-time 2008 12 29)))))
   (comment
     ;; no built in support for week-year in goog.date

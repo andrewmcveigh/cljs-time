@@ -33,8 +33,10 @@
 
 (defrecord SourcePaths [paths]
   cljs.closure/Compilable
-  (-compile [_ opts]
-    (mapcat #(closure/-compile % opts) paths)))
+  (closure/-compile [_ opts]
+    (mapcat #(closure/-compile % opts) paths))
+  (closure/-find-sources [_ opts]
+    (mapcat #(closure/-find-sources % opts) paths)))
 
 (defn compile
   [optimizations & {:keys [out-dir] :or {out-dir "target"}}]

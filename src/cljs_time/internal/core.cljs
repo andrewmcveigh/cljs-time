@@ -28,27 +28,38 @@
 
 (def days-in-month [31 28 31 30 31 30 31 31 30 31 30 31])
 
+(defn corrected-dim [month]
+  (days-in-month (if (= month 1) 11 (dec month))))
+
 (defn year-corrected-dim [year month]
-  (cond-> (days-in-month (if (= month 1) 11 (dec month)))
-          (and (leap-year? year) (= month 2)) inc))
+  (cond-> (corrected-dim month)
+    (and (leap-year? year) (= month 2)) inc))
 
 (defn valid-date?
   [{:keys [years months days hours minutes seconds millis] :as d}]
-  (let [months months]
-    (if (and years months days
-             (<= 1 months 12)
-             (<= 1 days (year-corrected-dim years months)))
-      (if (or hours minutes seconds millis)
-        (if (and hours minutes seconds millis
-                 (<= 0 hours 23)
-                 (<= 0 minutes 59)
-                 (<= 0 seconds 60)
-                 (<= 0 millis 999))
-          d
-          (throw
-           (ex-info "DateTime is not valid" {:type :invalid-date :date d})))
-        d)
-      (throw (ex-info "Date is not valid" {:type :invalid-date :date d})))))
+  (let [months?  (when months (<= 1 months 12))
+        dim      (if years
+                   (and months months? (year-corrected-dim years months))
+                   (and months months? (corrected-dim months)))
+        days?    (when days (if dim (<= 1 days dim) (<= 1 days 31)))
+        hours?   (when hours (<= 0 hours 23))
+        minutes? (when minutes (<= 0 minutes 59))
+        seconds? (when seconds (<= 0 seconds 60))
+        millis?  (when millis (<= 0 millis 999))]
+    (if (->> [months? days? hours? minutes? seconds? millis?]
+             (remove nil?)
+             (every? true?))
+      d
+      (throw
+       (ex-info "Date is not valid"
+                {:type :invalid-date :date d
+                 :errors (cond-> {}
+                           (false? months?)  (assoc :months months)
+                           (false? days?)    (assoc :days days)
+                           (false? hours?)   (assoc :hours hours)
+                           (false? minutes?) (assoc :minutes minutes)
+                           (false? seconds?) (assoc :seconds seconds)
+                           (false? millis?)  (assoc :millis millis))})))))
 
 (defn index-of [coll x]
   (first (keep-indexed #(when (= %2 x) %1) coll)))

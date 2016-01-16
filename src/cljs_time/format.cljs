@@ -104,6 +104,12 @@
     '       escape for text              delimiter
     ''      single quote                 literal       '
 
+    cljs-time additions:
+    ------  -------                      ------------  -------
+    Symbol  Meaning                      Presentation  Examples
+    ------  -------                      ------------  -------
+    o       ordinal suffix               text          st nd rd th (E.G., 1st, 2nd, 3rd, 4th)
+
   The count of pattern letters determine the format.
 
   **Text:** If the number of pattern letters is 4 or more, the full form is used;
@@ -194,7 +200,9 @@
   "Returns a DateTime instance in the UTC time zone obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-   (parse/compile goog.date.UtcDateTime (parse/parse (:format-str fmt) s)))
+   (->> s
+        (parse/parse (:format-str fmt))
+        (parse/compile :goog.date.UtcDateTime fmt)))
   ([s]
    (first
     (for [f (vals formatters)
@@ -205,7 +213,9 @@
   "Returns a local DateTime instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-   (parse/compile goog.date.DateTime (parse/parse (:format-str fmt) s)))
+   (->> s
+        (parse/parse (:format-str fmt))
+        (parse/compile :goog.date.DateTime fmt)))
   ([s]
    (first
     (for [f (vals formatters)
@@ -216,7 +226,9 @@
   "Returns a local Date instance obtained by parsing the
   given string according to the given formatter."
   ([fmt s]
-   (parse/compile goog.date.Date (parse/parse (:format-str fmt) s)))
+   (->> s
+        (parse/parse (:format-str fmt))
+        (parse/compile :goog.date.Date fmt)))
   ([s]
    (first
     (for [f (vals formatters)
@@ -227,7 +239,7 @@
   "Returns a string representing the given DateTime instance in UTC and in the
 form determined by the given formatter."
   [{:keys [format-str formatters]} dt]
-  {:pre [(not (nil? dt)) (instance? goog.date.DateTime dt)]}
+  {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
   (unparse/unparse format-str dt))
 
 (defn unparse-local
