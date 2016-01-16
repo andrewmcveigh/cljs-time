@@ -7,7 +7,7 @@
                  [org.clojure/clojurescript "1.7.228" :scope "provided"]
                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
                  [com.cemerick/piggieback "0.2.1" :scope "test"]
-                 [funcool/codeina "0.1.0"
+                 [funcool/codeina "0.3.0"
                   :scope "test"
                   :exclusions [org.clojure/clojure]]])
 
@@ -77,7 +77,7 @@
 (boot/deftask rhino-repl []
   (cemerick.piggieback/cljs-repl (rhino/repl-env)))
 
-(require '[codeina.main :as codeina])
+(require '[codeina.core :as codeina])
 
 (merge-env! :source-paths #{"checkouts/codeina/src"})
 
@@ -86,4 +86,9 @@
 
 (boot/deftask gen-docs []
   (codeina/generate-docs
-   {:language :clojurescript :name project :version version}))
+   {:language :clojurescript
+    :reader :clojurescript
+    :name project
+    :version version
+    :output-dir "docs"
+    :exclude '[cljs.core cljs.user]}))
