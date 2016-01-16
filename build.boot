@@ -2,7 +2,7 @@
 (def version "0.3.8-SNAPSHOT")
 
 (set-env!
- :source-paths #{"src" "test"}
+ :source-paths #{"src" "test" "compile"}
  :dependencies '[[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.228" :scope "provided"]
                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
@@ -91,3 +91,17 @@
     :version version
     :output-dir "docs"
     :exclude '[cljs.core cljs.user]}))
+
+(defn compile-dce-test []
+  (let [output (.getCanonicalPath (io/file "target/dce-test.js"))]
+    (closure/build "compile"
+                   {:cache-analysis false
+                    :main 'cljs-time.dce-compile-test
+                    :output-to output
+                    :optimizations :advanced})))
+
+(boot/deftask test-dce []
+  (compile-dce-test)
+  (let [f (io/file "target/dce-test.js")
+        b (.length f)]
+    (printf "%.2f KB" (double (/ b 1024)))))
