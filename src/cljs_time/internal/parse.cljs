@@ -4,7 +4,7 @@
    [cljs-time.internal.core :as i]
    [clojure.string :as string])
   (:import
-   [goog.date Interval]))
+   [goog.date Date DateTime UtcDateTime Interval]))
 
 (defn replace [s match replacement]
   (string/replace (if (string? s) s (string/join s)) match replacement))
@@ -35,6 +35,13 @@
   (let [[end s] (read-while #(not (re-find #"[a-zA-Z']" %)) s)]
     [(quoted (apply str ch end)) s]))
 
+(defn read-match [match ch s]
+  (let [c (dec (count match))
+        sub (str ch (subs s 0 c))]
+    (if (= match sub)
+      [sub (subs s c (count s))]
+      [nil (str ch s)])))
+
 (defn alpha? [ch]
   (re-find #"[a-zA-Z]" (str ch)))
 
@@ -50,6 +57,10 @@
     (let [[h s] (read s)
           out (conj out h)]
       (if (seq s) (recur s out) out))))
+
+(defn parse-match [s key match]
+  (let [[m s'] (read-match match (first s) (string/join (rest s)))]
+    (when m [[key m] s'])))
 
 (defn parse-number
   ([s limit] (parse-number s 1 limit))
@@ -116,31 +127,41 @@
   ([lower upper]
    (fn [s] (parse-period s :millis lower upper))))
 
+(defn timezone-adj [sign hh mm]
+  (let [hh (js/parseInt hh 10)
+        mm (js/parseInt mm 10)
+        mins (+ (* hh 60) mm)
+        adj-fn (if (= sign \+) - +)] ; sign is reversed for adj
+    [:timezone (Interval. Interval.MINUTES (adj-fn mins))]))
+
 (defn parse-timezone
   ([fmt]
    (fn [s]
      (let [[h & more] s
            err (ex-info
-                (str "Invalid timezone format: " s) {:type :parse-error})]
-       (if (#{\- \+} h)
-         (case fmt
-           :dddd (let [tz? (string/join (take 4 more))]
-                   (if-let [[_ & tz] (re-find #"^(\d{2})(\d{2})" tz?)]
-                     [[:timezone tz] (drop 4 more)]
-                     (throw err)))
-           :long (let [tz? (string/join (take 5 more))]
-                   (if-let [[_ & tz] (re-find #"^(\d{2}):(\d{2})" tz?)]
-                     [[:timezone tz] (drop 5 more)]
-                     (throw err))))
-         (case fmt
-           :abbr (let [tz? (take 3 s)
-                       [tz _] (read-while #(re-find #"[A-Z]" %) tz?)]
-                   (if (= (count tz) 3)
-                     [[:timezone (string/join tz)] (drop 3 s)]
-                     (throw err)))
-           :full (throw (ex-info (str "Cannot parse long form timezone:" s)
-                                 {:type :parse-error}))
-           (throw err)))))))
+                (str "Invalid timezone format: " s) {:type :parse-error})
+           dddd #(let [tz? (string/join (take 4 more))]
+                   (when-let [[_ hh mm] (re-find #"^(\d{2})(\d{2})" tz?)]
+                     [(timezone-adj % hh mm) (drop 4 more)]))
+           long #(let [tz? (string/join (take 5 more))]
+                   (when-let [[_ hh mm] (re-find #"^(\d{2}):(\d{2})" tz?)]
+                     [(timezone-adj % hh mm) (drop 5 more)]))]
+       (cond (#{\- \+} h)
+             (case fmt
+               :dddd (or (dddd h) (long h) (throw err))
+               :long (or (dddd h) (long h) (throw err)))
+             (= h \Z)
+             [[:timezone (timezone-adj + "0" "0")]]
+             :else
+             (case fmt
+               :abbr (let [tz? (take 3 s)
+                           [tz _] (read-while #(re-find #"[A-Z]" %) tz?)]
+                       (if (= (count tz) 3)
+                         [[:timezone (string/join tz)] (drop 3 s)]
+                         (throw err)))
+               :full (throw (ex-info (str "Cannot parse long form timezone:" s)
+                                     {:type :parse-error}))
+               (throw err)))))))
 
 (defn parse-meridiem
   ([]
@@ -179,19 +200,12 @@
                         {:type :parse-error :where :parse-quoted}))
         [[:quoted quoted] s']))))
 
-(defn timezone-adjustment [d timezone-string]
-  (let [d (.clone d)
-        [_ sign hh mm] (string/split timezone-string
-                                     #"Z|(?:([-+])(\d{2})(?::?(\d{2}))?)$")]
-    (when (and sign hh mm)
-      (let [sign (cond (= sign "-") #(.add %1 (Interval. %2 (- %3)))
-                       (= sign "+") #(.add %1 (Interval. %2 %3)))
-            [hh mm] (map #(js/parseInt % 10) [hh mm])
-            adjusted (-> d
-                         (sign (Interval.HOURS hh))
-                         (sign (Interval.MINUTES mm)))]
-        (.setTime d (.getTime adjusted))))
-    d))
+(defn parse-ordinal-suffix []
+  (fn [s]
+    (or (parse-match s :ordinal-suffix "st")
+        (parse-match s :ordinal-suffix "nd")
+        (parse-match s :ordinal-suffix "rd")
+        (parse-match s :ordinal-suffix "th"))))
 
 (defn lookup [[t pattern]]
   (if (= t :token)
@@ -230,6 +244,7 @@
       "EEE"  (parse-day-name true)
       "EEEE" (parse-day-name false)
       "a"    (parse-meridiem)
+      "A"    (parse-meridiem)
       "Z"    (parse-timezone :dddd)
       "ZZ"   (parse-timezone :long)
       "ZZZ"  (parse-timezone :abbr)
@@ -237,7 +252,10 @@
       "z"    (parse-timezone :abbr)
       "zz"   (parse-timezone :abbr)
       "zzz"  (parse-timezone :abbr)
-      "zzzz" (parse-timezone :full))
+      "zzzz" (parse-timezone :full)
+      "o"    (parse-ordinal-suffix)
+      (throw (ex-info (str "Illegal pattern component: " pattern)
+                      {:type :illegal-pattern})))
     (parse-quoted pattern)))
 
 (defn parse [pattern value]
@@ -253,20 +271,30 @@
           (recur s more (conj out value))))
       out)))
 
-(defn compile [class values]
-  (let [{:keys [years months days hours HOURS minutes seconds millis meridiem]
-         :as date-map}
-        (->> values
-             (remove (comp #{:quoted} first))
-             (into {}))
+(defn compile [class {:keys [default-year] :as fmt} values]
+  (let [{:keys [years months days
+                hours HOURS minutes seconds millis
+                meridiem timezone]
+         :as date-map} (->> values
+                            (remove (comp #{:quoted} first))
+                            (into {}))
+        years (or years default-year 0)
+        months (when months (dec months))
         hours (if meridiem
-                (if (#{:pm :PM} meridiem) (+ hours 12) hours)
+                (if (#{:pm :PM} meridiem) (+ (mod hours 12) 12) hours)
                 HOURS)
         date-map (-> date-map
                      (assoc :hours hours)
-                     (dissoc :HOURS :meridiem))]
+                     (dissoc :HOURS :meridiem))
+        timezone (if (instance? Interval timezone)
+                   timezone
+                   (Interval. Interval.SECONDS 0))]
     (i/valid-date? date-map)
-    (if (and years months days)
-      (if (and hours minutes seconds millis)
-        (new class years (dec months) days hours minutes seconds millis)
-        (new class years (dec months) days)))))
+    (doto (case class
+            :goog.date.Date
+            (Date. years months days)
+            :goog.date.DateTime
+            (DateTime. years months days hours minutes seconds millis)
+            :goog.date.UtcDateTime
+            (UtcDateTime. years months days hours minutes seconds millis))
+      (.add timezone))))
