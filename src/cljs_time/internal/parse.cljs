@@ -68,8 +68,7 @@
    (let [[n s] (read-while #(re-find #"\d" %) s)]
      (if (>= (count n) lower)
        [(js/parseInt (apply str (take upper n))) (concat (drop upper n) s)]
-       (throw (ex-info "Number does not meet minimum length"
-                       {:type :parse-error :where :parse-number}))))))
+       [(js/parseInt (apply str n)) s]))))
 
 (defn parse-period
   ([s period limit] (parse-period period 1 limit))
@@ -177,12 +176,18 @@
        [[:meridiem (keyword meridiem)] (string/join s)]))))
 
 (defn parse-period-name [s period periods short?]
-  (let [periods (cond->> periods short? (map #(subs % 0 3)))
+  (let [periods (concat periods (map #(subs % 0 3) periods))
         [m s] (->> periods
                    (map #(-> [% (replace s (re-pattern (str \^ %)) "")]))
                    (remove (comp (partial = s) second))
                    (first))]
-    [[period (i/index-of periods m)] s]))
+    (if m
+      [[period (mod (i/index-of periods m) 12)] s]
+      (throw (ex-info (str "Could not parse " (name period) " name")
+                      {:type :parse-error
+                       :sub-type :period-match-erroro
+                       :period period
+                       :in s})))))
 
 (defn parse-month-name [short?]
   (fn [s]
@@ -262,14 +267,17 @@
   (loop [s value
          [parser & more] (map lookup (read-pattern pattern))
          out []]
-    (if (seq s)
-      (if (nil? parser)
-        (throw
-         (ex-info (str "Invalid format: " value " is malformed at " (pr-str s))
-                  {:type :parse-error :sub-type :invalid-format}))
-        (let [[value s] (parser s)]
-          (recur s more (conj out value))))
-      out)))
+    (let [err (ex-info
+               (str "Invalid format: " value " is malformed at " (pr-str s))
+               {:type :parse-error :sub-type :invalid-format})]
+      (if (seq s)
+        (if (nil? parser)
+          (throw err)
+          (let [[value s] (parser s)]
+            (recur s more (conj out value))))
+        (if parser
+          (throw err)
+          out)))))
 
 (defn compile [class {:keys [default-year] :as fmt} values]
   (let [{:keys [years months days
@@ -281,7 +289,10 @@
         years (or years default-year 0)
         months (when months (dec months))
         hours (if meridiem
-                (if (#{:pm :PM} meridiem) (+ (mod hours 12) 12) hours)
+                (if (#{:pm :PM} meridiem)
+                  (let [hours (+ hours 12)]
+                    (if (= hours 24) 12 hours))
+                  (if (= hours 12) 0 hours))
                 HOURS)
         date-map (-> date-map
                      (assoc :hours hours)

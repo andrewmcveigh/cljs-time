@@ -18,10 +18,9 @@
    (time/hour d) (time/minute d) (time/second d) (time/milli d)])
 
 (deftest parse-test
-  (is (= :parser-no-match
-         (try
-           (format/parse (formatter "do MMM yyyy HH:mm") "28th August 2013 14:26")
-           (catch ExceptionInfo e (:type (ex-data e))))))
+  (is (= [2013 8 28 14 26 0 0]
+         (utc-int-vec
+           (format/parse (formatter "do MMM yyyy HH:mm") "28th August 2013 14:26"))))
   (is
    (= :invalid-date
       (try

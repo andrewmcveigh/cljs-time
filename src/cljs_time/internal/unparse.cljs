@@ -116,7 +116,9 @@
 
 (defn unparse-timezone []
   (fn [s d]
-    [(str s (.getTimezoneOffsetString d)) d]))
+    (if (instance? UtcDateTime d)
+      [(str s (.getTimezoneOffsetString d)) d]
+      [s d])))
 
 (defn unparse-ordinal-suffix [getter]
   (fn [s d]
