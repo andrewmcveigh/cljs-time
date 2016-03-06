@@ -6,6 +6,7 @@
  :dependencies '[[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.228" :scope "provided"]
                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
+                 [org.clojure/data.json "0.2.6"]
                  [com.cemerick/piggieback "0.2.1" :scope "test"]
                  [funcool/codeina "0.3.0"
                   :scope "test"
@@ -101,10 +102,13 @@
                    {:cache-analysis false
                     :main 'cljs-time.dce-compile-test
                     :output-to output
-                    :optimizations :advanced})))
+                    :optimizations :advanced
+                    ;; :pseudo-names true
+                    ;; :pretty-print true
+                    })))
 
 (boot/deftask test-dce []
   (compile-dce-test)
   (let [f (io/file "target/dce-test.js")
         b (.length f)]
-    (printf "%.2f KB" (double (/ b 1024)))))
+    (println (format "%.2fK" (double (/ b 1024))))))
