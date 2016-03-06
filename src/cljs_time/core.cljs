@@ -227,11 +227,11 @@ expected."}
 (def utc #js {:id "UTC" :std_offset 0 :names ["UTC"] :transitions []})
 
 (defn default-ms-fn []
-  (fn [] (js/Date.now)))
+  (fn [] (.getTime (goog.date.UtcDateTime.))))
 
 (defn offset-ms-fn
   [offset]
-  (fn [] (+ (js/Date.now) offset)))
+  (fn [] (+ (.getTime (goog.date.UtcDateTime.)) offset)))
 
 (defn static-ms-fn
   [ms]
@@ -734,15 +734,11 @@ Specify the year, month, and day. Does not deal with timezones."
 
 (defn today-at
   ([hours minutes seconds millis]
-   (let [midnight (doto (goog.date.Date.) (.setTime (*ms-fn*)))]
-     (doto (goog.date.UtcDateTime. 0)
-       (.setYear (.getYear midnight))
-       (.setMonth (.getMonth midnight))
-       (.setDate (.getDate midnight))
-       (.setHours hours)
-       (.setMinutes minutes)
-       (.setSeconds seconds)
-       (.setMilliseconds millis))))
+   (doto (goog.date.UtcDateTime.)
+     (.setHours hours)
+     (.setMinutes minutes)
+     (.setSeconds seconds)
+     (.setMilliseconds millis)))
   ([hours minutes seconds]
    (today-at hours minutes seconds 0))
   ([hours minutes]
