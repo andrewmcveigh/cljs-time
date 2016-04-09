@@ -59,5 +59,6 @@
    })
 
 (dotimes [_ 100]
-  (doseq [[date-key date-str] dates]
-    (f/parse (f/formatters date-key) date-str)))
+  (doseq [[date-key date-str] dates
+          :let [fmt (f/formatters date-key)]]
+    (f/unparse fmt (f/parse fmt date-str))))

@@ -20,7 +20,7 @@
 
 (require '[parse-perf-test :as perf])
 
-(boot/deftask compare-parse-perf []
+(boot/deftask compare-perf []
   (println
    "Average runs:"
    (pr-str (perf/compare perf/old-version perf/new-version))))
