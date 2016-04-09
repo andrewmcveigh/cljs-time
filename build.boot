@@ -1,15 +1,16 @@
 (def project 'com.andrewmcveigh/cljs-time)
 (def version "0.3.8-SNAPSHOT")
 
+(def dependencies
+  '[[org.clojure/clojure "1.8.0"]
+    [org.clojure/clojurescript "1.8.40" :scope "provided"]
+    ;; [org.clojure/tools.nrepl "0.2.12" :scope "test"]
+    [com.cemerick/piggieback "0.2.1" :scope "test"]
+    [funcool/codeina "0.3.0" :scope "test" :exclusions [org.clojure/clojure]]])
+
 (set-env!
  :source-paths #{"src" "test" "compile"}
- :dependencies '[[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.228" :scope "provided"]
-                 [org.clojure/tools.nrepl "0.2.12" :scope "test"]
-                 [com.cemerick/piggieback "0.2.1" :scope "test"]
-                 [funcool/codeina "0.3.0"
-                  :scope "test"
-                  :exclusions [org.clojure/clojure]]])
+ :dependencies dependencies)
 
 (require 'cemerick.piggieback)
 
