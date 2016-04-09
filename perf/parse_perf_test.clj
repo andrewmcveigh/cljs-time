@@ -30,9 +30,10 @@
 (def checkout-dir (str "/tmp/cljs-time-perf-test" (.getTime (java.util.Date.))))
 (def test-runner (str checkout-dir "/perf_test_runner.js"))
 (def old-version "v0.4.0")
-(def new-version "fe35788")
+(def new-version "a9a241f")
 
 (defn clone []
+  (when (.exists (io/file checkout-dir)) (sh/sh "rm" "-rf" checkout-dir))
   (let [{:keys [exit]} (sh/sh "git" "clone" repo checkout-dir)]
     (zero? exit)))
 
@@ -50,10 +51,10 @@
 
 (defn compile []
   (let [output (.getCanonicalPath (io/file test-runner))]
-    (closure/build (SourcePaths. [(str checkout-dir "/src")
-                                  (str checkout-dir "/perf")])
+    (closure/build (SourcePaths. [(str checkout-dir "/perf")
+                                  (str checkout-dir "/src")])
                    {:cache-analysis true
-                    :main 'runner
+                    :main 'cljs-time.runner
                     :output-to output
                     :optimizations :simple})))
 
@@ -71,3 +72,4 @@
 (clone)
 (checkout new-version)
 (compile)
+(time (run-test))

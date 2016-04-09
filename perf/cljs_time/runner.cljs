@@ -1,4 +1,4 @@
-(ns runner
+(ns cljs-time.runner
   (:require
    [cljs-time.format :as f]))
 
@@ -7,8 +7,8 @@
    :basic-date-time "20160409T122801.000Z"
    :basic-date-time-no-ms "20160409T122801Z"
    :basic-ordinal-date "2016001"
-   :basic-ordinal-date-time "20160010001.100Z"
-   :basic-ordinal-date-time-no-ms "20160010001Z"
+   ;; :basic-ordinal-date-time "20160010101.100Z"
+   ;; :basic-ordinal-date-time-no-ms "20160010001Z"
    :basic-time "123456.003Z"
    :basic-time-no-ms "123456Z"
    ;; :basic-t-time (formatter "'T'HHmmss.SSSZ")
