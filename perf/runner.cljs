@@ -16,10 +16,10 @@
    ;; :basic-week-date (formatter "xxxx'W'wwe")
    ;; :basic-week-date-time (formatter "xxxx'W'wwe'T'HHmmss.SSSZ")
    ;; :basic-week-date-time-no-ms (formatter "xxxx'W'wwe'T'HHmmssZ")
-   ;; :date (formatter "yyyy-MM-dd")
+   :date "2016-05-31"
    ;; :date-element-parser (not-implemented 'dateElementParser)
-   ;; :date-hour (formatter "yyyy-MM-dd'T'HH")
-   ;; :date-hour-minute (formatter "yyyy-MM-dd'T'HH:mm")
+   :date-hour "2016-03-31T23"
+   :date-hour-minute "2015-06-26T11:34"
    ;; :date-hour-minute-second (formatter "yyyy-MM-dd'T'HH:mm:ss")
    ;; :date-hour-minute-second-fraction (formatter "yyyy-MM-dd'T'HH:mm:ss.SSS")
    ;; :date-hour-minute-second-ms (formatter "yyyy-MM-dd'T'HH:mm:ss.SSS")
@@ -51,10 +51,10 @@
    ;; :weekyear (formatter "xxxx")
    ;; :weekyear-week (formatter "xxxx-'W'ww")
    ;; :weekyear-week-day (formatter "xxxx-'W'ww-e")
-   ;; :year (formatter "yyyy")
-   ;; :year-month (formatter "yyyy-MM")
-   ;; :year-month-day (formatter "yyyy-MM-dd")
-   ;; :rfc822 (formatter "EEE, dd MMM yyyy HH:mm:ss Z")
+   :year "2038"
+   :year-month "2015-08"
+   :year-month-day "2016-09-12"
+   :rfc822 "Mon, 01 May 2015 08:08:08 Z"
    :mysql "2016-04-08 12:34:56"
    })
 

@@ -5,7 +5,6 @@
   '[[org.clojure/clojure "1.8.0" :scope "provided"]
     [org.clojure/clojurescript "1.8.40" :scope "provided"]
     ;; [org.clojure/tools.nrepl "0.2.12" :scope "test"]
-    ;; [com.cemerick/piggieback "0.2.1" :scope "test"]
     ;; [funcool/codeina "0.3.0" :scope "test" :exclusions [org.clojure/clojure]]
     ])
 
@@ -13,16 +12,18 @@
  :source-paths #{"src" "test" "compile" "perf"}
  :dependencies dependencies)
 
-;; (require 'cemerick.piggieback)
+(task-options! pom {:project project :version "0.1.0-SNAPSHOT"})
 
-;; (swap! boot.repl/*default-middleware* conj 'cemerick.piggieback/wrap-cljs-repl)
-;; (swap! boot.repl/*default-middleware* distinct)
+(require '[boot.core :as boot])
+(require '[boot.task.built-in :as task])
 
-;; (task-options! pom {:project project :version "0.1.0-SNAPSHOT"})
 
-;; (require '[boot.core :as boot])
-;; (require '[boot.task.built-in :as task])
+(require '[parse-perf-test :as perf])
 
+(boot/deftask compare-parse-perf []
+  (println
+   "Average runs:"
+   (pr-str (perf/compare perf/old-version perf/new-version))))
 
 ;; ;;; CLJS
 
@@ -72,13 +73,23 @@
 ;;     (compile o)
 ;;     (run-tests (test-command o))))
 
-;; (require '[cljs.repl.rhino :as rhino])
-;; (require '[cemerick.piggieback])
+;; (defn add-piggieware []
+;;   (merge-env!
+;;    {:dependencies '[[com.cemerick/piggieback "0.2.1"
+;;                      :scope "test"
+;;                      :exclude [org.clojure/clojure]]]})
+;;   (require '[cemerick.piggieback])
+;;   (swap! boot.repl/*default-middleware* conj
+;;          'cemerick.piggieback/wrap-cljs-repl)
+;;   (swap! boot.repl/*default-middleware* distinct))
 
 ;; (boot/deftask node-repl []
+;;   (add-piggieware)
 ;;   (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))
 
 ;; (boot/deftask rhino-repl []
+;;   (require '[cljs.repl.rhino :as rhino])
+;;   (add-piggieware)
 ;;   (cemerick.piggieback/cljs-repl (rhino/repl-env)))
 
 ;; (require '[codeina.core :as codeina])
