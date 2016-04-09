@@ -1,23 +1,3 @@
-;; How to test:
-;; need old code, compiled vs
-;; new code compiled with same settings
-;; run a number of parsing/formatting tests 1000x or something
-
-;; tuning:
-;; leave old code as is, new code needs to be as fast, or faster. No
-;; gain from improving old code
-;; need:
-;; quick compile/test loop
-;; compile in clojure? run in node/shell?
-;; compile in cljs? run in cljs-env?
-
-;; cleanest/most extendable way:
-;; * checkout/clone repo to /tmp
-;; * checkout 1st version
-;; * compile
-;; * run
-;; * repeat with 2nd version
-
 (ns parse-perf-test
   (:refer-clojure :exclude [compile compare])
   (:require
@@ -54,13 +34,12 @@
     (closure/build (SourcePaths. [(str checkout-dir "/perf")
                                   (str checkout-dir "/src")])
                    {:cache-analysis true
-                    :main 'cljs-time.runner
+                    :main 'runner
                     :output-to output
                     :optimizations :simple})))
 
 (defn run-test []
-  (println "Running perf test:")
-  (let [{:keys [exit out err]} (sh/sh "time" "node" test-runner)]
+  (let [{:keys [exit out err]} (sh/sh "node" test-runner)]
     (println out)
     (println err)
     (zero? exit)))
@@ -69,7 +48,16 @@
   (compile)
   (run-test))
 
-(clone)
-(checkout new-version)
-(compile)
-(time (run-test))
+(defmacro btime [& body]
+  `(let [start# (.getTime (java.util.Date.))
+         res# (do ~@body)]
+     {:time-ms (- (.getTime (java.util.Date.)) start#)
+      :res res#}))
+
+(defn run-perf [version]
+  (clone)
+  (checkout version)
+  (compile)
+  (btime (run-test)))
+
+;; (run-perf new-version)

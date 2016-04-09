@@ -3,26 +3,15 @@
 
 (def dependencies
   '[[org.clojure/clojure "1.8.0" :scope "provided"]
-    ;; [org.clojure/clojurescript "1.8.40" :scope "provided"]
+    [org.clojure/clojurescript "1.8.40" :scope "provided"]
     ;; [org.clojure/tools.nrepl "0.2.12" :scope "test"]
     ;; [com.cemerick/piggieback "0.2.1" :scope "test"]
     ;; [funcool/codeina "0.3.0" :scope "test" :exclusions [org.clojure/clojure]]
     ])
 
-(def clojurescript-deps
-  '[[org.clojure/clojure "1.8.0"]
-    [org.clojure/data.json "0.2.6"]
-    [org.clojure/tools.reader "1.0.0-beta1"]
-    [org.clojure/google-closure-library "0.0-20151016-61277aea"]
-    [com.google.javascript/closure-compiler "v20151216"]
-    [org.mozilla/rhino "1.7R5"]])
-
 (set-env!
- :source-paths #{"src" "test" "compile"
-                 "clojurescript/src/main/clojure"
-                 "clojurescript/src/main/cljs"
-                 "perf"}
- :dependencies (concat dependencies clojurescript-deps))
+ :source-paths #{"src" "test" "compile" "perf"}
+ :dependencies dependencies)
 
 ;; (require 'cemerick.piggieback)
 
