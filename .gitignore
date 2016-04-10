@@ -18,3 +18,4 @@ out/
 **/*~
 **/#*#
 clojurescript/
+doc/
