@@ -22,9 +22,7 @@
 
   By default the parse function always returns a DateTime instance with a UTC
   time zone, and the unparse function always represents a given DateTime
-  instance in UTC. A formatter can be modified to different timezones, locales,
-  etc with the functions with-zone, with-locale, with-chronology, and
-  with-pivot-year."
+  instance in UTC."
   (:require
     [cljs-time.internal.core :as i]
     [cljs-time.internal.parse :as parse]
