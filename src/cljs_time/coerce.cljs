@@ -12,7 +12,8 @@
   (:refer-clojure :exclude [extend second])
   (:require
     [cljs-time.core :refer
-     [date-time from-default-time-zone year month day hour minute second milli]]
+     [date-time to-utc-time-zone from-default-time-zone year month day
+      hour minute second milli]]
     [cljs-time.format :as time-fmt])
   (:import [goog.date UtcDateTime]))
 
@@ -94,18 +95,12 @@
   goog.date.Date
   (to-date-time [local-date]
     (when local-date
-      (date-time (year local-date) (month local-date) (day local-date))))
+      (to-utc-time-zone local-date)))
 
   goog.date.DateTime
   (to-date-time [local-date-time]
     (when local-date-time
-      (date-time (year local-date-time)
-                 (month local-date-time)
-                 (day local-date-time)
-                 (hour local-date-time)
-                 (minute local-date-time)
-                 (second local-date-time)
-                 (milli local-date-time))))
+      (to-utc-time-zone local-date-time)))
 
   goog.date.UtcDateTime
   (to-date-time [date-time]

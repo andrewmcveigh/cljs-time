@@ -2,7 +2,8 @@
   (:require
    [cljs.test :refer-macros [deftest is]]
    [cljs-time.core
-    :refer [date-time date-midnight plus hours local-date local-date-time]]
+    :refer [date-time date-midnight from-utc-time-zone plus hours
+            local-date local-date-time]]
    [cljs-time.coerce :refer
     [from-date from-long from-string to-date to-date-time to-epoch to-long
      to-string to-local-date to-local-date-time]]
@@ -24,17 +25,16 @@
   (is (= (from-string "1998-04-25T00:00:00.000Z")
          (date-time 1998 4 25))))
 
-;(deftest test-from-year-month
-  ;(is (= (to-date-time (year-month 1998 4))
-         ;(date-time 1998 4))))
-
 (deftest test-from-local-date
-  (is (= (to-date-time (local-date 2013 03 20))
+  (is (= (from-utc-time-zone (local-date 2013 03 20))
          (date-time 2013 03 20))))
 
 (deftest test-from-local-date-time
-  (is (= (to-date-time (local-date-time 2013 03 20 14 00 34 16))
+  (is (= (from-utc-time-zone (local-date-time 2013 03 20 14 00 34 16))
          (date-time 2013 03 20 14 00 34 16))))
+;;; ^^ The above 2 original clj-time tests don't really make sense
+;;; here. LocalDate/Time means something different in clj-time vs
+;;; cljs-time
 
 (deftest test-to-date
   (is (nil? (to-date nil)))

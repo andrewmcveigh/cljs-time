@@ -374,6 +374,14 @@ Specify the year, month, and day. Does not deal with timezones."
   [dt]
   (goog.date.DateTime. dt))
 
+(defn to-utc-time-zone
+  "Assuming `dt` is in the Local timezone, returns a UtcDateTime
+  corresponding to the same absolute instant in time as the given
+  DateTime, but with calendar fields corresponding to in the UTC
+  timezone."
+  [dt]
+  (goog.date.UtcDateTime.fromTimestamp (.getTime dt)))
+
 (defn from-default-time-zone
   "Assuming `dt` is in the UTC timezone, returns a DateTime
   corresponding to the same point in calendar time as the given
@@ -392,6 +400,28 @@ Specify the year, month, and day. Does not deal with timezones."
                        (.getMinutes dt)
                        (.getSeconds dt)
                        (.getMilliseconds dt)))
+
+(defn from-utc-time-zone
+  "Assuming `dt` is in the local timezone, returns a UtcDateTime
+  corresponding to the same point in calendar time as the given
+  DateTime, but for a correspondingly different absolute instant in
+  time in the UTC timezone.
+
+  Note: This implementation uses the ECMAScript 5.1 implementation which
+  trades some historical daylight savings transition accuracy for simplicity.
+  see http://es5.github.io/#x15.9.1.8
+  "
+  [dt]
+  (let [year (.getYear dt)
+        month (.getMonth dt)
+        date (.getDate dt)]
+    (if (= goog.date.Date (type dt))
+      (goog.date.UtcDateTime. year month date)
+      (goog.date.UtcDateTime. year month date
+                              (.getHours dt)
+                              (.getMinutes dt)
+                              (.getSeconds dt)
+                              (.getMilliseconds dt)))))
 
 (defn years
   "Given a number, returns a Period representing that many years.
