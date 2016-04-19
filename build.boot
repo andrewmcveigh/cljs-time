@@ -4,8 +4,10 @@
 
 (def dependencies
   '[[org.clojure/clojure "1.8.0" :scope "provided"]
-    [org.clojure/clojurescript "1.8.40" :scope "provided"]
-    [org.clojure/tools.nrepl "0.2.12"]
+    [org.clojure/clojurescript "1.8.40" :scope "provided"]])
+
+(def dev-dependencies
+  '[[org.clojure/tools.nrepl "0.2.12"]
     [funcool/codeina "0.3.0"
      :scope "test" :exclude [org.clojure/clojure org.clojure/tools.namespace]]
     [adzerk/boot-cljs "1.7.228-1"]
@@ -17,7 +19,8 @@
 
 (set-env!
  :source-paths #{"src" "test" "compile" "perf"}
- :dependencies dependencies)
+ :resource-paths #{"src"}
+ :dependencies (vec (concat dependencies dev-dependencies)))
 
 (require
  '[adzerk.boot-cljs :refer [cljs]]
@@ -26,6 +29,8 @@
  '[boot.task.built-in :as task]
  '[cljs.closure :as closure]
  '[clojure.java.io :as io]
+ '[clojure.string :as string]
+ '[clojure.set :as set]
  '[crisptrutski.boot-cljs-test :refer [test-cljs]]
  '[doo.shell]
  '[doo.utils]
@@ -37,8 +42,8 @@
  pom {:project +project+
       :version +version+
       :description +description+
-      :license {:name "Eclipse Public License"
-                :url "http://www.eclipse.org/legal/epl-v10.html"}
+      :license {"Eclipse Public License"
+                "http://www.eclipse.org/legal/epl-v10.html"}
       :scm {:url "git@github.com:andrewmcveigh/cljs-time.git"}}
  apidoc {:version +version+
          :name (name +project+)
@@ -46,7 +51,7 @@
          :sources #{"src"}
          :reader :clojurescript})
 
-(boot/deftask compare-perf []
+(deftask compare-perf []
   (println
    "Average runs:"
    (pr-str (perf/compare perf/old-version perf/new-version))))
@@ -92,33 +97,84 @@
         (test-cljs :js-env :node)))
 
 (defn add-piggieware []
-  ;; (require 'cemerick.piggieback)
   (swap! repl/*default-middleware* conj 'cemerick.piggieback/wrap-cljs-repl)
   (swap! repl/*default-middleware* distinct))
 
 (defn node-repl []
   (add-piggieware)
-  ;; (require ')
   (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))
 
-;; (defn rhino-repl []
-;;   (add-piggieware)
-;;   ;; (require 'cljs.repl 'cljs.repl.rhino)
-;;   (cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env)))
+(deftask test-all []
+  (comp (test-cljs :js-env :node :optimizations :simple)
+        (test-cljs :js-env :node :optimizations :advanced)))
 
-;; (require '[cljs.analyzer :as ana])
-;; (require '[clojure.java.io :as io])
+(defn compile-dce-test []
+  (let [output (.getCanonicalPath (io/file "target/dce-test.js"))]
+    (closure/build "compile"
+                   {:cache-analysis false
+                    :main 'cljs-time.dce-compile-test
+                    :output-to output
+                    :optimizations :advanced})))
 
-;; (defn compile-dce-test []
-;;   (let [output (.getCanonicalPath (io/file "target/dce-test.js"))]
-;;     (closure/build "compile"
-;;                    {:cache-analysis false
-;;                     :main 'cljs-time.dce-compile-test
-;;                     :output-to output
-;;                     :optimizations :advanced})))
+(deftask test-dce []
+  (compile-dce-test)
+  (let [f (io/file "target/dce-test.js")
+        b (.length f)]
+    (printf "%.2f KB" (double (/ b 1024)))))
 
-;; (boot/deftask test-dce []
-;;   (compile-dce-test)
-;;   (let [f (io/file "target/dce-test.js")
-;;         b (.length f)]
-;;     (printf "%.2f KB" (double (/ b 1024)))))
+(defn load-clj-time []
+  (set-env! :dependencies #(conj % '[clj-time "0.11.0"]))
+  (let [nses '[clj-time.coerce
+               clj-time.core
+               clj-time.format
+               clj-time.instant
+               clj-time.local
+               clj-time.periodic
+               clj-time.predicates]]
+    (doseq [ns nses]
+      (require ns))))
+
+(require '[clojure.tools.reader :as r])
+(import '[java.io PushbackReader])
+
+(defn read [r]
+  (try
+    (r/read r false nil)
+    (catch Exception _ :ex)))
+
+(defn cljs-ns-publics [ns]
+  (let [f (str (string/replace (munge (name ns)) #"\." "/") ".cljs")]
+    (with-open [r (PushbackReader. (io/reader (io/resource f)))]
+      (loop [form (read r)
+             defs #{}]
+        (if form
+          (if (list? form)
+            (let [[def? name? & forms] form]
+              (cond (= 'defprotocol def?)
+                    (recur (read r) (apply conj defs (map first (filter list? forms))))
+                    (and (symbol? def?) (re-find #"^def" (name def?)))
+                    (recur (read r) (conj defs name?))
+                    :default (recur (read r) defs)))
+            (recur (read r) defs))
+          defs)))))
+
+(defn api-diff [ns-part]
+  (let [part (name ns-part)
+        clj-ns (symbol (str "clj-time." part))
+        cljs-ns (symbol (str "cljs-time." part))]
+    (set/difference (set (keys (ns-publics clj-ns)))
+                    (cljs-ns-publics cljs-ns))))
+
+(api-diff 'core)
+
+(comment
+  
+  ;; release
+  (test-all)
+  ;; change version
+  ;; change version in readme
+  
+  ;; check clj-time api
+  (load-clj-time)
+
+  )
