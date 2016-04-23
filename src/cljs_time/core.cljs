@@ -67,11 +67,15 @@
   (:require
    [cljs-time.internal.core :as internal :refer [leap-year? format]]
    [clojure.string :as string]
-   goog.date.Interval)
+   goog.date.Interval
+   goog.date)
   (:import
    goog.date.Date
    goog.date.DateTime
    goog.date.UtcDateTime))
+
+(defn deprecated [message]
+  (println "DEPRECATION WARNING: " message))
 
 (def ^{:doc "**Note:** Equality in goog.date.* (and also with plain
 javascript dates) is not the same as in Joda/clj-time. Two date
@@ -101,7 +105,8 @@ expected."}
   (plus- [this period] "Returns a new date/time corresponding to the given date/time moved forwards by the given Period(s).")
   (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s).")
   (first-day-of-the-month- [this] "Returns the first day of the month")
-  (last-day-of-the-month- [this] "Returns the last day of the month"))
+  (last-day-of-the-month- [this] "Returns the last day of the month")
+  (week-number-of-year [this] "Returs the number of weeks in the year"))
 
 (defprotocol InTimeUnitProtocol
   "Interface for in-<time unit> functions"
@@ -181,6 +186,9 @@ expected."}
     (minus-
      (goog.date.UtcDateTime. (.getYear this) (inc (.getMonth this)) 1 0 0 0 0)
      (period :days 1)))
+  (week-number-of-year [this]
+    (goog.date/getWeekNumber
+     (.getYear this) (.getMonth this) (.getDate this)))
 
   goog.date.DateTime
   (year [this] (.getYear this))
@@ -202,6 +210,9 @@ expected."}
     (minus-
      (goog.date.DateTime. (.getYear this) (inc (.getMonth this)) 1 0 0 0 0)
      (period :days 1)))
+  (week-number-of-year [this]
+    (goog.date/getWeekNumber
+     (.getYear this) (.getMonth this) (.getDate this)))
 
   goog.date.Date
   (year [this] (.getYear this))
@@ -222,7 +233,10 @@ expected."}
   (last-day-of-the-month- [this]
     (minus-
      (goog.date.Date. (.getYear this) (inc (.getMonth this)) 1)
-     (period :days 1))))
+     (period :days 1)))
+  (week-number-of-year [this]
+    (goog.date/getWeekNumber
+     (.getYear this) (.getMonth this) (.getDate this))))
 
 (def utc #js {:id "UTC" :std_offset 0 :names ["UTC"] :transitions []})
 
@@ -650,6 +664,21 @@ Specify the year, month, and day. Does not deal with timezones."
          (and (after? end-b start-a) (before? start-b end-a))
          (or (= start-a end-b) (= start-b end-a)))))
 
+(defn overlap
+  "Returns an Interval representing the overlap of the specified Intervals.
+ Returns nil if the Intervals do not overlap.
+ The first argument must not be nil.
+ If the second argument is nil then the overlap of the first argument
+ and a zero duration interval with both start and end times equal to the
+ current time is returned."
+  [i-a i-b]
+  ;; from joda-time AbstractInterval.overlaps:
+  ;; null argument means a zero length interval 'now'.
+  (cond (nil? i-b) (let [n (now)] (overlap i-a (interval n n)))
+        (overlaps? i-a i-b) (interval (latest (start i-a) (start i-b))
+                                      (earliest (end i-a) (end i-b)))
+        :else nil))
+
 (defn abuts?
   "Returns true if Interval a abuts b, i.e. then end of a is exactly the
   beginning of b."
@@ -777,3 +806,14 @@ Specify the year, month, and day. Does not deal with timezones."
 (defn do-at* [base-date-time body-fn]
   (binding [*ms-fn* (static-ms-fn (.getTime base-date-time))]
     (body-fn)))
+
+(defn floor
+  "Floors the given date-time dt to the given time unit dt-fn,
+ e.g. (floor (now) hour) returns (now) for all units
+ up to and including the hour"
+  ([dt dt-fn]
+   (let [dt-fns [year month day hour minute second milli]]
+     (apply date-time
+            (map apply
+                 (concat (take-while (partial not= dt-fn) dt-fns) [dt-fn])
+                 (repeat [dt]))))))

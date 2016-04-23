@@ -17,7 +17,8 @@
       years months weeks days hours minutes seconds millis
       years? months? weeks? days? hours? minutes? seconds?
       extend start end mins-ago default-time-zone
-      to-default-time-zone from-default-time-zone]]
+      to-default-time-zone from-default-time-zone
+      overlap week-number-of-year floor]]
     [cljs-time.extend]))
 
 (deftest test-now
@@ -460,6 +461,28 @@
     (is (not (overlaps? ld1 ld2 ld3 ld4)))
     (is (not (overlaps? ld1 ld3 ld4 ld5)))))
 
+(deftest test-overlap
+  (let [d1 (date-time 1985)
+        d2 (date-time 1986)
+        d3 (date-time 1987)
+        d4 (date-time 1988)
+        n (now)
+        n1 (minus n (minutes 5))
+        n2 (plus n (minutes 5))]
+    (is (nil? (overlap (interval d1 d2) nil)))
+    (is (let [t (overlap (interval n1 n2) nil)]
+          ;; nil is a zero length duration at 'now'
+          (and
+           (< (in-millis (interval n (start t))) 1000)
+           (= 0 (in-millis t)))))
+    (is (= (interval d2 d2) (overlap (interval d1 d3) (interval d2 d2))))
+    (is (nil? (overlap (interval d1 d1) (interval d1 d1)))) ;; The intervals abut
+    (is (nil? (overlap (interval d1 d2) (interval d2 d3)))) ;; The intervals abut
+    (is (= (interval d2 d3) (overlap (interval d1 d3) (interval d2 d4))))
+    (is (= (interval d2 d3) (overlap (interval d1 d3) (interval d2 d3))))
+    (is (nil? (overlap (interval d1 d2) (interval d2 d3))))
+    (is (nil? (overlap (interval d1 d2) (interval d3 d4))))))
+
 (deftest test-abuts?
   (let [d1 (date-time 1985)
         d2 (date-time 1986)
@@ -523,6 +546,16 @@
     (is (= d9 (last-day-of-the-month d9)))
     (is (= d9 (last-day-of-the-month d10)))
     (is (= d9 (last-day-of-the-month d11)))))
+
+(deftest test-week-number-of-year
+  (is (= 52 (week-number-of-year (date-time 2012 1 1))))
+  (is (= 1 (week-number-of-year (date-time 2012 1 2))))
+  (is (= 1 (week-number-of-year (date-time 2012 1 8))))
+  (is (= 2 (week-number-of-year (date-time 2012 1 9))))
+  (is (= 34 (week-number-of-year (date-time 2012 8 20))))
+  (is (= 52 (week-number-of-year (date-time 2012 12 30))))
+  (is (= 1 (week-number-of-year (date-time 2012 12 31))))
+  (is (= 1 (week-number-of-year (date-time 2013 1 1)))))
 
 (deftest test-number-of-days-in-the-month
   (is (= 31 (number-of-days-in-the-month 2012 1)))
@@ -600,5 +633,15 @@
          (minus (date-time 2015 4 2) (months 26))))
   (is (= (date-time 2009 12 2)
          (minus (date-time 2018 4 2) (months 100)))))
+
+(deftest test-floor
+  (let [^DateTime t (date-time 0 1 2 3 4 5 6)]
+    (is (= (floor t year) (date-time 0)))
+    (is (= (floor t month) (date-time 0 1)))
+    (is (= (floor t day) (date-time 0 1 2)))
+    (is (= (floor t hour) (date-time 0 1 2 3)))
+    (is (= (floor t minute) (date-time 0 1 2 3 4)))
+    (is (= (floor t second) (date-time 0 1 2 3 4 5)))
+    (is (= (floor t milli) (date-time 0 1 2 3 4 5 6)))))
 
 (enable-console-print!)
