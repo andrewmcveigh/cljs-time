@@ -104,6 +104,9 @@
   (add-piggieware)
   (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))
 
+(deftask test []
+  (test-cljs :js-env :node :optimizations :simple))
+
 (deftask test-all []
   (comp (test-cljs :js-env :node :optimizations :simple)
         (test-cljs :js-env :node :optimizations :advanced)))
@@ -151,7 +154,8 @@
           (if (list? form)
             (let [[def? name? & forms] form]
               (cond (= 'defprotocol def?)
-                    (recur (read r) (apply conj defs (map first (filter list? forms))))
+                    (recur (read r) (apply conj defs name?
+                                           (map first (filter list? forms))))
                     (and (symbol? def?) (re-find #"^def" (name def?)))
                     (recur (read r) (conj defs name?))
                     :default (recur (read r) defs)))
@@ -165,7 +169,6 @@
     (set/difference (set (keys (ns-publics clj-ns)))
                     (cljs-ns-publics cljs-ns))))
 
-(api-diff 'core)
 
 (comment
   
@@ -177,4 +180,47 @@
   ;; check clj-time api
   (load-clj-time)
 
+  (api-diff 'core)
+  #{to-time-zone
+    in-secs ;; deprecated since 0.6.0
+    time-zone-for-id ;; n/a tzs
+    secs? ;; deprecated since 0.6.0
+    do-at ;; in macros.clj
+    local-time ;; only the time part of local-date-time, doesn't have
+               ;; a corresponding goog.date obj
+    utc ;; exists, but js tag reader error
+    secs ;; deprecated since 0.6.0
+    from-time-zone ;; n/a tzs
+    available-ids ;; n/a tzs
+    year-month ;; n/a unrepresented joda type
+    in-msecs ;; deprecated since 0.6.0
+    }
+
+  (api-diff 'coerce) ;; diffs all sql/tzs
+  #{from-sql-time
+    from-sql-date
+    to-sql-time
+    to-timestamp
+    in-time-zone
+    to-sql-date}
+
+  (api-diff 'format)
+  #{with-chronology ;; n/a unrepresented joda type
+    with-zone ;; n/a tz
+    parse-local-time ;; n/a time part
+    with-locale ;; no local in goog.date
+    unparse-local-time ;; n/a time part
+    with-pivot-year} ;; converts yy -> yyyy using pivot year
+
+  (api-diff 'instant)
+  #{}
+
+  (api-diff 'local)
+  #{}
+
+  (api-diff 'periodic)
+  #{}
+
+  (api-diff 'predicates)
+  #{}
   )
