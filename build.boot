@@ -8,7 +8,7 @@
 
 (def dev-dependencies
   '[[org.clojure/tools.nrepl "0.2.12"]
-    [funcool/codeina "0.3.0"
+    [funcool/codeina "0.4.0"
      :scope "test" :exclude [org.clojure/clojure org.clojure/tools.namespace]]
     [adzerk/boot-cljs "1.7.228-1"]
     [crisptrutski/boot-cljs-test "0.2.2-SNAPSHOT" :scope "test"]
@@ -49,7 +49,8 @@
          :name (name +project+)
          :description +description+
          :sources #{"src"}
-         :reader :clojurescript})
+         :reader :clojurescript}
+ push {:repo "clojars"})
 
 (deftask compare-perf []
   (println
@@ -110,6 +111,12 @@
 (deftask test-all []
   (comp (test-cljs :js-env :node :optimizations :simple)
         (test-cljs :js-env :node :optimizations :advanced)))
+
+(boot/deftask build []
+  (comp (pom) (jar)))
+
+(boot/deftask deploy []
+  (comp (test-all) (build) (install) (push)))
 
 (defn compile-dce-test []
   (let [output (.getCanonicalPath (io/file "target/dce-test.js"))]
