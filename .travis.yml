@@ -1,8 +1,7 @@
 before_install:
   - export TZ=Australia/Canberra
 language: java
+install: make deps
 script: make clean test
 jdk:
-  - openjdk7
-  - oraclejdk7
   - oraclejdk8

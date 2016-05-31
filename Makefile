@@ -17,8 +17,8 @@ bin/boot: mkdirs
 deps: bin/boot
 	export BOOT_EMIT_TARGET=no && ./bin/boot -V
 
-build: bin/boot deps
+build: bin/boot
 	export BOOT_EMIT_TARGET=no && ./bin/boot build
 
-test: bin/boot deps
+test: bin/boot
 	./bin/boot test-all
