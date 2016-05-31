@@ -50,7 +50,8 @@
          :description +description+
          :sources #{"src"}
          :reader :clojurescript}
- push {:repo "clojars"})
+ push {:repo "clojars"}
+ target {:dir #{"target"}})
 
 (deftask compare-perf []
   (println
@@ -113,7 +114,7 @@
         (test-cljs :js-env :node :optimizations :advanced)))
 
 (boot/deftask build []
-  (comp (pom) (jar)))
+  (comp (pom) (jar) (target)))
 
 (boot/deftask deploy []
   (comp (test-all) (build) (install) (push)))
