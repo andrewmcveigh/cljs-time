@@ -291,6 +291,6 @@ is also available (marginalia generated).
 
 ## License
 
-Copyright © 2013 Andrew Mcveigh
+Copyright © 2013-2016 Andrew Mcveigh
 
 Distributed under the Eclipse Public License, the same as Clojure.
