@@ -19,3 +19,4 @@ out/
 **/#*#
 clojurescript/
 doc/
+bin/
