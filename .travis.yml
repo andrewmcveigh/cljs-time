@@ -1,6 +1,6 @@
 before_install:
   - export TZ=Australia/Canberra
-language: clojure
+language: java
 script: make clean test
 jdk:
   - openjdk7
