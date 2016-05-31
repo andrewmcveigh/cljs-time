@@ -15,9 +15,10 @@ bin/boot: mkdirs
 	chmod 755 bin/boot
 
 deps: bin/boot
+	export BOOT_EMIT_TARGET=no && ./bin/boot -V
 
-build: bin/boot
+build: bin/boot deps
 	export BOOT_EMIT_TARGET=no && ./bin/boot build
 
-test: bin/boot
+test: bin/boot deps
 	./bin/boot test-all
