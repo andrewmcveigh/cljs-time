@@ -1,8 +1,8 @@
 before_install:
   - export TZ=Australia/Canberra
 language: clojure
-lein: lein2
-script: lein2 do clean, test-all
+script: make clean test
 jdk:
   - openjdk7
   - oraclejdk7
+  - oraclejdk8
