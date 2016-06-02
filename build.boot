@@ -7,13 +7,13 @@
     [org.clojure/clojurescript "1.8.40" :scope "provided"]])
 
 (def dev-dependencies
-  '[[org.clojure/tools.nrepl "0.2.12"]
+  '[[org.clojure/tools.nrepl "0.2.12" :scope "test"]
     [funcool/codeina "0.4.0"
      :scope "test" :exclude [org.clojure/clojure org.clojure/tools.namespace]]
-    [adzerk/boot-cljs "1.7.228-1"]
+    [adzerk/boot-cljs "1.7.228-1" :scope "test"]
     [crisptrutski/boot-cljs-test "0.2.2-SNAPSHOT" :scope "test"]
-    [doo "0.1.7-SNAPSHOT"]
-    [funcool/boot-codeina "0.1.0-SNAPSHOT"]
+    [doo "0.1.7-SNAPSHOT" :scope "test"]
+    [funcool/boot-codeina "0.1.0-SNAPSHOT" :scope "test"]
     [com.cemerick/piggieback "0.2.1"
      :scope "test" :exclude [org.clojure/clojure]]])
 
