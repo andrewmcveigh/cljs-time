@@ -10,7 +10,7 @@ the clj-time API can be replicated to make this library "good enough"
 for other projects.
 
 This library is currently leaning on the
-[Google Closure goog.date](https://google.github.io/closure-library/api/namespace_goog_date.html)
+[Google Closure goog.date](https://google.github.io/closure-library/api/goog.date.html)
 library for basic date/time functionality. **The date objects in this
 library are mutable**, however any operations that **alter** a date
 object return a copy, leaving the referenced date object alone. In the
