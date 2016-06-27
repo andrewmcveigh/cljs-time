@@ -1,5 +1,5 @@
 (ns cljs-time.coerce
-  "### Utilites to coerce goog.data DateTime instances to and from
+  "### Utilites to coerce goog.date DateTime instances to and from
   various other types.
 
   For example, to convert a goog.date DateTime to and from a js number:
