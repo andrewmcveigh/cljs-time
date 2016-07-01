@@ -23,14 +23,20 @@
   IEquiv
   (-equiv [o other]
     (and (instance? goog.date.Date other)
-         (identical? (.getTime o) (.getTime other))
-         (identical? (.getTimezoneOffset o) (.getTimezoneOffset other))))
+         (.equals o other)))
   IHash
   (-hash [this]
     (hash-parts 1 (.getTime this) (.getTimezoneOffset this)))
   IComparable
   (-compare [o other]
-    (- (.getTime o) (.getTime other))))
+    (let [yo (.getYear o)
+          yother (.getYear other)
+          dayo (.getDayOfYear o)
+          dayother (.getDayOfYear other)]
+      (cond
+        (not= yo yother) (- yo yother)
+        (not= dayo dayother) (- dayo dayother)
+        :else 0))))
 
 (extend-type goog.date.DateTime
   IEquiv
