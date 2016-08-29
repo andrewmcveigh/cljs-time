@@ -71,7 +71,7 @@
        [(js/parseInt (apply str n)) s]))))
 
 (defn parse-period
-  ([s period limit] (parse-period period 1 limit))
+  ([s period limit] (parse-period s period 1 limit))
   ([s period lower upper]
    (let [[n s] (parse-number s lower upper)]
      [[period n] s])))
