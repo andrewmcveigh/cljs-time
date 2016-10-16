@@ -362,5 +362,11 @@
       (is (= "2010-W01" (format/unparse fmt (time/date-time 2010 1 4))))
       (is (= "2009-W01" (format/unparse fmt (time/date-time 2008 12 29)))))))
 
-(deftest unparse-MM-test
+(deftest parse-MM-test
   (is (format/parse (format/formatter "yyyy-MM-dd") "2012-1-1")))
+
+(deftest unparse-o-test
+  (is (= "14th"
+         (format/unparse (format/formatter "ddo")
+                         (cljs-time.coerce/from-long 1473878547000)))))
+
