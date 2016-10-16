@@ -4,7 +4,7 @@
 
 (def dependencies
   '[[org.clojure/clojure "1.8.0" :scope "provided"]
-    [org.clojure/clojurescript "1.8.40" :scope "provided"]])
+    [org.clojure/clojurescript "1.9.89" :scope "provided"]])
 
 (def dev-dependencies
   '[[org.clojure/tools.nrepl "0.2.12" :scope "test"]
@@ -36,7 +36,7 @@
  '[doo.utils]
  '[funcool.boot-codeina :refer [apidoc]]
  '[parse-perf-test :as perf]
- 'cemerick.piggieback 'cljs.repl 'cljs.repl.node)
+ 'cemerick.piggieback 'cljs.repl 'cljs.repl.node 'cljs.repl.rhino)
 
 (task-options!
  pom {:project +project+
@@ -105,6 +105,10 @@
 (defn node-repl []
   (add-piggieware)
   (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))
+
+(defn rhino-repl []
+  (add-piggieware)
+  (cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env)))
 
 (deftask test []
   (test-cljs :js-env :node :optimizations :simple))
