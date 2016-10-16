@@ -361,3 +361,6 @@
       (is (= "2009-W53" (format/unparse fmt (time/date-time 2010 1 3))))
       (is (= "2010-W01" (format/unparse fmt (time/date-time 2010 1 4))))
       (is (= "2009-W01" (format/unparse fmt (time/date-time 2008 12 29)))))))
+
+(deftest unparse-MM-test
+  (is (format/parse (format/formatter "yyyy-MM-dd") "2012-1-1")))

@@ -231,7 +231,7 @@
       "DD"   (parse-day 2 3)
       "DDD"  (parse-day 3 3)
       "M"    (parse-month 1 2)
-      "MM"   (parse-month 2 2)
+      "MM"   (parse-month 1 2)
       "MMM"  (parse-month-name true)
       "MMMM" (parse-month-name false)
       "y"    (parse-year 1 4)
