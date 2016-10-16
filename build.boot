@@ -1,5 +1,5 @@
 (def +project+ 'com.andrewmcveigh/cljs-time)
-(def +version+ "0.5.0-alpha1")
+(def +version+ "0.5.0-alpha2")
 (def +description+ "A clj-time inspired date library for clojurescript.")
 
 (def dependencies
@@ -138,7 +138,7 @@
     (printf "%.2f KB" (double (/ b 1024)))))
 
 (defn load-clj-time []
-  (set-env! :dependencies #(conj % '[clj-time "0.11.0"]))
+  (set-env! :dependencies #(conj % '[clj-time "0.12.0"]))
   (let [nses '[clj-time.coerce
                clj-time.core
                clj-time.format

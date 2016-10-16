@@ -38,7 +38,7 @@ With Leiningen:
 [com.andrewmcveigh/cljs-time "0.4.0"]
 
 ;; Upcoming
-[com.andrewmcveigh/cljs-time "0.5.0-alpha1"]
+[com.andrewmcveigh/cljs-time "0.5.0-alpha2"]
 ```
 
 ## Bugs and Enhancements
