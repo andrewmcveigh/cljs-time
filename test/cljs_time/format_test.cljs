@@ -8,6 +8,7 @@
     [cljs-time.extend]
     [cljs-time.format :as format
      :refer [formatter formatters instant->map parse unparse
+             with-locale
              formatter-local
              parse-local parse-local-date
              unparse-local unparse-local-date
@@ -184,6 +185,14 @@
     ;(DateTimeZone/forOffsetHours -5))
     ;(date-time 2010 3 11 17 49 20 881))))
     ))
+
+(deftest test-unparse-with-locale
+  (let [fmt (formatter "EEEE, d 'de' MMMM 'de' y")
+        lfmt (with-locale fmt goog.i18n.DateTimeSymbols_pt_BR)
+        fmt-month (formatter "EEEE d MMMM y")
+        lfmt-month (with-locale fmt-month goog.i18n.DateTimeSymbols_fr)]
+    (is (= "quinta-feira, 11 de março de 2010" (unparse lfmt (local-date 2010 3 11))))
+    (is (= "lundi 11 février 2013" (unparse lfmt-month (local-date 2013 2 11))))))
 
 (deftest test-local-parse
   (is (= (local-date-time 2010 10 11)

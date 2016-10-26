@@ -46,6 +46,28 @@
 (defn formatter-local [fmts]
   (map->Formatter {:format-str fmts :overrides (skip-timezone-formatter)}))
 
+(defrecord LocalizedFormatter [format-str overrides default-year timezone date-time-patterns date-time-symbols])
+
+(defn with-locale [f l]
+  "Return a copy of a formatter that uses the given version of goog.i18n.DateTimeSymbols, for example goog.i18n.DateTimeSymbols_fr"
+  {:pre [(instance? Formatter f) (.-MONTHS l) (.-WEEKDAYS l)]}
+  (map->LocalizedFormatter (assoc f :date-time-symbols l)))
+
+(defprotocol LocalizedUnparse
+  (unparse [fmt dt] "Returns a string representing the given DateTime instance in UTC and in the
+                    form determined by the given formatter."))
+
+(extend-protocol LocalizedUnparse
+  Formatter
+  (unparse [fmt dt] 
+           (do-unparse fmt dt))
+  
+  LocalizedFormatter
+  (unparse [{:keys [format-str formatters date-time-symbols] :as fmt} dt]
+           (with-redefs [i/months (.-MONTHS date-time-symbols)
+                         i/days (.-WEEKDAYS date-time-symbols)]
+             (do-unparse fmt dt))))
+
 (defn with-default-year
   "Return a copy of a formatter that uses the given default year."
   [f default-year]
@@ -233,7 +255,7 @@
           :let [d (try (parse-local-date f s) (catch js/Error _ nil))]
           :when d] d))))
 
-(defn unparse
+(defn do-unparse
   "Returns a string representing the given DateTime instance in UTC and in the
 form determined by the given formatter."
   [{:keys [format-str formatters]} dt]
