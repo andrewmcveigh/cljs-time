@@ -383,7 +383,7 @@ Specify the year, month, and day. Does not deal with timezones."
 (defn to-default-time-zone
   "Assuming `dt` is in the UTC timezone, returns a DateTime
   corresponding to the same absolute instant in time as the given
-  DateTime, but with calendar fields corresponding to in the default
+  DateTime, but with calendar fields corresponding to the default
   (local) timezone."
   [dt]
   (goog.date.DateTime. dt))
@@ -391,7 +391,7 @@ Specify the year, month, and day. Does not deal with timezones."
 (defn to-utc-time-zone
   "Assuming `dt` is in the Local timezone, returns a UtcDateTime
   corresponding to the same absolute instant in time as the given
-  DateTime, but with calendar fields corresponding to in the UTC
+  DateTime, but with calendar fields corresponding to the UTC
   timezone."
   [dt]
   (goog.date.UtcDateTime.fromTimestamp (.getTime dt)))
