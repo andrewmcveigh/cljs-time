@@ -1,6 +1,6 @@
 (ns cljs-time.coerce-test
   (:require
-   [cljs.test :refer-macros [deftest is]]
+   [cljs.test :refer-macros [deftest testing is]]
    [cljs-time.core
     :refer [date-time date-midnight from-utc-time-zone plus hours
             local-date local-date-time]]
@@ -81,7 +81,10 @@
   (is (= 893462400 (to-epoch (js/Date. 893462400000))))
   (is (= (long 0) (to-epoch 0)))
   (is (= 893462400 (to-epoch 893462400000)))
-  (is (= 893462400 (to-epoch "1998-04-25T00:00:00.000Z"))))
+  (is (= 893462400 (to-epoch "1998-04-25T00:00:00.000Z")))
+  (testing "times with fractions of a second are rounded down"
+    (is (= 893462400 (to-epoch 893462400001)))
+    (is (= 893462400 (to-epoch 893462400999)))))
 
 (deftest test-to-string
   (is (nil? (to-string nil)))
