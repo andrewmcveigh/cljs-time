@@ -50,7 +50,8 @@
 (defn to-epoch
   "Convert `obj` to Unix epoch."
   [obj]
-  (some-> obj to-long (/ 1000)))
+  (let [millis (to-long obj)]
+    (and millis (quot millis 1000))))
 
 (defn to-date
   "Convert `obj` to a JavaScript Date instance."
