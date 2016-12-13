@@ -70,8 +70,10 @@
   "Convert `obj` to a goog.date.Date instance"
   [obj]
   (when obj
-    (if-let [dt (to-date-time obj)]
-      (goog.date.Date. (.getYear dt) (.getMonth dt) (.getDate dt)))))
+    (if (= goog.date.Date (type obj))
+      obj
+      (if-let [dt (to-date-time obj)]
+        (goog.date.Date. (.getYear dt) (.getMonth dt) (.getDate dt))))))
 
 (defn to-local-date-time
   "Convert `obj` to a goog.date.DateTime instance"

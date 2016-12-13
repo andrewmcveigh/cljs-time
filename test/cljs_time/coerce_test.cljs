@@ -106,7 +106,8 @@
   (is (= (date/Date. 1998 3 25) (to-local-date (js/Date. 893462400000))))
   (is (= (date/Date. 1970 0 1) (to-local-date 0)))
   (is (= (date/Date. 1998 3 25) (to-local-date 893462400000)))
-  (is (= (date/Date. 1998 3 25) (to-local-date "1998-04-25T00:00:00.000Z"))))
+  (is (= (date/Date. 1998 3 25) (to-local-date "1998-04-25T00:00:00.000Z")))
+  (is (= (date/Date. 1998 3 25) (to-local-date (to-local-date "1998-04-25")))))
 
 (deftest test-to-local-date-time
   (is (nil? (to-local-date-time nil)))
