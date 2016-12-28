@@ -58,7 +58,7 @@ minimal, and therefore so is cljs-time's.
 The majority of the tests from clj-time have been ported, and are
 passing.
 
-[API documentation](http://andrewmcveigh.github.io/cljs-time/api/index.html) is
+[API documentation](http://andrewmcveigh.github.io/cljs-time/latest/index.html) is
 available.
 
 ## Usage
@@ -286,8 +286,8 @@ Running the tests:
 
 ## Documentation
 
-The complete [API documentation](http://andrewmcveigh.github.io/cljs-time/api/index.html)
-is also available (marginalia generated).
+The complete [API documentation](http://andrewmcveigh.github.io/cljs-time/latest/index.html)
+is also available.
 
 ## License
 
