@@ -1,4 +1,13 @@
 (ns cljs-time.instant
+  "### Optional namespace to extend goog.date.* DateTime types
+
+   Optionally require this namespace to extend
+   cljs.core/IPrintWithWriter protocol for:
+
+   * goog.date.Date
+   * goog.date.DateTime
+   * goog.date.UtcDateTime"
+
   (:require
    [goog.date.DateTime]
    [cljs-time.format :refer [unparse formatters]]))

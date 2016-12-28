@@ -4,61 +4,73 @@
   Create a DateTime instance with date-time (or a local DateTime instance with local-date-time),
   specifying the year, month, day, hour, minute, second, and millisecond:
 
-    => (date-time 1986 10 14 4 3 27 456)
-    #<DateTime 1986-10-14T04:03:27.456Z>
+```clojure
+=> (date-time 1986 10 14 4 3 27 456)
+#<DateTime 1986-10-14T04:03:27.456Z>
 
-    => (local-date-time 1986 10 14 4 3 27 456)
-    #<DateTime 1986-10-14T04:03:27.456>
+=> (local-date-time 1986 10 14 4 3 27 456)
+#<DateTime 1986-10-14T04:03:27.456>
 
-  Less-significant fields can be omitted:
+ss-significant fields can be omitted:
 
-    => (date-time 1986 10 14)
-    #<DateTime 1986-10-14T00:00:00.000Z>
+=> (date-time 1986 10 14)
+#<DateTime 1986-10-14T00:00:00.000Z>
 
-    => (local-date-time 1986 10 14)
-    #<DateTime 1986-10-14T00:00:00.000>
+=> (local-date-time 1986 10 14)
+#<DateTime 1986-10-14T00:00:00.000>
+```
 
   Get the current time with (now) and the start of the Unix epoch with (epoch).
 
   Once you have a date-time, use accessors like hour and second to access the
   corresponding fields:
 
-    => (hour (date-time 1986 10 14 22))
-    22
+```clojure
+=> (hour (date-time 1986 10 14 22))
+22
 
-    => (hour (local-date-time 1986 10 14 22))
-    22
+=> (hour (local-date-time 1986 10 14 22))
+22
+```
 
   The functions after? and before? determine the relative position of two
   DateTime instances:
 
-    => (after? (date-time 1986 10) (date-time 1986 9))
-    true
+```clojure
+=> (after? (date-time 1986 10) (date-time 1986 9))
+true
 
-    => (after? (local-date-time 1986 10) (local-date-time 1986 9))
-    true
+=> (after? (local-date-time 1986 10) (local-date-time 1986 9))
+true
+```
 
   Often you will want to find a date some amount of time from a given date. For
   example, to find the time 1 month and 3 weeks from a given date-time:
 
-    => (plus (date-time 1986 10 14) (months 1) (weeks 3))
-    #<DateTime 1986-12-05T00:00:00.000Z>
+```clojure
+=> (plus (date-time 1986 10 14) (months 1) (weeks 3))
+#<DateTime 1986-12-05T00:00:00.000Z>
 
-    => (plus (local-date-time 1986 10 14) (months 1) (weeks 3))
-    #<DateTime 1986-12-05T00:00:00.000Z>
+=> (plus (local-date-time 1986 10 14) (months 1) (weeks 3))
+#<DateTime 1986-12-05T00:00:00.000Z>
+```
 
   An Interval is used to represent the span of time between two DateTime
   instances. Construct one using interval, then query them using within?,
   overlaps?, and abuts?
 
-    => (within? (interval (date-time 1986) (date-time 1990)) (date-time 1987))
-    true
+```clojure
+=> (within? (interval (date-time 1986) (date-time 1990)) (date-time 1987))
+true
+```
 
   To find the amount of time encompased by an interval, use in-seconds and
   in-minutes:
 
-    => (in-minutes (interval (date-time 1986 10 2) (date-time 1986 10 14)))
-    17280
+```clojure
+=> (in-minutes (interval (date-time 1986 10 2) (date-time 1986 10 14)))
+17280
+```
 
   Note that all functions in this namespace work with Joda objects or ints. If
   you need to print or parse date-times, see cljs-time.format. If you need to

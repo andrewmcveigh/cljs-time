@@ -4,11 +4,13 @@
 
   For example, to convert a goog.date DateTime to and from a js number:
 
-    => (to-long (date-time 1998 4 25))
-    893462400000
+```clojure
+=> (to-long (date-time 1998 4 25))
+893462400000
 
-    => (from-long 893462400000)
-    #<19980425T000000>"
+=> (from-long 893462400000)
+#<19980425T000000>
+```"
   (:refer-clojure :exclude [extend second])
   (:require
     [cljs-time.core :refer

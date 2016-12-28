@@ -4,21 +4,27 @@
   Parsing and printing are controlled by formatters. You can either use one
   of the built in ISO 8601 and a single RFC 822 formatters or define your own, e.g.:
 
-    (def built-in-formatter (formatters :basic-date-time))
-    (def custom-formatter (formatter \"yyyyMMdd\"))
+```clojure
+(def built-in-formatter (formatters :basic-date-time))
+(def custom-formatter (formatter \"yyyyMMdd\"))
+```
 
   To see a list of available built-in formatters and an example of a date-time
   printed in their format:
 
-    (show-formatters)
+```clojure
+(show-formatters)
+```
 
   Once you have a formatter, parsing and printing are strait-forward:
 
-    => (parse custom-formatter \"20100311\")
-    #<DateTime 2010-03-11T00:00:00.000Z>
+```clojure
+=> (parse custom-formatter \"20100311\")
+#<DateTime 2010-03-11T00:00:00.000Z>
 
-    => (unparse custom-formatter (date-time 2010 10 3))
-    \"20101003\"
+=> (unparse custom-formatter (date-time 2010 10 3))
+\"20101003\"
+```
 
   By default the parse function always returns a DateTime instance with a UTC
   time zone, and the unparse function always represents a given DateTime
@@ -68,6 +74,7 @@
   time zone names cannot be parsed and a few more symbols are supported. All
   ASCII letters are reserved as pattern letters, which are defined as follows:
 
+```
     Symbol  Meaning                      Presentation  Examples
     ------  -------                      ------------  -------
     G       era                          text          AD
@@ -107,6 +114,7 @@
     Symbol  Meaning                      Presentation  Examples
     ------  -------                      ------------  -------
     o       ordinal suffix               text          st nd rd th (E.G., 1st, 2nd, 3rd, 4th)
+```
 
   The count of pattern letters determine the format.
 
@@ -117,19 +125,19 @@
   amount.
 
   **Year:** Numeric presentation for year and weekyear fields are handled
-  specially. For example, if the count of 'y' is 2, the year will be displayed
+  specially. For example, if the count of `y` is 2, the year will be displayed
   as the zero-based year of the century, which is two digits.
 
   **Month:** 3 or over, use text, otherwise use number.
 
-  **Zone:** 'Z' outputs offset without a colon, 'ZZ' outputs the offset with a
-  colon, 'ZZZ' or more outputs the zone id.
+  **Zone:** `Z` outputs offset without a colon, `ZZ` outputs the offset with a
+  colon, `ZZZ` or more outputs the zone id.
 
   **Zone names:** Time zone names ('z') cannot be parsed.
 
-  Any characters in the pattern that are not in the ranges of ['a'..'z'] and
-  ['A'..'Z'] will be treated as quoted text. For instance, characters like ':',
-  '.', ' ', '#' and '?' will appear in the resulting time text even they are
+  Any characters in the pattern that are not in the ranges of `['a'..'z']` and
+  `['A'..'Z']` will be treated as quoted text. For instance, characters like `:`,
+  `.`, `<space>`, `#` and `?` will appear in the resulting time text even they are
   not embraced within single quotes."}
   formatters
     {:basic-date (formatter "yyyyMMdd")

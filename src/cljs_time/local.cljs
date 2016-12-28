@@ -9,9 +9,11 @@
   The following all return `1986-10-14 04:03:27.246` with the
   local time zone.
 
-    (to-local-date-time (clj-time.core/date-time 1986 10 14 4 3 27 246))
-    (to-local-date-time \"1986-10-14T04:03:27.246\")
-    (to-local-date-time \"1986-10-14T04:03:27.246Z\")
+```clojure
+(to-local-date-time (clj-time.core/date-time 1986 10 14 4 3 27 246))
+(to-local-date-time \"1986-10-14T04:03:27.246\")
+(to-local-date-time \"1986-10-14T04:03:27.246Z\")
+```
 
   The dynamic var *local-formatters* contains a map of local formatters
   for parsing and printing. It is initialized with all the formatters in
