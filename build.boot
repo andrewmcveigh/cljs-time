@@ -1,5 +1,5 @@
 (def +project+ 'com.andrewmcveigh/cljs-time)
-(def +version+ "0.5.0-alpha2")
+(def +version+ "0.5.0-SNAPSHOT")
 (def +description+ "A clj-time inspired date library for clojurescript.")
 
 (def dependencies
