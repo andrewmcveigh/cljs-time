@@ -7,15 +7,11 @@
     [org.clojure/clojurescript "1.9.89" :scope "provided"]])
 
 (def dev-dependencies
-  '[[org.clojure/tools.nrepl "0.2.12" :scope "test"]
-    [funcool/codeina "0.4.0"
-     :scope "test" :exclude [org.clojure/clojure org.clojure/tools.namespace]]
-    [adzerk/boot-cljs "1.7.228-1" :scope "test"]
-    [crisptrutski/boot-cljs-test "0.2.2-SNAPSHOT" :scope "test"]
-    [doo "0.1.7-SNAPSHOT" :scope "test"]
-    [funcool/boot-codeina "0.1.0-SNAPSHOT" :scope "test"]
-    [com.cemerick/piggieback "0.2.1"
-     :scope "test" :exclude [org.clojure/clojure]]])
+  '[[org.clojure/tools.nrepl "0.2.12" :scope "test" :exclusions [org.clojure/clojure]]
+    [boot-codox "0.10.2" :scope "test"]
+    [codox-theme-rdash "0.1.1"]
+    [adzerk/boot-cljs "1.7.228-2" :scope "test"]
+    [crisptrutski/boot-cljs-test "0.3.0" :scope "test"]])
 
 (set-env!
  :source-paths #{"src" "test" "compile" "perf"}
@@ -32,11 +28,23 @@
  '[clojure.string :as string]
  '[clojure.set :as set]
  '[crisptrutski.boot-cljs-test :refer [test-cljs]]
- '[doo.shell]
- '[doo.utils]
- '[funcool.boot-codeina :refer [apidoc]]
+ '[codox.boot :refer [codox]]
  '[parse-perf-test :as perf]
- 'cemerick.piggieback 'cljs.repl 'cljs.repl.node 'cljs.repl.rhino)
+ 'cljs.repl 'cljs.repl.node 'cljs.repl.rhino)
+
+(defn documentation-namespaces []
+  (->> "src"
+       (clojure.java.io/file)
+       (file-seq)
+       (map str)
+       (filter (partial re-matches #"^.*\.cljs$"))
+       (map (comp #(string/replace % #"/" ".")
+                  #(string/replace % #"_" "-")
+                  #(string/replace % #"^src/" "")
+                  #(string/replace % #"\.cljs$" "")))
+       (remove (partial re-find #"^cljs-time.internal"))
+       (map symbol)
+       (set)))
 
 (task-options!
  pom {:project +project+
@@ -45,11 +53,15 @@
       :license {"Eclipse Public License"
                 "http://www.eclipse.org/legal/epl-v10.html"}
       :scm {:url "git@github.com:andrewmcveigh/cljs-time.git"}}
- apidoc {:version +version+
-         :name (name +project+)
-         :description +description+
-         :sources #{"src"}
-         :reader :clojurescript}
+ codox {:version +version+
+        :name (name +project+)
+        :description +description+
+        :source-paths #{"src"}
+        :filter-namespaces (documentation-namespaces)
+        :language :clojurescript
+        :metadata {:doc/format :markdown}
+        :themes [:rdash]
+        :source-uri "https://github.com/andrewmcveigh/cljs-time/blob/v{version}/{filepath}#L{line}"}
  push {:repo "clojars"}
  target {:dir #{"target"}})
 
@@ -81,34 +93,10 @@
                     :optimizations optimizations}))
   (println "Finished compiling"))
 
-(def env
-  (into-array String ["TZ=Australia/Canberra"]))
-
-(alter-var-root
- #'doo.shell/exec!
- (constantly
-  (fn exec! [cmd exec-dir]
-    (let [command-arr (into-array String cmd)]
-      (if exec-dir
-        (.exec (Runtime/getRuntime) command-arr env exec-dir)
-        (.exec (Runtime/getRuntime) command-arr env))))))
-
 (deftask auto-test []
   (comp (watch)
         (speak)
         (test-cljs :js-env :node)))
-
-(defn add-piggieware []
-  (swap! repl/*default-middleware* conj 'cemerick.piggieback/wrap-cljs-repl)
-  (swap! repl/*default-middleware* distinct))
-
-(defn node-repl []
-  (add-piggieware)
-  (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))
-
-(defn rhino-repl []
-  (add-piggieware)
-  (cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env)))
 
 (deftask test []
   (test-cljs :js-env :node :optimizations :simple))
