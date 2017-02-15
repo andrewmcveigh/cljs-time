@@ -11,7 +11,8 @@
              formatter-local
              parse-local parse-local-date
              unparse-local unparse-local-date
-             with-default-year with-locale]]))
+             with-default-year with-locale]]
+    [cljs-time.locale :as locale]))
 
 (defn utc-int-vec [d]
   [(time/year d) (time/month d) (time/day d)
@@ -373,13 +374,13 @@
 (deftest test-unparse-with-locale
   (let [pt-br-fmt (with-locale
                     (formatter "EEEE, d 'de' MMMM 'de' y")
-                    "pt_BR")
+                    (locale/locale "pt_BR"))
         pt-br-short-fmt (with-locale
                           (formatter "EEE, d 'de' MMM 'de' y")
-                          "pt_BR")
+                          (locale/locale "pt_BR"))
         fr-fmt (with-locale
                  (formatter "EEEE d MMMM y")
-                 "fr")]
+                 (locale/locale "fr"))]
     (is (= "quinta-feira, 11 de março de 2010"
            (unparse pt-br-fmt (local-date 2010 3 11))))
     (is (= "qui, 11 de mar de 2010"

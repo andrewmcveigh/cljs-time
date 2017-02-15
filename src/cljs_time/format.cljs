@@ -31,6 +31,7 @@
   instance in UTC."
   (:require
     [cljs-time.internal.core :as i]
+    [cljs-time.locale :as locale]
     [cljs-time.internal.parse :as parse]
     [cljs-time.internal.unparse :as unparse]
     [cljs-time.core :as time]
@@ -45,19 +46,19 @@
 (defn skip-timezone-formatter []
   {"Z" (constantly "") "ZZ" (constantly "")})
 
-(defrecord Formatter [format-str overrides default-year timezone locale-symbols])
+(defrecord Formatter [format-str overrides default-year timezone locale])
 
 (defn formatter
   ([fmts] (formatter fmts time/utc))
   ([fmts dtz]
    (map->Formatter {:format-str fmts
                     :timezone dtz
-                    :locale-symbols DateTimeSymbols})))
+                    :locale locale/DEFAULT})))
 
 (defn formatter-local [fmts]
   (map->Formatter {:format-str fmts
                    :overrides (skip-timezone-formatter)
-                   :locale-symbols DateTimeSymbols}))
+                   :locale locale/DEFAULT}))
 
 (defn with-default-year
   "Return a copy of a formatter that uses the given default year."
@@ -65,7 +66,8 @@
   (assoc f :default-year default-year))
 
 (defn with-locale [f locale]
-  (assoc f :locale-symbols (i/lookup-locale locale)))
+  {:pre [(locale/locale? locale)]}
+  (assoc f :locale locale))
 
 (defn not-implemented [sym]
   #(throw #js {:name :not-implemented
