@@ -373,13 +373,13 @@
 (deftest test-unparse-with-locale
   (let [pt-br-fmt (with-locale
                     (formatter "EEEE, d 'de' MMMM 'de' y")
-                    goog.i18n.DateTimeSymbols_pt_BR)
+                    "pt_BR")
         pt-br-short-fmt (with-locale
                           (formatter "EEE, d 'de' MMM 'de' y")
-                          goog.i18n.DateTimeSymbols_pt_BR)
+                          "pt_BR")
         fr-fmt (with-locale
                  (formatter "EEEE d MMMM y")
-                 goog.i18n.DateTimeSymbols_fr)]
+                 "fr")]
     (is (= "quinta-feira, 11 de março de 2010"
            (unparse pt-br-fmt (local-date 2010 3 11))))
     (is (= "qui, 11 de mar de 2010"

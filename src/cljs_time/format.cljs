@@ -65,7 +65,7 @@
   (assoc f :default-year default-year))
 
 (defn with-locale [f locale]
-  (assoc f :locale-symbols locale))
+  (assoc f :locale-symbols (i/lookup-locale locale)))
 
 (defn not-implemented [sym]
   #(throw #js {:name :not-implemented

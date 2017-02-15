@@ -97,3 +97,9 @@
         (update-in [:weeks] scale-fn)
         (update-in [:months] scale-fn)
         (update-in [:years] scale-fn))))
+
+(defn lookup-locale [locale]
+  (or (aget goog.i18n (str "DateTimeSymbols_" locale))
+      (throw (ex-info (str "Unknown locale " locale
+                           ". Please see goog.i18n for valid locales.")
+                      {:type :unknown-locale}))))
