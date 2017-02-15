@@ -68,11 +68,5 @@
                 ;;          (prn 'test-local-formatters (to-local-date-time "04/25/1998 11:59:01"))
                 ;;          (time/time-zone-for-offset (int hours) (mod hours 1)))))
                 )))]
-    (when-available
-     with-redefs
-     (with-redefs [time/default-time-zone time-zone-fn]
-       (asserts)))
-    (when-not-available
-     with-redefs
-     (binding [time/default-time-zone time-zone-fn]
-       (asserts)))))
+    (with-redefs [time/default-time-zone time-zone-fn]
+      (asserts))))
