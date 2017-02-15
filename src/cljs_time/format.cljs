@@ -35,7 +35,9 @@
     [cljs-time.internal.unparse :as unparse]
     [cljs-time.core :as time]
     [clojure.set :refer [difference]]
-    [goog.date.duration :as duration]))
+    [goog.date.duration :as duration])
+  (:import
+   [goog.i18n DateTimeSymbols]))
 
 (def months i/months)
 (def days i/days)
@@ -43,19 +45,27 @@
 (defn skip-timezone-formatter []
   {"Z" (constantly "") "ZZ" (constantly "")})
 
-(defrecord Formatter [format-str overrides default-year timezone])
+(defrecord Formatter [format-str overrides default-year timezone locale-symbols])
 
 (defn formatter
   ([fmts] (formatter fmts time/utc))
-  ([fmts dtz] (map->Formatter {:format-str fmts :timezone dtz})))
+  ([fmts dtz]
+   (map->Formatter {:format-str fmts
+                    :timezone dtz
+                    :locale-symbols DateTimeSymbols})))
 
 (defn formatter-local [fmts]
-  (map->Formatter {:format-str fmts :overrides (skip-timezone-formatter)}))
+  (map->Formatter {:format-str fmts
+                   :overrides (skip-timezone-formatter)
+                   :locale-symbols DateTimeSymbols}))
 
 (defn with-default-year
   "Return a copy of a formatter that uses the given default year."
   [f default-year]
   (assoc f :default-year default-year))
+
+(defn with-locale [f locale]
+  (assoc f :locale-symbols locale))
 
 (defn not-implemented [sym]
   #(throw #js {:name :not-implemented
@@ -244,9 +254,9 @@
 (defn unparse
   "Returns a string representing the given DateTime instance in UTC and in the
 form determined by the given formatter."
-  [{:keys [format-str formatters]} dt]
+  [{:keys [format-str formatters] :as fmt} dt]
   {:pre [(not (nil? dt)) (instance? goog.date.Date dt)]}
-  (unparse/unparse format-str dt))
+  (unparse/unparse fmt dt))
 
 (defn unparse-local
   "Returns a string representing the given local DateTime instance in the
