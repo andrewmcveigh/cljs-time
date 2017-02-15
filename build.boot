@@ -10,7 +10,9 @@
                  [adzerk/boot-cljs "1.7.228-2" :scope "test"]
                  [crisptrutski/boot-cljs-test "0.3.0" :scope "test"]
                  [boot-codox "0.10.2" :scope "test"]
-                 [codox-theme-rdash "0.1.1" :scope "test"]])
+                 [codox-theme-rdash "0.1.1" :scope "test"]
+                 [com.cemerick/piggieback "0.2.1" :scope "test"]
+                 [org.clojure/tools.nrepl "0.2.12" :scope "test"]])
 
 (require
  '[adzerk.boot-cljs :refer [cljs]]
@@ -55,7 +57,8 @@
  pom (pom-opts)
  codox (codox-opts)
  push {:repo "clojars"}
- target {:dir #{"target"}})
+ target {:dir #{"target"}}
+ repl {:middleware '[cemerick.piggieback/wrap-cljs-repl]})
 
 (deftask auto-test []
   (comp (watch)
@@ -80,3 +83,13 @@
 
 (defn cider? []
   (get (ns-publics 'boot.user) 'cider))
+
+(defn node-repl []
+  (require 'cemerick.piggieback 'cljs.repl.node)
+  ((resolve 'cemerick.piggieback/cljs-repl)
+   ((resolve 'cljs.repl.node/repl-env))))
+
+(defn rhino-repl []
+  (require 'cemerick.piggieback 'cljs.repl.node)
+  ((resolve 'cemerick.piggieback/cljs-repl)
+   ((resolve 'cljs.repl.node/repl-env))))
