@@ -175,9 +175,8 @@
                               [({\A "am" \P "pm"} m) (cons n s)])]
        [[:meridiem (keyword meridiem)] (string/join s)]))))
 
-(defn parse-period-name [s period periods short?]
-  (let [periods (concat periods (map #(subs % 0 3) periods))
-        [m s] (->> periods
+(defn parse-period-name [s period periods]
+  (let [[m s] (->> periods
                    (map #(-> [% (replace s (re-pattern (str \^ %)) "")]))
                    (remove (comp (partial = s) second))
                    (first))]
@@ -189,13 +188,13 @@
                        :period period
                        :in s})))))
 
-(defn parse-month-name [short?]
+(defn parse-month-name [months]
   (fn [s]
-    (-> (parse-period-name s :months i/months short?)
+    (-> (parse-period-name s :months months)
         (update-in [0 1] inc))))
 
-(defn parse-day-name [short?]
-  (fn [s] (parse-period-name s :days i/days short?)))
+(defn parse-day-name [days]
+  (fn [s] (parse-period-name s :days days)))
 
 (defn parse-quoted [quoted]
   (fn [s]
@@ -212,60 +211,65 @@
         (parse-match s :ordinal-suffix "rd")
         (parse-match s :ordinal-suffix "th"))))
 
-(defn lookup [[t pattern]]
-  (if (= t :token)
-    (case pattern
-      "S"    (parse-millis 1 2)
-      "SSS"  (parse-millis 3 3)
-      "s"    (parse-seconds 1 2)
-      "ss"   (parse-seconds 2 2)
-      "m"    (parse-minutes 1 2)
-      "mm"   (parse-minutes 2 2)
-      "h"    (parse-hours 1 2)
-      "hh"   (parse-hours 2 2)
-      "H"    (parse-HOURS 1 2)
-      "HH"   (parse-HOURS 2 2)
-      "d"    (parse-day 1 2)
-      "dd"   (parse-day 2 2)
-      "D"    (parse-day 1 3)
-      "DD"   (parse-day 2 3)
-      "DDD"  (parse-day 3 3)
-      "M"    (parse-month 1 2)
-      "MM"   (parse-month 1 2)
-      "MMM"  (parse-month-name true)
-      "MMMM" (parse-month-name false)
-      "y"    (parse-year 1 4)
-      "yy"   (parse-year 2 2)
-      "yyyy" (parse-year 4 4)
-      "Y"    (parse-year 1 4)
-      "YY"   (parse-year 2 2)
-      "YYYY" (parse-year 4 4)
-      "x"    (parse-weekyear 1 4)
-      "xx"   (parse-weekyear 2 2)
-      "xxxx" (parse-weekyear 4 4)
-      "w"    (parse-weekyear-week 1 2)
-      "ww"   (parse-weekyear-week 2 2)
-      "E"    (parse-day-name true)
-      "EEE"  (parse-day-name true)
-      "EEEE" (parse-day-name false)
-      "a"    (parse-meridiem)
-      "A"    (parse-meridiem)
-      "Z"    (parse-timezone :dddd)
-      "ZZ"   (parse-timezone :long)
-      "ZZZ"  (parse-timezone :abbr)
-      "ZZZZ" (parse-timezone :abbr)
-      "z"    (parse-timezone :abbr)
-      "zz"   (parse-timezone :abbr)
-      "zzz"  (parse-timezone :abbr)
-      "zzzz" (parse-timezone :full)
-      "o"    (parse-ordinal-suffix)
-      (throw (ex-info (str "Illegal pattern component: " pattern)
-                      {:type :illegal-pattern})))
-    (parse-quoted pattern)))
+(defn lookup [locale [t pattern]]
+  (let [days (concat (.-WEEKDAYS (:symbols locale))
+                     (.-SHORTWEEKDAYS (:symbols locale)))
+        months (concat (.-MONTHS (:symbols locale))
+                       (.-SHORTMONTHS (:symbols locale)))]
+    (if (= t :token)
+            (case pattern
+              "S"    (parse-millis 1 2)
+              "SSS"  (parse-millis 3 3)
+              "s"    (parse-seconds 1 2)
+              "ss"   (parse-seconds 2 2)
+              "m"    (parse-minutes 1 2)
+              "mm"   (parse-minutes 2 2)
+              "h"    (parse-hours 1 2)
+              "hh"   (parse-hours 2 2)
+              "H"    (parse-HOURS 1 2)
+              "HH"   (parse-HOURS 2 2)
+              "d"    (parse-day 1 2)
+              "dd"   (parse-day 2 2)
+              "D"    (parse-day 1 3)
+              "DD"   (parse-day 2 3)
+              "DDD"  (parse-day 3 3)
+              "M"    (parse-month 1 2)
+              "MM"   (parse-month 1 2)
+              "MMM"  (parse-month-name months)
+              "MMMM" (parse-month-name months)
+              "y"    (parse-year 1 4)
+              "yy"   (parse-year 2 2)
+              "yyyy" (parse-year 4 4)
+              "Y"    (parse-year 1 4)
+              "YY"   (parse-year 2 2)
+              "YYYY" (parse-year 4 4)
+              "x"    (parse-weekyear 1 4)
+              "xx"   (parse-weekyear 2 2)
+              "xxxx" (parse-weekyear 4 4)
+              "w"    (parse-weekyear-week 1 2)
+              "ww"   (parse-weekyear-week 2 2)
+              "E"    (parse-day-name days)
+              "EEE"  (parse-day-name days)
+              "EEEE" (parse-day-name days)
+              "a"    (parse-meridiem)
+              "A"    (parse-meridiem)
+              "Z"    (parse-timezone :dddd)
+              "ZZ"   (parse-timezone :long)
+              "ZZZ"  (parse-timezone :abbr)
+              "ZZZZ" (parse-timezone :abbr)
+              "z"    (parse-timezone :abbr)
+              "zz"   (parse-timezone :abbr)
+              "zzz"  (parse-timezone :abbr)
+              "zzzz" (parse-timezone :full)
+              "o"    (parse-ordinal-suffix)
+              (throw (ex-info (str "Illegal pattern component: " pattern)
+                              {:type :illegal-pattern})))
+            (parse-quoted pattern))))
 
-(defn parse [pattern value]
+(defn parse [{:keys [format-str locale] :as fmt} value]
   (loop [s value
-         [parser & more] (map lookup (read-pattern pattern))
+         [parser & more] (map (partial lookup locale)
+                              (read-pattern format-str))
          out []]
     (let [err (ex-info
                (str "Invalid format: " value " is malformed at " (pr-str s))

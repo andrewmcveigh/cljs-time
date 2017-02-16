@@ -387,3 +387,20 @@
            (unparse pt-br-short-fmt (local-date 2010 3 11))))
     (is (= "lundi 11 février 2013"
            (unparse fr-fmt (local-date 2013 2 11))))))
+
+(deftest test-parse-with-locale
+  (let [pt-br-fmt (with-locale
+                    (formatter "EEEE, d 'de' MMMM 'de' y")
+                    (locale/locale "pt_BR"))
+        pt-br-short-fmt (with-locale
+                          (formatter "EEE, d 'de' MMM 'de' y")
+                          (locale/locale "pt_BR"))
+        fr-fmt (with-locale
+                 (formatter "EEEE d MMMM y")
+                 (locale/locale "fr"))]
+    (is (= (date-time 2010 3 11)
+           (parse pt-br-fmt "quinta-feira, 11 de março de 2010")))
+    (is (= (date-time 2010 3 11)
+           (parse pt-br-short-fmt "qui, 11 de mar de 2010")))
+    (is (= (date-time 2013 2 11)
+           (parse fr-fmt "lundi 11 février 2013")))))

@@ -219,7 +219,7 @@
   given string according to the given formatter."
   ([fmt s]
    (->> s
-        (parse/parse (:format-str fmt))
+        (parse/parse fmt)
         (parse/compile :goog.date.UtcDateTime fmt)))
   ([s]
    (first
@@ -232,7 +232,7 @@
   given string according to the given formatter."
   ([fmt s]
    (->> s
-        (parse/parse (:format-str fmt))
+        (parse/parse fmt)
         (parse/compile :goog.date.DateTime fmt)))
   ([s]
    (first
@@ -245,7 +245,7 @@
   given string according to the given formatter."
   ([fmt s]
    (->> s
-        (parse/parse (:format-str fmt))
+        (parse/parse fmt)
         (parse/compile :goog.date.Date fmt)))
   ([s]
    (first
