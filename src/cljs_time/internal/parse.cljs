@@ -29,7 +29,7 @@
   (if (= h \')
     [(quoted "'") more]
     (let [[q s] (read-while (complement #{\'}) s)]
-      [(quoted q) (rest s)])))
+      [(quoted (apply str q)) (rest s)])))
 
 (defn read-punctuation [ch s]
   (let [[end s] (read-while #(not (re-find #"[a-zA-Z']" %)) s)]
