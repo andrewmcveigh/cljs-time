@@ -137,8 +137,8 @@
   ([fmt]
    (fn [s]
      (let [[h & more] s
-           err (ex-info
-                (str "Invalid timezone format: " s) {:type :parse-error})
+           err #(ex-info
+                 (str "Invalid timezone format: " s) {:type :parse-error})
            dddd #(let [tz? (string/join (take 4 more))]
                    (when-let [[_ hh mm] (re-find #"^(\d{2})(\d{2})" tz?)]
                      [(timezone-adj % hh mm) (drop 4 more)]))
@@ -147,8 +147,8 @@
                      [(timezone-adj % hh mm) (drop 5 more)]))]
        (cond (#{\- \+} h)
              (case fmt
-               :dddd (or (dddd h) (long h) (throw err))
-               :long (or (dddd h) (long h) (throw err)))
+               :dddd (or (dddd h) (long h) (throw (err)))
+               :long (or (dddd h) (long h) (throw (err))))
              (= h \Z)
              [[:timezone (timezone-adj + "0" "0")]]
              :else
@@ -157,10 +157,10 @@
                            [tz _] (read-while #(re-find #"[A-Z]" %) tz?)]
                        (if (= (count tz) 3)
                          [[:timezone (string/join tz)] (drop 3 s)]
-                         (throw err)))
+                         (throw (err))))
                :full (throw (ex-info (str "Cannot parse long form timezone:" s)
                                      {:type :parse-error}))
-               (throw err)))))))
+               (throw (err))))))))
 
 (defn parse-meridiem
   ([]
@@ -267,16 +267,16 @@
   (loop [s value
          [parser & more] (map lookup (read-pattern pattern))
          out []]
-    (let [err (ex-info
-               (str "Invalid format: " value " is malformed at " (pr-str s))
-               {:type :parse-error :sub-type :invalid-format})]
+    (let [err #(ex-info
+                (str "Invalid format: " value " is malformed at " (pr-str s))
+                {:type :parse-error :sub-type :invalid-format})]
       (if (seq s)
         (if (nil? parser)
-          (throw err)
+          (throw (err))
           (let [[value s] (parser s)]
             (recur s more (conj out value))))
         (if parser
-          (throw err)
+          (throw (err))
           out)))))
 
 (defn compile [class {:keys [default-year] :as fmt} values]
