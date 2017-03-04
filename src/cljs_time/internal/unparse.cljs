@@ -72,17 +72,16 @@
   (fn [s d]
     [(apply str s quoted) d]))
 
-(defn unparse-period-name [s d n periods short?]
-  (let [periods (vec (cond->> periods short? (map #(subs % 0 3))))]
-    [(str s (periods n)) d]))
+(defn unparse-period-name [s d n periods]
+  [(str s (nth periods n)) d])
 
-(defn unparse-month-name [short?]
+(defn unparse-month-name [months]
   (fn [s d]
-    (unparse-period-name s d (.getMonth d) i/months short?)))
+    (unparse-period-name s d (.getMonth d) months)))
 
-(defn unparse-day-name [short?]
+(defn unparse-day-name [days]
   (fn [s d]
-    (unparse-period-name s d (.getDay d) i/days short?)))
+    (unparse-period-name s d (.getDay d) days)))
 
 (defn unparse-weekyear
   ([min] (unparse-weekyear min min))
@@ -126,7 +125,7 @@
           o (case n 1 "st" 2 "nd" 3 "rd" 21 "st" 22 "nd" 23 "rd" 31 "st" "th")]
       [(str s o) d])))
 
-(defn lookup [[t pattern]]
+(defn lookup [locale [t pattern]]
   (if (= t :token)
     (case pattern
       "S"    [:millis 1 2]
@@ -146,8 +145,8 @@
       "DDD"  [:day 3 3]
       "M"    [:month 1 2]
       "MM"   [:month 2 2]
-      "MMM"  [:month-name true]
-      "MMMM" [:month-name false]
+      "MMM"  [:month-name (.-SHORTMONTHS (:symbols locale))]
+      "MMMM" [:month-name (.-MONTHS (:symbols locale))]
       "y"    [:year 1 4]
       "yy"   [:year 2 2]
       "yyyy" [:year 4 4]
@@ -159,9 +158,9 @@
       "xxxx" [:weekyear 4 4]
       "w"    [:weekyear-week 1 2]
       "ww"   [:weekyear-week 2 2]
-      "E"    [:day-name true]
-      "EEE"  [:day-name true]
-      "EEEE" [:day-name false]
+      "E"    [:day-name (.-SHORTWEEKDAYS (:symbols locale))]
+      "EEE"  [:day-name (.-SHORTWEEKDAYS (:symbols locale))]
+      "EEEE" [:day-name (.-WEEKDAYS (:symbols locale))]
       "a"    [:meridiem false]
       "A"    [:meridiem true]
       "Z"    [:timezone]
@@ -200,8 +199,9 @@
                       (unparse-ordinal-suffix (lookup-getter k)))
     :quoted         (apply unparse-quoted args)))
 
-(defn unparse [pattern value]
-  (let [syn-list (mapv lookup (read-pattern pattern))]
+(defn unparse [{:keys [format-str locale] :as fmt} value]
+  (let [syn-list (mapv (partial lookup locale)
+                                      (read-pattern format-str))]
     (loop [d value
            [unparser & more] (map-indexed (partial lookup-fn syn-list) syn-list)
            s ""]
