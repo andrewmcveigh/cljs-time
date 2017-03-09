@@ -604,7 +604,7 @@ Specify the year, month, and day. Does not deal with timezones."
               {:type :unsupported-operation}))))
 
 (extend-protocol InTimeUnitProtocol
-  cljs-time.core.Period
+  Period
   (in-millis [{:keys [millis seconds minutes hours days weeks months years]}]
     (cond months (conversion-error :months :millis)
           years (conversion-error :years :millis)
@@ -637,7 +637,7 @@ Specify the year, month, and day. Does not deal with timezones."
           weeks (conversion-error :weeks :years)
           months (int (+ (/ months 12) years))
           years years))
-  cljs-time.core.Interval
+  Interval
   (in-millis [{:keys [start end]}] (- (.getTime end) (.getTime start)))
   (in-seconds [this] (int (/ (in-millis this) 1000)))
   (in-minutes [this] (int (/ (in-seconds this) 60)))

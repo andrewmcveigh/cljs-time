@@ -304,15 +304,15 @@ formatted with each of the available printing formatters."
       (.getSeconds dt)
       (.getMilliseconds dt)))
 
-  cljs-time.core.Period
+  cljs-time.core/Period
   (instant->map [m]
     (time/->period m))
 
-  cljs-time.core.Interval
+  cljs-time.core/Interval
   (instant->map [m]
     (time/->period m))
 
-  cljs.core.PersistentArrayMap
+  cljs.core/PersistentArrayMap
   (instant->map [m]
     (case (:type (meta m))
       :cljs-time.core/period m
