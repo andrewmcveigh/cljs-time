@@ -4,7 +4,7 @@
 
 (def dependencies
   '[[org.clojure/clojure "1.8.0" :scope "provided"]
-    [org.clojure/clojurescript "1.9.89" :scope "provided"]])
+    [org.clojure/clojurescript "1.9.494" :scope "provided"]])
 
 (def dev-dependencies
   '[[org.clojure/tools.nrepl "0.2.12" :scope "test" :exclusions [org.clojure/clojure]]
