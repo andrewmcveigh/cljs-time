@@ -101,6 +101,9 @@
 (deftask test []
   (test-cljs :js-env :node :optimizations :simple))
 
+(deftask test-optimized []
+  (test-cljs :js-env :node :optimizations :advanced))
+
 (deftask test-all []
   (comp (test-cljs :js-env :node :optimizations :simple)
         (test-cljs :js-env :node :optimizations :advanced)))
