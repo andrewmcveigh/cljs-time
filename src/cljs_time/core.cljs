@@ -177,6 +177,16 @@ expected."}
           (when-let [f (period-fns k)] (f date' operator v))))
       date')))
 
+(defn- compare-local-dates [o other]
+  (let [yo (.getYear o)
+        yother (.getYear other)
+        dayo (.getDayOfYear o)
+        dayother (.getDayOfYear other)]
+    (cond
+      (not= yo yother) (- yo yother)
+      (not= dayo dayother) (- dayo dayother)
+      :else 0)))
+
 (extend-protocol DateTimeProtocol
   goog.date.UtcDateTime
   (year [this] (.getYear this))
@@ -235,9 +245,9 @@ expected."}
   (minute [this] nil)
   (second [this] nil)
   (milli [this] nil)
-  (equal? [this that] (== (.getTime this) (.getTime that)))
-  (after? [this that] (> (.getTime this) (.getTime that)))
-  (before? [this that] (< (.getTime this) (.getTime that)))
+  (equal? [this that] (.equals this that))
+  (after? [this that] (pos? (compare-local-dates this that)))
+  (before? [this that] (neg? (compare-local-dates this that)))
   (plus- [this period] ((period-fn period) + this))
   (minus- [this period] ((period-fn period) - this))
   (first-day-of-the-month- [this]
