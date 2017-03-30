@@ -364,16 +364,16 @@ they will default to 1 or 0 as appropriate."
    (goog.date.DateTime. year (dec month) day hour minute second millis)))
 
 (defn local-date
-  "Constructs and returns a new local DateTime.
-Specify the year, month, and day. Does not deal with timezones."
+  "Constructs and returns a new goog.date.Date in the local timezone.
+Specify the year, month, and day."
   [year month day]
   (goog.date.Date. year (dec month) day))
 
 (defn today
-  "Constructs and returns a new local DateTime representing today's date.
-  local DateTime objects do not deal with timezones at all."
+  "Constructs and returns a new goog.date.Date representing today in the local timezone."
   []
-  (doto (goog.date.Date.) (.setTime (*ms-fn*))))
+  ;Note that the actual time field of the constructed date is midnight of 'today'
+  (goog.date.Date. (js/Date. (*ms-fn*))))
 
 (defn time-zone-for-offset
   "Returns a timezone map for the given offset, specified either in hours or
