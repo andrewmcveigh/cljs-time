@@ -162,21 +162,28 @@
   (let [d (date-time 1918 11 11)]
     (is (= 1 (day-of-week d)))))
 
+(def local-date-x (local-date 2017 3 29))
+(def local-date-x-with-later-time (doto (goog.date.Date.)
+                                             (.setTime (+ 1 (.getTime local-date-x)))))
+
 (deftest test-equal?
   (is (equal? (date-time 2013 01 01 01) (date-time 2013 01 01 01)))
   (is (equal? (date-time 1987) (date-time 1987)))
   (is (not (equal? (date-time 1986) (date-time 1987))))
-  (is (not (equal? (date-time 1987) (date-time 1986)))))
+  (is (not (equal? (date-time 1987) (date-time 1986))))
+  (is (equal? local-date-x local-date-x-with-later-time)))
 
 (deftest test-after?
   (is (after? (date-time 1987) (date-time 1986)))
   (is (not (after? (date-time 1986) (date-time 1987))))
-  (is (not (after? (date-time 1986) (date-time 1986)))))
+  (is (not (after? (date-time 1986) (date-time 1986))))
+  (is (not (after? local-date-x-with-later-time local-date-x))))
 
 (deftest test-before?
   (is (before? (date-time 1986) (date-time 1987)))
   (is (not (before? (date-time 1987) (date-time 1986))))
-  (is (not (before? (date-time 1986) (date-time 1986)))))
+  (is (not (before? (date-time 1986) (date-time 1986))))
+  (is (not (before? local-date-x local-date-x-with-later-time))))
 
 (deftest test-periods
   (is (= (date-time 1986 10 14 4 3 2 1)

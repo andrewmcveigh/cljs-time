@@ -11,7 +11,8 @@
   (:import
    [goog.date Date]
    [goog.date DateTime]
-   [goog.date UtcDateTime]))
+   [goog.date UtcDateTime])
+  (:require [cljs-time.core :as time]))
 
 (defn hash-parts [type-hash ms-since-epoch offset]
   (let [ms-shifted (* ms-since-epoch 100000)
@@ -29,14 +30,7 @@
     (hash-parts 1 (.getTime this) (.getTimezoneOffset this)))
   IComparable
   (-compare [o other]
-    (let [yo (.getYear o)
-          yother (.getYear other)
-          dayo (.getDayOfYear o)
-          dayother (.getDayOfYear other)]
-      (cond
-        (not= yo yother) (- yo yother)
-        (not= dayo dayother) (- dayo dayother)
-        :else 0))))
+    (time/compare-local-dates o other)))
 
 (extend-type goog.date.DateTime
   IEquiv
