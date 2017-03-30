@@ -24,7 +24,7 @@
   IEquiv
   (-equiv [o other]
     (and (instance? goog.date.Date other)
-         (time/equal? o other)))
+         (.equals o other)))
   IHash
   (-hash [this]
     (hash-parts 1 (.getTime this) (.getTimezoneOffset this)))
