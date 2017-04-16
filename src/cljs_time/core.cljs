@@ -782,7 +782,7 @@ Specify the year, month, and day."
 
 (extend-protocol IToPeriod
 
-  cljs-time.core.Interval
+  Interval
   (->period [{:keys [start end] :as interval}]
     (let [years (in-years interval)
           start-year (year start)
@@ -810,7 +810,7 @@ Specify the year, month, and day."
               :millis (- (in-millis interval)
                          (* 1000 (+ seconds seconds-to-remove))))))
 
-  cljs-time.core.Period
+  Period
   (->period [period] period))
 
 (defn today-at
