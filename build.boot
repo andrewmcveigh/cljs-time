@@ -1,5 +1,5 @@
 (def +project+ 'com.andrewmcveigh/cljs-time)
-(def +version+ "0.5.0-SNAPSHOT")
+(def +version+ "0.5.0")
 (def +description+ "A clj-time inspired date library for clojurescript.")
 
 (def dependencies
@@ -9,7 +9,7 @@
 (def dev-dependencies
   '[[org.clojure/tools.nrepl "0.2.12" :scope "test" :exclusions [org.clojure/clojure]]
     [boot-codox "0.10.2" :scope "test"]
-    [codox-theme-rdash "0.1.1"]
+    [codox-theme-rdash "0.1.1" :scope "test"]
     [adzerk/boot-cljs "1.7.228-2" :scope "test"]
     [crisptrutski/boot-cljs-test "0.3.0" :scope "test"]])
 
