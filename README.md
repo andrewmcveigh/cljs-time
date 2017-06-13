@@ -277,7 +277,7 @@ And by the magic of protocols you can pass in an isoformat string and get the un
 
 Running the tests:
 
-    $ lein test-all
+    $ boot test-all
 
 (assumes Leiningen 2.x)
 
