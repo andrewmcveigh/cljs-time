@@ -112,4 +112,4 @@
   (comp (pom) (jar) (target)))
 
 (boot/deftask deploy []
-  (comp (test-all) (build) (install) (push)))
+  (comp (build) (test-all) (install) (push)))
