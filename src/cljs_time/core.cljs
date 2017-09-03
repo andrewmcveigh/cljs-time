@@ -793,7 +793,7 @@ Specify the year, month, and day. Does not deal with timezones."
 
 (defn today-at
   ([hours minutes seconds millis]
-   (doto (goog.date.UtcDateTime.)
+   (doto (now)
      (.setHours hours)
      (.setMinutes minutes)
      (.setSeconds seconds)
