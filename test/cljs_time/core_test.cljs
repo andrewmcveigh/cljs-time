@@ -596,7 +596,10 @@
         d  (day n)
         d1 (date-time y m d 13 0)]
     (is (= d1 (today-at 13 0)))
-    (is (= d1 (today-at 13 0 0)))))
+    (is (= d1 (today-at 13 0 0)))
+    (is (= (date-midnight 2010 1 1)
+           (do-at (date-midnight 2010 1 1)
+            (today-at 0 0))))))
 
 (deftest group-by-equiv-test
   (is (= {(date-midnight 2015 6 1) '[(a 1433152980000) (b 1433196180000)]
