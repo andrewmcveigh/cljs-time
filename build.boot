@@ -11,7 +11,7 @@
     [boot-codox "0.10.2" :scope "test"]
     [codox-theme-rdash "0.1.1" :scope "test"]
     [adzerk/boot-cljs "1.7.228-2" :scope "test"]
-    [crisptrutski/boot-cljs-test "0.3.0" :scope "test"]])
+    [crisptrutski/boot-cljs-test "0.3.4" :scope "test"]])
 
 (set-env!
  :source-paths #{"src" "test" "compile" "perf"}
@@ -79,6 +79,7 @@
   (closure/-find-sources [_ opts]
     (mapcat #(closure/-find-sources % opts) paths)))
 
+(ns-unmap 'boot.user 'compile)
 (defn compile
   [optimizations & {:keys [out-dir] :or {out-dir "target"}}]
   {:pre [(#{:none :whitespace :simple :advanced} optimizations)]}
@@ -98,6 +99,7 @@
         (speak)
         (test-cljs :js-env :node)))
 
+(ns-unmap 'boot.user 'test)
 (deftask test []
   (test-cljs :js-env :node :optimizations :simple))
 
