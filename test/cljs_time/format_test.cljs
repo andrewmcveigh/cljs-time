@@ -371,3 +371,6 @@
          (format/unparse (format/formatter "ddo")
                          (cljs-time.coerce/from-long 1473878547000)))))
 
+(deftest parse-yy-test
+  (is (= (date-time 2017 1 1)
+         (format/parse (format/formatter "yy") "17"))))

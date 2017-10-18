@@ -286,7 +286,13 @@
          :as date-map} (->> values
                             (remove (comp #{:quoted} first))
                             (into {}))
+        year (.getYear (Date.))
+        pivot (- year 30)
+        century (- year (mod year 100))
         years (or years default-year 0)
+        years (cond-> years
+                (< years (mod (+ pivot 50) 100))
+                (+ century))
         months (when months (dec months))
         hours (if meridiem
                 (if (#{:pm :PM} meridiem)
