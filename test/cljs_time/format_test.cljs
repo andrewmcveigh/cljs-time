@@ -374,3 +374,8 @@
 (deftest parse-yy-test
   (is (= (date-time 2017 1 1)
          (format/parse (format/formatter "yy") "17"))))
+
+(deftest parse-quoted-test
+  (is (= (date-time 2017 7 1)
+         (format/parse (format/formatter "MMMM dd, YYYY 'at' H:mm a")
+                       "July 1, 2017 at 10:00 am"))))

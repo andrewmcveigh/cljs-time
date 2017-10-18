@@ -198,12 +198,13 @@
   (fn [s] (parse-period-name s :days i/days short?)))
 
 (defn parse-quoted [quoted]
-  (fn [s]
-    (let [s' (replace s (re-pattern (str \^ quoted)) "")]
-      (if (= s s')
-        (throw (ex-info "Quoted text not found"
-                        {:type :parse-error :where :parse-quoted}))
-        [[:quoted quoted] s']))))
+  (let [qpat (re-pattern (apply str \^ quoted))]
+    (fn [s]
+      (let [s' (replace s qpat "")]
+        (if (= s s')
+          (throw (ex-info "Quoted text not found"
+                          {:type :parse-error :where :parse-quoted}))
+          [[:quoted quoted] s'])))))
 
 (defn parse-ordinal-suffix []
   (fn [s]
