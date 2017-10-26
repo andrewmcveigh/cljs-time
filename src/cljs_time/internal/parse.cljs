@@ -167,12 +167,16 @@
    (fn [s]
      (let [[[m n] s] (split-at 2 s)
            meridiem (str m n)
+           err #(ex-info
+                 (str "Invalid meridiem format: " meridiem) {:type :parse-error})
            [meridiem s] (cond (#{"am" "pm" "AM" "PM"} meridiem)
                               [meridiem s]
                               (#{\a \p} m)
                               [({\a "am" \p "pm"} m) (cons n s)]
                               (#{\A \P} m)
-                              [({\A "am" \P "pm"} m) (cons n s)])]
+                              [({\A "am" \P "pm"} m) (cons n s)]
+                              :default
+                              (throw (err)))]
        [[:meridiem (keyword meridiem)] (string/join s)]))))
 
 (defn parse-period-name [s period periods short?]

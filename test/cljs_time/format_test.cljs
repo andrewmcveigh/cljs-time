@@ -31,6 +31,13 @@
       (try
         (format/parse (formatter "dd/MM/yyyy") "32/04/2013")
         (catch ExceptionInfo e (:type (ex-data e))))))
+
+  (is
+   (= :parse-error
+      (try
+        (format/parse (formatter "hh:mm A") "10:00 T")
+        (catch ExceptionInfo e (:type (ex-data e))))))
+
   (let [date (format/parse (formatter "dd/MM/yyyy") "12/08/1938")]
     (is (= 1938 (.getYear date)))
     (is (= 12   (.getDate date)))
