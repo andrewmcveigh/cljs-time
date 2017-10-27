@@ -204,7 +204,8 @@
 (defn parse-quoted [quoted]
   (let [qpat (re-pattern (apply str \^ quoted))]
     (fn [s]
-      (let [s' (replace s qpat "")]
+      (let [s (string/join s)
+            s' (replace s qpat "")]
         (if (= s s')
           (throw (ex-info "Quoted text not found"
                           {:type :parse-error :where :parse-quoted}))
