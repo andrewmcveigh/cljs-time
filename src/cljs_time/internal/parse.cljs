@@ -167,12 +167,16 @@
    (fn [s]
      (let [[[m n] s] (split-at 2 s)
            meridiem (str m n)
+           err #(ex-info
+                 (str "Invalid meridiem format: " meridiem) {:type :parse-error})
            [meridiem s] (cond (#{"am" "pm" "AM" "PM"} meridiem)
                               [meridiem s]
                               (#{\a \p} m)
                               [({\a "am" \p "pm"} m) (cons n s)]
                               (#{\A \P} m)
-                              [({\A "am" \P "pm"} m) (cons n s)])]
+                              [({\A "am" \P "pm"} m) (cons n s)]
+                              :default
+                              (throw (err)))]
        [[:meridiem (keyword meridiem)] (string/join s)]))))
 
 (defn parse-period-name [s period periods short?]
@@ -200,7 +204,8 @@
 (defn parse-quoted [quoted]
   (let [qpat (re-pattern (apply str \^ quoted))]
     (fn [s]
-      (let [s' (replace s qpat "")]
+      (let [s (string/join s)
+            s' (replace s qpat "")]
         (if (= s s')
           (throw (ex-info "Quoted text not found"
                           {:type :parse-error :where :parse-quoted}))
