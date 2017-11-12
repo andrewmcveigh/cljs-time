@@ -279,7 +279,22 @@ Running the tests:
 
     $ boot test-all
 
-(assumes Leiningen 2.x)
+OR
+
+    $ boot auto-test
+
+### Getting a REPL
+
+    $ boot repl # (or jack-in from cider/etc)
+
+``` clojure
+    boot.user> (node-repl)
+    clojurescript node.js repl server listening on 56950
+    to quit, type: :cljs/quit
+    nil
+    cljs.user> (+ 1 1)
+    2
+```
 
 ## Documentation
 
