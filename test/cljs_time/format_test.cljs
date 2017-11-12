@@ -383,7 +383,13 @@
     (is (= "2015-W01-2" 
            (format/unparse fmt (time/date-time 2014 12 30))))
     (is (= "2015-W01-7" 
-           (format/unparse fmt (time/date-time 2015 1 4))))))
+           (format/unparse fmt (time/date-time 2015 1 4))))
+    (is (= (time/date-time 2014 12 29)
+           (format/parse fmt "2015-W01-1")))
+    (is (= (time/date-time 2014 12 30)
+           (format/parse fmt "2015-W01-2")))
+    (is (= (time/date-time 2015 1 4)
+           (format/parse fmt "2015-W01-7")))))
 
 (deftest parse-MM-test
   (is (= (date-time 2012 1 1)
