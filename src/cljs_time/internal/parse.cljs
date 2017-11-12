@@ -101,6 +101,11 @@
   ([lower upper]
    (fn [s] (parse-period s :days lower upper))))
 
+(defn parse-day-of-week
+  ([limit] (parse-day 1 limit))
+  ([lower upper]
+   (fn [s] (parse-period s :day-of-week lower upper))))
+
 (defn parse-hours
   ([limit] (parse-hours 1 limit))
   ([lower upper]
@@ -254,6 +259,7 @@
       "E"    (parse-day-name true)
       "EEE"  (parse-day-name true)
       "EEEE" (parse-day-name false)
+      "e"    (parse-day-of-week 1 2)
       "a"    (parse-meridiem)
       "A"    (parse-meridiem)
       "Z"    (parse-timezone :dddd)

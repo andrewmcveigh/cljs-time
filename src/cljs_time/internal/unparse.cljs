@@ -50,8 +50,18 @@
    (fn [s d]
      (unparse-period s d (.getDate d) min max))))
 
+(defn unparse-day-of-week
+  ".getDay returns 0-6, shifts to 1-7"
+  ([min] (unparse-day-of-week min min))
+  ([min max]
+   (fn [s d]
+     (let [raw-day-of-week (.getDay d)
+           day-of-week (if (= raw-day-of-week 0)
+                         7 raw-day-of-week)]
+       (unparse-period s d day-of-week min max)))))
+
 (defn unparse-day-of-year
-  ([min] (unparse-day min min))
+  ([min] (unparse-day min min)) ;; <- this right?
   ([min max]
    (fn [s d]
      (unparse-period s d (.getDate d) min max))))
@@ -159,6 +169,7 @@
       "xxxx" [:weekyear 4 4]
       "w"    [:weekyear-week 1 2]
       "ww"   [:weekyear-week 2 2]
+      "e"    [:day-of-week 1 1]
       "E"    [:day-name true]
       "EEE"  [:day-name true]
       "EEEE" [:day-name false]
@@ -194,6 +205,7 @@
     :weekyear       (apply unparse-weekyear args)
     :weekyear-week  (apply unparse-weekyear-week args)
     :day-name       (apply unparse-day-name args)
+    :day-of-week    (apply unparse-day-of-week args)
     :meridiem       (apply unparse-meridiem args)
     :timezone       (apply unparse-timezone args)
     :ordinal-suffix (let [[k] (syntax-list (dec i))]

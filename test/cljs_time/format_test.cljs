@@ -369,14 +369,21 @@
     (is (= "W02" (format/unparse fmt (time/date-time 2015 1 5))))
     (is (= "W01" (format/unparse fmt (time/date-time 2010 1 4))))
     (is (= "W01" (format/unparse fmt (time/date-time 2008 12 29)))))
-  (comment
-    ;; no built in support for week-year in goog.date
-    (let [fmt (format/formatters :weekyear-week)]
-      (is (= "2015-W01" (format/unparse fmt (time/date-time 2014 12 29))))
-      (is (= "2015-W02" (format/unparse fmt (time/date-time 2015 1 5))))
-      (is (= "2009-W53" (format/unparse fmt (time/date-time 2010 1 3))))
-      (is (= "2010-W01" (format/unparse fmt (time/date-time 2010 1 4))))
-      (is (= "2009-W01" (format/unparse fmt (time/date-time 2008 12 29)))))))
+  (let [fmt (format/formatters :weekyear-week)]
+    (is (= "2015-W01" (format/unparse fmt (time/date-time 2014 12 29))))
+    (is (= "2015-W02" (format/unparse fmt (time/date-time 2015 1 5))))
+    (is (= "2009-W53" (format/unparse fmt (time/date-time 2010 1 3))))
+    (is (= "2010-W01" (format/unparse fmt (time/date-time 2010 1 4))))
+    (is (= "2009-W01" (format/unparse fmt (time/date-time 2008 12 29))))))
+
+(deftest weekyear-week-day-test
+  (let [fmt (format/formatters :weekyear-week-day)]
+    (is (= "2015-W01-1" 
+           (format/unparse fmt (time/date-time 2014 12 29))))
+    (is (= "2015-W01-2" 
+           (format/unparse fmt (time/date-time 2014 12 30))))
+    (is (= "2015-W01-7" 
+           (format/unparse fmt (time/date-time 2015 1 4))))))
 
 (deftest parse-MM-test
   (is (= (date-time 2012 1 1)
