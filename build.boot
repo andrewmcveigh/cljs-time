@@ -11,7 +11,8 @@
     [boot-codox "0.10.2" :scope "test"]
     [codox-theme-rdash "0.1.1" :scope "test"]
     [adzerk/boot-cljs "1.7.228-2" :scope "test"]
-    [crisptrutski/boot-cljs-test "0.3.4" :scope "test"]])
+    [crisptrutski/boot-cljs-test "0.3.4" :scope "test"]
+    [com.cemerick/piggieback "0.2.2" :scope "test"]])
 
 (set-env!
  :source-paths #{"src" "test" "compile" "perf"}
@@ -115,3 +116,12 @@
 
 (boot/deftask deploy []
   (comp (build) (test-all) (install) (push)))
+
+(defn add-piggieware []
+  (require 'cemerick.piggieback)
+  (swap! repl/*default-middleware* conj 'cemerick.piggieback/wrap-cljs-repl)
+  (swap! repl/*default-middleware* distinct))
+
+(deftask node-repl []
+  (add-piggieware)
+  ((resolve 'cemerick.piggieback/cljs-repl) (cljs.repl.node/repl-env)))
