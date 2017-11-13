@@ -118,7 +118,8 @@ expected."}
   (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s).")
   (first-day-of-the-month- [this] "Returns the first day of the month")
   (last-day-of-the-month- [this] "Returns the last day of the month")
-  (week-number-of-year [this] "Returs the number of weeks in the year"))
+  (week-number-of-year [this] "Returns the week of the week based year of the given date/time")
+  (week-year [this] "Returns the the week based year of the given date/time."))
 
 (defprotocol InTimeUnitProtocol
   "Interface for in-<time unit> functions"
@@ -187,6 +188,17 @@ expected."}
       (not= dayo dayother) (- dayo dayother)
       :else 0)))
 
+(defn get-week-year
+  "Counterpart ot goog.date/getWeekNumber"
+  [year month date]
+  (let [january (= month 0)
+        december (= month 11)
+        week-number (goog.date/getWeekNumber year month date)]
+    (cond 
+      (and january (>= week-number 52)) (dec year)
+      (and december (= week-number 1))  (inc year)
+      :else year)))
+
 (extend-protocol DateTimeProtocol
   goog.date.UtcDateTime
   (year [this] (.getYear this))
@@ -211,6 +223,8 @@ expected."}
   (week-number-of-year [this]
     (goog.date/getWeekNumber
      (.getYear this) (.getMonth this) (.getDate this)))
+  (week-year [this] 
+    (get-week-year (.getYear this) (.getMonth this) (.getDate this)))
 
   goog.date.DateTime
   (year [this] (.getYear this))
@@ -235,6 +249,8 @@ expected."}
   (week-number-of-year [this]
     (goog.date/getWeekNumber
      (.getYear this) (.getMonth this) (.getDate this)))
+  (week-year [this] 
+    (get-week-year (.getYear this) (.getMonth this) (.getDate this)))
 
   goog.date.Date
   (year [this] (.getYear this))
@@ -258,7 +274,9 @@ expected."}
      (period :days 1)))
   (week-number-of-year [this]
     (goog.date/getWeekNumber
-     (.getYear this) (.getMonth this) (.getDate this))))
+     (.getYear this) (.getMonth this) (.getDate this)))
+  (week-year [this] 
+    (get-week-year (.getYear this) (.getMonth this) (.getDate this))))
 
 (def utc #js {:id "UTC" :std_offset 0 :names ["UTC"] :transitions []})
 

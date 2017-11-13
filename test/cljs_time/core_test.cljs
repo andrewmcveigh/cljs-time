@@ -18,7 +18,7 @@
       years? months? weeks? days? hours? minutes? seconds?
       extend start end mins-ago default-time-zone
       to-default-time-zone from-default-time-zone
-      overlap week-number-of-year floor]]
+      overlap week-number-of-year week-year floor]]
     [cljs-time.extend]))
 
 (deftest test-now
@@ -549,6 +549,12 @@
   (is (= 52 (week-number-of-year (date-time 2012 12 30))))
   (is (= 1 (week-number-of-year (date-time 2012 12 31))))
   (is (= 1 (week-number-of-year (date-time 2013 1 1)))))
+
+(deftest test-week-year
+  (is (= 2015 (week-year (date-time 2014 12 29))))
+  (is (= 2015 (week-year (date-time 2015 1 5))))
+  (is (= 2009 (week-year (date-time 2010 1 3))))
+  (is (= 2010 (week-year (date-time 2010 1 4)))))
 
 (deftest test-number-of-days-in-the-month
   (is (= 31 (number-of-days-in-the-month 2012 1)))
