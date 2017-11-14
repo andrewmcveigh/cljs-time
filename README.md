@@ -35,7 +35,7 @@ With Leiningen:
 
 ``` clj
 ;; Stable
-[com.andrewmcveigh/cljs-time "0.5.0"]
+[com.andrewmcveigh/cljs-time "0.5.2"]
 ```
 
 ## Bugs and Enhancements
