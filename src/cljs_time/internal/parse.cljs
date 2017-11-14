@@ -322,6 +322,7 @@
          :as date-map} (->> values
                             (remove (comp #{:quoted} first))
                             (into {})
+                            (i/valid-date?)
                             (week-date->gregorian))
         years (infer-years years (:default-year fmt))
         months (when months (dec months))
@@ -337,7 +338,6 @@
         timezone (if (instance? Interval timezone)
                    timezone
                    (Interval. Interval.SECONDS 0))]
-    (i/valid-date? date-map)
     (doto (case class
             :goog.date.Date
             (Date. years months days)

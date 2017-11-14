@@ -77,7 +77,8 @@ true
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
-   [cljs-time.internal.core :as internal :refer [leap-year? format]]
+   [cljs-time.internal.core :as internal :refer [leap-year? format
+                                                 get-week-year]]
    [clojure.string :as string]
    goog.date.Interval
    goog.date)
@@ -187,17 +188,6 @@ expected."}
       (not= yo yother) (- yo yother)
       (not= dayo dayother) (- dayo dayother)
       :else 0)))
-
-(defn get-week-year
-  "Counterpart ot goog.date/getWeekNumber"
-  [year month date]
-  (let [january (= month 0)
-        december (= month 11)
-        week-number (goog.date/getWeekNumber year month date)]
-    (cond 
-      (and january (>= week-number 52)) (dec year)
-      (and december (= week-number 1))  (inc year)
-      :else year)))
 
 (extend-protocol DateTimeProtocol
   goog.date.UtcDateTime

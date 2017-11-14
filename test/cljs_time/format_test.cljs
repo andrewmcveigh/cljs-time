@@ -384,6 +384,8 @@
            (format/unparse fmt (time/date-time 2014 12 30))))
     (is (= "2015-W01-7" 
            (format/unparse fmt (time/date-time 2015 1 4))))
+    (is (= "2009-W53-7"
+           (format/unparse fmt (time/date-time 2010 1 3))))
     (is (= (time/date-time 2014 12 29)
            (format/parse fmt "2015-W01-1")))
     (is (= (time/date-time 2014 12 30)

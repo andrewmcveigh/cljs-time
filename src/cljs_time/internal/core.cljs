@@ -3,7 +3,8 @@
   (:require
    [clojure.string :as string]
    [goog.string :as gstring]
-   [goog.string.format]))
+   [goog.string.format]
+   [goog.date]))
 
 (def months
   ["January" "February" "March" "April" "May" "June" "July" "August"
@@ -36,7 +37,8 @@
     (and (leap-year? year) (= month 2)) inc))
 
 (defn valid-date?
-  [{:keys [years months days hours minutes seconds millis] :as d}]
+  [{:keys [years months days hours minutes seconds millis
+           weekyear weekyear-week day-of-week] :as d}]
   (let [months?  (when months (<= 1 months 12))
         dim      (if years
                    (and months months? (year-corrected-dim years months))
@@ -45,11 +47,20 @@
         hours?   (when hours (<= 0 hours 23))
         minutes? (when minutes (<= 0 minutes 59))
         seconds? (when seconds (<= 0 seconds 60))
-        millis?  (when millis (<= 0 millis 999))]
-    (if (->> [months? days? hours? minutes? seconds? millis?]
+        millis?  (when millis (<= 0 millis 999))
+        weekyear-week? (when weekyear-week (<= 1 weekyear-week 53))
+        day-of-week? (when day-of-week (<= 1 day-of-week 7))]
+    (if (->> [months? days? hours? minutes? seconds? millis? 
+              weekyear-week? day-of-week?]
              (remove nil?)
              (every? true?))
-      d
+      (if (not (and (or years months days)
+                    (or weekyear weekyear-week day-of-week)))
+        d
+        (throw 
+         (ex-info "Mixing year, month, day and week-year week-number fields"
+                  {:type :invalid-date :date d
+                   :errors {}})))
       (throw
        (ex-info "Date is not valid"
                 {:type :invalid-date :date d
@@ -59,7 +70,9 @@
                            (false? hours?)   (assoc :hours hours)
                            (false? minutes?) (assoc :minutes minutes)
                            (false? seconds?) (assoc :seconds seconds)
-                           (false? millis?)  (assoc :millis millis))})))))
+                           (false? millis?)  (assoc :millis millis)
+                           (false? weekyear-week?) (assoc :weekyear-week weekyear-week)
+                           (false? day-of-week?) (assoc :day-of-week day-of-week))})))))
 
 (defn index-of [coll x]
   (first (keep-indexed #(when (= %2 x) %1) coll)))
@@ -97,3 +110,15 @@
         (update-in [:weeks] scale-fn)
         (update-in [:months] scale-fn)
         (update-in [:years] scale-fn))))
+
+(defn get-week-year
+  "Counterpart ot goog.date/getWeekNumber. 
+  month 0 is jan per goog.date"
+  [year month date]
+  (let [january (= month 0)
+        december (= month 11)
+        week-number (goog.date/getWeekNumber year month date)]
+    (cond 
+      (and january (>= week-number 52)) (dec year)
+      (and december (= week-number 1))  (inc year)
+      :else year)))

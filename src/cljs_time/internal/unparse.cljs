@@ -98,16 +98,12 @@
   ([min] (unparse-weekyear min min))
   ([min max]
    (fn [s d]
-     (let [year (.getYear d) month (.getMonth d) day (.getDate d)
-           january (= month 0)
-           december (= month 11)
-           week-number (goog.date/getWeekNumber year month day)
-           weekyear (cond (and january (>= week-number 52))
-                          (dec year)
-                          (and december (= week-number 1))
-                          (inc year)
-                          :else year)]
-       (unparse-period s d weekyear min max)))))
+     (let [year (.getYear d) 
+           month (.getMonth d) 
+           day (.getDate d)]
+       (unparse-period s d 
+                       (i/get-week-year year month day) 
+                       min max)))))
 
 (defn unparse-weekyear-week
   ([min] (unparse-weekyear-week min min))
