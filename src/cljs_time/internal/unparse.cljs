@@ -61,7 +61,7 @@
        (unparse-period s d day-of-week min max)))))
 
 (defn unparse-day-of-year
-  ([min] (unparse-day min min)) ;; <- this right?
+  ([min] (unparse-day min min))
   ([min max]
    (fn [s d]
      (unparse-period s d (.getDate d) min max))))
