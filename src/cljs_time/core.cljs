@@ -77,7 +77,8 @@ true
   ceorce date-times to or from other types, see cljs-time.coerce."
   (:refer-clojure :exclude [= extend second])
   (:require
-   [cljs-time.internal.core :as internal :refer [leap-year? format]]
+   [cljs-time.internal.core :as internal :refer [leap-year? format
+                                                 get-week-year]]
    [clojure.string :as string]
    goog.date.Interval
    goog.date)
@@ -118,7 +119,8 @@ expected."}
   (minus- [this period] "Returns a new date/time corresponding to the given date/time moved backwards by the given Period(s).")
   (first-day-of-the-month- [this] "Returns the first day of the month")
   (last-day-of-the-month- [this] "Returns the last day of the month")
-  (week-number-of-year [this] "Returs the number of weeks in the year"))
+  (week-number-of-year [this] "Returns the week of the week based year of the given date/time")
+  (week-year [this] "Returns the the week based year of the given date/time."))
 
 (defprotocol InTimeUnitProtocol
   "Interface for in-<time unit> functions"
@@ -211,6 +213,8 @@ expected."}
   (week-number-of-year [this]
     (goog.date/getWeekNumber
      (.getYear this) (.getMonth this) (.getDate this)))
+  (week-year [this] 
+    (get-week-year (.getYear this) (.getMonth this) (.getDate this)))
 
   goog.date.DateTime
   (year [this] (.getYear this))
@@ -235,6 +239,8 @@ expected."}
   (week-number-of-year [this]
     (goog.date/getWeekNumber
      (.getYear this) (.getMonth this) (.getDate this)))
+  (week-year [this] 
+    (get-week-year (.getYear this) (.getMonth this) (.getDate this)))
 
   goog.date.Date
   (year [this] (.getYear this))
@@ -258,7 +264,9 @@ expected."}
      (period :days 1)))
   (week-number-of-year [this]
     (goog.date/getWeekNumber
-     (.getYear this) (.getMonth this) (.getDate this))))
+     (.getYear this) (.getMonth this) (.getDate this)))
+  (week-year [this] 
+    (get-week-year (.getYear this) (.getMonth this) (.getDate this))))
 
 (def utc #js {:id "UTC" :std_offset 0 :names ["UTC"] :transitions []})
 

@@ -101,6 +101,11 @@
   ([lower upper]
    (fn [s] (parse-period s :days lower upper))))
 
+(defn parse-day-of-week
+  ([limit] (parse-day 1 limit))
+  ([lower upper]
+   (fn [s] (parse-period s :day-of-week lower upper))))
+
 (defn parse-hours
   ([limit] (parse-hours 1 limit))
   ([lower upper]
@@ -254,6 +259,7 @@
       "E"    (parse-day-name true)
       "EEE"  (parse-day-name true)
       "EEEE" (parse-day-name false)
+      "e"    (parse-day-of-week 1 2)
       "a"    (parse-meridiem)
       "A"    (parse-meridiem)
       "Z"    (parse-timezone :dddd)
@@ -285,20 +291,40 @@
           (throw (err))
           out)))))
 
-(defn compile [class {:keys [default-year] :as fmt} values]
-  (let [{:keys [years months days
-                hours HOURS minutes seconds millis
-                meridiem timezone]
-         :as date-map} (->> values
-                            (remove (comp #{:quoted} first))
-                            (into {}))
-        year (.getYear (Date.))
+(defn infer-years
+  [years default-year]
+  (let [year (.getYear (Date.))
         pivot (- year 30)
         century (- year (mod year 100))
         years (or years default-year 0)
         years (cond-> years
                 (< years (mod (+ pivot 50) 100))
-                (+ century))
+                (+ century))]
+    years))
+
+(defn week-date->gregorian
+  [{:keys [weekyear weekyear-week day-of-week] :as date-map}]
+  (if (and weekyear weekyear-week)
+    (let [date (Date. weekyear 0 4)]
+      (.add date (Interval. 0 0 (* 7 (dec weekyear-week))))
+      (.add date (Interval. 0 0 (- (or day-of-week 1) 
+                                   (inc (mod (dec (.getDay date)) 7)))))
+      (-> date-map
+          (assoc :years (.getYear date))
+          (assoc :months (inc (.getMonth date)))
+          (assoc :days (.getDate date))))
+    date-map))
+
+(defn compile [class fmt values]
+  (let [{:keys [years months days
+                hours HOURS minutes seconds millis
+                meridiem timezone]
+         :as date-map} (->> values
+                            (remove (comp #{:quoted} first))
+                            (into {})
+                            (i/valid-date?)
+                            (week-date->gregorian))
+        years (infer-years years (:default-year fmt))
         months (when months (dec months))
         hours (if meridiem
                 (if (#{:pm :PM} meridiem)
@@ -312,7 +338,6 @@
         timezone (if (instance? Interval timezone)
                    timezone
                    (Interval. Interval.SECONDS 0))]
-    (i/valid-date? date-map)
     (doto (case class
             :goog.date.Date
             (Date. years months days)

@@ -50,6 +50,16 @@
    (fn [s d]
      (unparse-period s d (.getDate d) min max))))
 
+(defn unparse-day-of-week
+  ".getDay returns 0-6, shifts to 1-7"
+  ([min] (unparse-day-of-week min min))
+  ([min max]
+   (fn [s d]
+     (let [raw-day-of-week (.getDay d)
+           day-of-week (if (= raw-day-of-week 0)
+                         7 raw-day-of-week)]
+       (unparse-period s d day-of-week min max)))))
+
 (defn unparse-day-of-year
   ([min] (unparse-day min min))
   ([min max]
@@ -88,16 +98,12 @@
   ([min] (unparse-weekyear min min))
   ([min max]
    (fn [s d]
-     (let [year (.getYear d) month (.getMonth d) day (.getDate d)
-           january (= month 0)
-           december (= month 11)
-           week-number (goog.date/getWeekNumber year month day)
-           weekyear (cond (and january (>= week-number 52))
-                          (dec year)
-                          (and december (= week-number 1))
-                          (inc year)
-                          :else year)]
-       (unparse-period s d weekyear min max)))))
+     (let [year (.getYear d) 
+           month (.getMonth d) 
+           day (.getDate d)]
+       (unparse-period s d 
+                       (i/get-week-year year month day) 
+                       min max)))))
 
 (defn unparse-weekyear-week
   ([min] (unparse-weekyear-week min min))
@@ -159,6 +165,7 @@
       "xxxx" [:weekyear 4 4]
       "w"    [:weekyear-week 1 2]
       "ww"   [:weekyear-week 2 2]
+      "e"    [:day-of-week 1 1]
       "E"    [:day-name true]
       "EEE"  [:day-name true]
       "EEEE" [:day-name false]
@@ -194,6 +201,7 @@
     :weekyear       (apply unparse-weekyear args)
     :weekyear-week  (apply unparse-weekyear-week args)
     :day-name       (apply unparse-day-name args)
+    :day-of-week    (apply unparse-day-of-week args)
     :meridiem       (apply unparse-meridiem args)
     :timezone       (apply unparse-timezone args)
     :ordinal-suffix (let [[k] (syntax-list (dec i))]
