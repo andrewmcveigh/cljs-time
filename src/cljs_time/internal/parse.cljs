@@ -66,9 +66,9 @@
   ([s limit] (parse-number s 1 limit))
   ([s lower upper]
    (let [[n s] (read-while #(re-find #"\d" %) s)]
-     (if (>= (count n) lower)
-       [(js/parseInt (apply str (take upper n))) (concat (drop upper n) s)]
-       [(js/parseInt (apply str n)) s]))))
+     (if (>= (count n) upper)
+       [(js/parseInt (apply str (take upper n)) 10) (concat (drop upper n) s)]
+       [(js/parseInt (apply str n) 10) s]))))
 
 (defn parse-period
   ([s period limit] (parse-period s period 1 limit))
