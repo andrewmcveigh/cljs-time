@@ -228,6 +228,7 @@
     (case pattern
       "S"    (parse-millis 1 2)
       "SSS"  (parse-millis 3 3)
+      "SSSS" (parse-millis 9)
       "s"    (parse-seconds 1 2)
       "ss"   (parse-seconds 2 2)
       "m"    (parse-minutes 1 2)
