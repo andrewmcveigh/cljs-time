@@ -4,7 +4,7 @@
 
 (def dependencies
   '[[org.clojure/clojure "1.8.0" :scope "provided"]
-    [org.clojure/clojurescript "1.9.521" :scope "provided"]])
+    [org.clojure/clojurescript "1.10.439" :scope "provided"]])
 
 (def dev-dependencies
   '[[org.clojure/tools.nrepl "0.2.12" :scope "test" :exclusions [org.clojure/clojure]]
@@ -102,14 +102,13 @@
 
 (ns-unmap 'boot.user 'test)
 (deftask test []
-  (test-cljs :js-env :node :optimizations :simple))
+  (test-cljs :js-env :node :optimizations :simple :exit? true))
 
 (deftask test-optimized []
-  (test-cljs :js-env :node :optimizations :advanced))
+  (test-cljs :js-env :node :optimizations :advanced :exit? true))
 
 (deftask test-all []
-  (comp (test-cljs :js-env :node :optimizations :simple)
-        (test-cljs :js-env :node :optimizations :advanced)))
+  (comp (test) (test-optimized)))
 
 (boot/deftask build []
   (comp (pom) (jar) (target)))
