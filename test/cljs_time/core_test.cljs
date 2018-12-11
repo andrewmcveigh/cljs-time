@@ -4,7 +4,7 @@
     [cljs-time.macros :refer [do-at]]
     [cljs-time.core-test :refer [try= when-available when-not-available]])
   (:require
-    [cljs.test :refer-macros [deftest is are]]
+    [cljs.test :refer-macros [deftest is are testing]]
     [cljs-time.coerce :refer [from-long to-long]]
     [cljs-time.core :as time :refer
      [date-time epoch year month day date-midnight today-at-midnight hour

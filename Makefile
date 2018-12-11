@@ -20,5 +20,31 @@ deps: bin/boot
 build: bin/boot
 	export BOOT_EMIT_TARGET=no && ./bin/boot build
 
-test: bin/boot
-	./bin/boot test-all
+test: test-sydney test-adelaide test-brisbane test-utc test-amsterdam test-auckland test-colombo test-kathmandu test-midway
+
+test-sydney: bin/boot
+	export TZ=Australia/Sydney && ./bin/boot test-all
+
+test-adelaide: bin/boot
+	export TZ=Australia/Adelaide && ./bin/boot test-all
+
+test-brisbane: bin/boot
+	export TZ=Australia/Brisbane && ./bin/boot test-all
+
+test-utc: bin/boot
+	export TZ=Etc/Utc && ./bin/boot test-all
+
+test-amsterdam: bin/boot
+	export TZ=Europe/Amsterdam && ./bin/boot test-all
+
+test-auckland: bin/boot
+	export TZ=Pacific/Auckland && ./bin/boot test-all
+
+test-colombo: bin/boot
+	export TZ=Asia/Colombo && ./bin/boot test-all
+
+test-kathmandu: bin/boot
+	export TZ=Asia/Kathmandu && ./bin/boot test-all
+
+test-midway: bin/boot
+	export TZ=Pacific/Midway && ./bin/boot test-all
