@@ -4,7 +4,7 @@
     [cljs-time.macros :refer [do-at]]
     [cljs-time.core-test :refer [try= when-available when-not-available]])
   (:require
-    [cljs.test :refer-macros [deftest is are]]
+    [cljs.test :refer-macros [deftest is are testing]]
     [cljs-time.coerce :refer [from-long to-long]]
     [cljs-time.core :as time :refer
      [date-time epoch year month day date-midnight today-at-midnight hour
@@ -20,6 +20,15 @@
       to-default-time-zone from-default-time-zone
       overlap week-number-of-year week-year floor]]
     [cljs-time.extend]))
+
+(defn cest?
+  "Is this date in Central European Summer Time?"
+  [date]
+  ;; Linux prints timezone as (CEST)
+  ;; macOS prints it as (Central European Summer Time)
+  (->> (str date)
+       (re-find #"(\(CEST\)|\(Central European Summer Time\))$")
+       (boolean)))
 
 (deftest test-now
   (is (= (date-time 2010 1 1)
@@ -119,17 +128,15 @@
 
 (deftest test-to-default-time-zone
   (let [dt1 (date-time 1986 10 14 6)
-        cest? (re-find #"\(CEST\)$" (str (js/Date. (.getTime dt1))))
         dt2 (to-default-time-zone dt1)]
-    (when cest?
+    (when (cest? (js/Date. (.getTime dt1)))
       (is (= 8 (hour dt2))))
     (is (= (.getTime dt1) (.getTime dt2)))))
 
 (deftest test-from-default-time-zone
   (let [dt1 (date-time 1986 10 14 6)
-        cest? (re-find #"\(CEST\)$" (str (js/Date. (.getTime dt1))))
         dt2 (from-default-time-zone dt1)]
-    (when cest?
+    (when (cest? (js/Date. (.getTime dt1)))
       (is (= 6 (hour dt2))))
     (cond (zero? (.getTimezoneOffset dt2))
           (is (= (.getTime dt1) (.getTime dt2)))
@@ -144,17 +151,85 @@
                 (today)))))
 
 (deftest test-dst-time-default
-  (let [summer-time-change (js/Date. (.getTime (local-date-time 2013 3 31 3)))
-        cest? (re-find #"\(CEST\)$" (str summer-time-change))]
-    (when cest?
-      (is (= (local-date-time 2013 3 30 1)
-             (to-default-time-zone (date-time 2013 3 30 0))))
-      (is (= (local-date-time 2013 3 31 3)
-             (to-default-time-zone (date-time 2013 3 31 1))))
-      (is (= (local-date-time 2013 10 26 2)
-             (to-default-time-zone (date-time 2013 10 26 0))))
-      (is (= (local-date-time 2013 10 27 2)
-             (to-default-time-zone (date-time 2013 10 27 1)))))))
+  (let [summer-time-change (js/Date. (.getTime (local-date-time 2013 3 31 3)))]
+    (when (cest? summer-time-change)
+      (testing "Central European Time daylight savings switchover in March 2013"
+        ;; https://www.timeanddate.com/news/time/europe-starts-dst-2013.html
+        ;; DST starts at March 31, 2am (02:00) local time, when clocks move forward to 3am (03:00).
+        ;; CET -> CEST
+        (testing "1am day before"
+          (is (= (local-date-time 2013 3 30 1)
+                 (to-default-time-zone (date-time 2013 3 30 0)))))
+        (testing "1am"
+          (is (= (local-date-time 2013 3 31 1)
+                 (to-default-time-zone (date-time 2013 3 31 0)))))
+        (testing "2am (move forward)"
+          (is (= (local-date-time 2013 3 31 2)
+                 (to-default-time-zone (date-time 2013 3 31 1)))))
+        (testing "2:01am"
+          (is (= (local-date-time 2013 3 31 2 1)
+                 (to-default-time-zone (date-time 2013 3 31 1 1))))
+          ;; 2:01am on March 31, 2013 doesn't really exist in Amsterdam
+          ;; at 2am the clocks moved forward to 3am.
+          (is (= (local-date-time 2013 3 31 2 1)
+                 (local-date-time 2013 3 31 3 1))))
+        (testing "3am"
+          (is (= (local-date-time 2013 3 31 3)
+                 (to-default-time-zone (date-time 2013 3 31 1)))))
+        (testing "3:01am"
+          (is (= (local-date-time 2013 3 31 3 1)
+                 (to-default-time-zone (date-time 2013 3 31 1 1))))))
+
+      (testing "Central Europe Time daylight savings switchover in October 2013"
+        ;; Beware! Different Browsers have different timezone databases
+        ;; PhantomJS says that the switch from CEST to CET happened at 2am on 27 October
+        ;; Node, Chrome, and Firefox say that the switch happened at 3am on 27 October
+        ;; Phantom is wrong here.
+
+        ;; From https://www.timeanddate.com/news/time/europe-ends-dst-2013.html
+        ;; Central Europe Time (CET), observed in countries including France, Germany,
+        ;; Austria, Italy, Switzerland, Netherlands, Norway, Poland, Hungary, and Spain.
+        ;; UTC offset: UTC +1 hr / UTC +2 hrs (Standard Time / DST)
+        ;; DST ends at 3:00 a.m. (03:00) local time, when clocks move back 1 hour to 2:00 a.m. (02:00).
+
+        (comment
+          ;; Useful functions to run when debugging these tests:
+          (prn (.-timeZone (.resolvedOptions (js/Intl.DateTimeFormat))))
+          (prn "Local dates:")
+          (prn (str (js/Date. (.getTime (local-date-time 2013 10 27 1)))))
+          (prn (str (js/Date. (.getTime (local-date-time 2013 10 27 2)))))
+          (prn (str (js/Date. (.getTime (local-date-time 2013 10 27 2 59)))))
+          (prn (str (js/Date. (.getTime (local-date-time 2013 10 27 3)))))
+
+          ;; In Phantom JS
+          "Local dates:"
+          "Sun Oct 27 2013 02:00:00 GMT+0200 (CEST)"
+          "Sun Oct 27 2013 02:00:00 GMT+0100 (CET)"
+          "Sun Oct 27 2013 02:59:00 GMT+0100 (CET)"
+          "Sun Oct 27 2013 03:00:00 GMT+0100 (CET)"
+
+          ;; In Node
+          "Local dates:"
+          "Sun Oct 27 2013 01:00:00 GMT+0200 (Central European Summer Time)"
+          "Sun Oct 27 2013 02:00:00 GMT+0200 (Central European Summer Time)"
+          "Sun Oct 27 2013 02:59:00 GMT+0200 (Central European Summer Time)"
+          "Sun Oct 27 2013 03:00:00 GMT+0100 (Central European Standard Time)")
+
+        (testing "3am day before switchover"
+          (is (= (local-date-time 2013 10 26 3)
+                 (to-default-time-zone (date-time 2013 10 26 1)))))
+        (testing "1am in Amsterdam"
+          (is (= (local-date-time 2013 10 27 1)
+                 (to-default-time-zone (date-time 2013 10 26 23)))))
+        (testing "2am in Amsterdam"
+          (is (= (local-date-time 2013 10 27 2)
+                 (to-default-time-zone (date-time 2013 10 27 0)))))
+        (testing "2:59am in Amsterdam (last minute of Central European Summer Time (CEST)"
+          (is (= (local-date-time 2013 10 27 2 59)
+                 (to-default-time-zone (date-time 2013 10 27 0 59)))))
+        (testing "3am in Amsterdam (switch back to Central European Standard Time (CET)"
+          (is (= (local-date-time 2013 10 27 3)
+                 (to-default-time-zone (date-time 2013 10 27 2)))))))))
 
 (deftest test-day-of-week
   (let [d (date-time 2010 4 24)]
