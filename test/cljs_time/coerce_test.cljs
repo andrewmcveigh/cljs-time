@@ -119,7 +119,17 @@
   (is (= (date/DateTime. 1998 3 25 0 0 55 0) (to-local-date-time 893462455000)))
   (is (= (date/DateTime. 1998 3 25 10 20 30 400) (to-local-date-time "1998-04-25T10:20:30.400Z"))))
 
+(defn to-date-from-date
+  [d]
+  (-> d
+      (to-date)
+      (from-date)
+      (instant->map)))
+
 (deftest test-to-date-2
-  (is (apply = (map #(instant->map (from-date %))
-                    [(to-date (cljs-time.core/now))
-                     (to-date (cljs-time.core/time-now))]))))
+  (let [now (cljs-time.core/*ms-fn*)]
+    ;; We create a raw Date as the base for both of these types, as
+    ;; the tests will occasionally fail if you cross the millisecond boundary
+    ;; after running (now) and before running (time-now)
+    (is (= (to-date-from-date (doto (cljs-time.core/now) (.setTime now)))
+           (to-date-from-date (doto (cljs-time.core/time-now) (.setTime now)))))))
