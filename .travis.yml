@@ -2,7 +2,7 @@ language: java
 install: make deps
 script: make clean test
 jdk:
-  - oraclejdk8
+  - openjdk8
   - openjdk11
 cache:
   directories:
