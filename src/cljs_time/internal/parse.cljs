@@ -129,7 +129,14 @@
 (defn parse-millis
   ([limit] (parse-millis 1 limit))
   ([lower upper]
-   (fn [s] (parse-period s :millis lower upper))))
+   (fn [s]
+     (let [[n s] (read-while #(re-find #"\d" %) s)
+           [n s]
+           (if (>= (count n) lower)
+             [(js/parseInt (apply str (take (min upper 3) n))) (concat (drop upper n) s)]
+             [(js/parseInt (apply str (take 3 n))) s])]
+       [[:millis n] s])
+     )))
 
 (defn timezone-adj [sign hh mm]
   (let [hh (js/parseInt hh 10)
@@ -228,6 +235,7 @@
     (case pattern
       "S"    (parse-millis 1 2)
       "SSS"  (parse-millis 3 3)
+      "SSSS" (parse-millis 9)
       "s"    (parse-seconds 1 2)
       "ss"   (parse-seconds 2 2)
       "m"    (parse-minutes 1 2)
@@ -307,7 +315,7 @@
   (if (and weekyear weekyear-week)
     (let [date (Date. weekyear 0 4)]
       (.add date (Interval. 0 0 (* 7 (dec weekyear-week))))
-      (.add date (Interval. 0 0 (- (or day-of-week 1) 
+      (.add date (Interval. 0 0 (- (or day-of-week 1)
                                    (inc (mod (dec (.getDay date)) 7)))))
       (-> date-map
           (assoc :years (.getYear date))

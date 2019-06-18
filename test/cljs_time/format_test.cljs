@@ -77,7 +77,11 @@
   (is (= [2002 10 2 13 0 0 0]
          (utc-int-vec
           (format/parse (:rfc822 formatters)
-                        "Wed, 02 Oct 2002 15:00:00 +0200")))))
+                        "Wed, 02 Oct 2002 15:00:00 +0200"))))
+  (is (= [2018 3 27 10 44 23 22]
+         (utc-int-vec
+          (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ss.SSSSZZ")
+                        "2018-03-27T10:44:23.022787+00:00")))))
 
 (deftest unparse-test
   (let [date (from-date #inst "2013-08-29T00:00:00.000-00:00")]
@@ -378,11 +382,11 @@
 
 (deftest weekyear-week-day-test
   (let [fmt (format/formatters :weekyear-week-day)]
-    (is (= "2015-W01-1" 
+    (is (= "2015-W01-1"
            (format/unparse fmt (time/date-time 2014 12 29))))
-    (is (= "2015-W01-2" 
+    (is (= "2015-W01-2"
            (format/unparse fmt (time/date-time 2014 12 30))))
-    (is (= "2015-W01-7" 
+    (is (= "2015-W01-7"
            (format/unparse fmt (time/date-time 2015 1 4))))
     (is (= "2009-W53-7"
            (format/unparse fmt (time/date-time 2010 1 3))))
