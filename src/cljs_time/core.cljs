@@ -312,6 +312,16 @@ expected."}
   []
   (doto (goog.date.UtcDateTime.) (.setTime 0)))
 
+(defn min-date
+  "Minimum of the provided DateTimes."
+  [dt & dts]
+  (reduce #(if (before? %1 %2) %1 %2) dt dts))
+
+(defn max-date
+  "Maximum of the provided DateTimes."
+  [dt & dts]
+  (reduce #(if (after? %1 %2) %1 %2) dt dts))
+
 (defn date-midnight
   "Constructs and returns a new DateTime at midnight in UTC.
 
