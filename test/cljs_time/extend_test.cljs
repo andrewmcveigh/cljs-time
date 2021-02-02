@@ -1,7 +1,6 @@
 (ns cljs-time.extend-test
-  (:require-macros
-   [cljs.test :refer [deftest is]])
   (:require
+   [cljs.test :refer-macros [deftest is]]
    [cljs-time.core :as time]
    [cljs-time.extend :as extend])
   (:import

@@ -20,3 +20,9 @@ out/
 clojurescript/
 doc/
 bin/
+.calva/
+.clj-kondo/
+.lsp/
+.shadow-cljs/
+node_modules/
+yarn.lock

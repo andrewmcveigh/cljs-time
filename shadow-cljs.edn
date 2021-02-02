@@ -1,0 +1,21 @@
+{:source-paths
+ ["src" "test" "perf"]
+
+ :dependencies
+ []
+
+ :repositories
+ {"central" {:url "https://maven.aliyun.com/nexus/content/groups/public/"}
+  "clojars" {:url "https://mirrors.ustc.edu.cn/clojars/"}}
+
+ :builds
+ {:app {:target :node-library
+        :output-dir "target"
+        :compiler-options {:infer-externs true}
+        :devtools {:repl-init-ns cljs-time.core
+                   :repl-pprint true}}
+  
+  :test {:target :node-test
+         :output-to "target/test.js"
+         :compiler-options {:infer-externs true}
+         :autorun   true}}}

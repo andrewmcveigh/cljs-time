@@ -20,7 +20,7 @@
 (deftest parse-test
   (is (= [2013 8 28 14 26 0 0]
          (utc-int-vec
-           (format/parse (formatter "do MMM yyyy HH:mm") "28th August 2013 14:26"))))
+          (format/parse (formatter "do MMM yyyy HH:mm") "28th August 2013 14:26"))))
   (is
    (= :invalid-date
       (try
@@ -81,7 +81,31 @@
   (is (= [2018 3 27 10 44 23 22]
          (utc-int-vec
           (format/parse (formatter "yyyy-MM-dd'T'HH:mm:ss.SSSSZZ")
-                        "2018-03-27T10:44:23.022787+00:00")))))
+                        "2018-03-27T10:44:23.022787+00:00"))))
+  (is (= [2021 1 31 00 00 00 00]
+         (utc-int-vec
+          (format/parse (formatter "yyyy-MM-dd, E")
+                        "2021-01-31, Sun"))))
+  (is (= [2021 1 31 00 00 00 00]
+         (utc-int-vec
+          (format/parse (formatter "yyyy-MM-dd, EEEE")
+                        "2021-01-31, Sunday"))))
+  (is (= [2021 1 31 00 00 00 00]
+         (utc-int-vec
+          (format/parse (formatter "E, yyyy-MM-dd")
+                        "Sun, 2021-01-31"))))
+  (is (= [2021 1 31 00 00 00 00]
+         (utc-int-vec
+          (format/parse (formatter "EEEE, yyyy-MM-dd")
+                        "Sunday, 2021-01-31"))))
+  (is (= [2021 2 1 00 00 00 00]
+         (utc-int-vec
+          (format/parse (formatter "EEE, yyyy-MM-dd")
+                        "Mon, 2021-02-01"))))
+  (is (= [2021 2 1 00 00 00 00]
+         (utc-int-vec
+          (format/parse (formatter "yyyy-MM-dd, EEE")
+                        "2021-02-01, Mon")))))
 
 (deftest unparse-test
   (let [date (from-date #inst "2013-08-29T00:00:00.000-00:00")]
