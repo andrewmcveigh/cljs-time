@@ -50,14 +50,14 @@
         millis?  (when millis (<= 0 millis 999))
         weekyear-week? (when weekyear-week (<= 1 weekyear-week 53))
         day-of-week? (when day-of-week (<= 1 day-of-week 7))]
-    (if (->> [months? days? hours? minutes? seconds? millis? 
+    (if (->> [months? days? hours? minutes? seconds? millis?
               weekyear-week? day-of-week?]
              (remove nil?)
              (every? true?))
       (if (not (and (or years months days)
-                    (or weekyear weekyear-week day-of-week)))
+                    (or weekyear weekyear-week)))
         d
-        (throw 
+        (throw
          (ex-info "Mixing year, month, day and week-year week-number fields"
                   {:type :invalid-date :date d
                    :errors {}})))

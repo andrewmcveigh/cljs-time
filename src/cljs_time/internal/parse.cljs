@@ -192,13 +192,13 @@
        [[:meridiem (keyword meridiem)] (string/join s)]))))
 
 (defn parse-period-name [s period periods short?]
-  (let [periods (concat periods (map #(subs % 0 3) periods))
-        [m s] (->> periods
+  (let [all-periods (concat periods (map #(subs % 0 3) periods))
+        [m s] (->> all-periods
                    (map #(-> [% (replace s (re-pattern (str \^ %)) "")]))
                    (remove (comp (partial = s) second))
                    (first))]
     (if m
-      [[period (mod (i/index-of periods m) 12)] s]
+      [[period (mod (i/index-of all-periods m) (count periods))] s]
       (throw (ex-info (str "Could not parse " (name period) " name")
                       {:type :parse-error
                        :sub-type :period-match-erroro
@@ -210,8 +210,10 @@
     (-> (parse-period-name s :months i/months short?)
         (update-in [0 1] inc))))
 
-(defn parse-day-name [short?]
-  (fn [s] (parse-period-name s :days i/days short?)))
+(defn parse-day-of-week-name [short?]
+  (fn [s] 
+    (let [[[period value] s] (parse-period-name s :day-of-week i/days short?)]
+      [[period (if (= value 0) 7 value)] s])))
 
 (defn parse-quoted [quoted]
   (let [qpat (re-pattern (apply str \^ quoted))]
@@ -264,9 +266,9 @@
       "xxxx" (parse-weekyear 4 4)
       "w"    (parse-weekyear-week 1 2)
       "ww"   (parse-weekyear-week 2 2)
-      "E"    (parse-day-name true)
-      "EEE"  (parse-day-name true)
-      "EEEE" (parse-day-name false)
+      "E"    (parse-day-of-week-name true)
+      "EEE"  (parse-day-of-week-name true)
+      "EEEE" (parse-day-of-week-name false)
       "e"    (parse-day-of-week 1 2)
       "a"    (parse-meridiem)
       "A"    (parse-meridiem)

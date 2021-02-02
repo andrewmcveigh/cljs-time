@@ -82,8 +82,13 @@
         v2-avg (run-perf v2)]
     {:v1-avg-ms v1-avg :v2-avg-ms v2-avg}))
 
+(defn run
+  ([] (run old-version new-version))
+  ([v1 v2]
+    (println
+      "Average runs:"
+      (pr-str (compare v1 v2)))))
+
 (comment
-  
-  (compare old-version new-version)
-  
-  )
+
+  (compare old-version new-version))
