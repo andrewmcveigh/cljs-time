@@ -1,4 +1,5 @@
-# cljs-time [![Build Status](https://travis-ci.org/andrewmcveigh/cljs-time.svg?branch=master)](https://travis-ci.org/andrewmcveigh/cljs-time)
+# cljs-time
+## Fork from https://github.com/andrewmcveigh/cljs-time
 
 A date and time library for ClojureScript, imitating the API of the
 [clj-time](https://github.com/clj-time/clj-time) library.
@@ -17,25 +18,11 @@ object return a copy, leaving the referenced date object alone. In the
 future, immutable date objects will be preferred.
 
 ## Artifacts
-
-`cljs-time` artifacts are [released to Clojars](https://clojars.org/com.andrewmcveigh/cljs-time).
-
-If you are using Maven, add the following repository definition to your `pom.xml`:
-
-``` xml
-<repository>
-  <id>clojars.org</id>
-  <url>http://clojars.org/repo</url>
-</repository>
-```
-
-### The Most Recent Release
-
-With Leiningen:
-
+Update your **deps.edn** to use:
 ``` clj
-;; Stable
-[com.andrewmcveigh/cljs-time "0.5.2"]
+{:deps
+ {logseq/cljs-time
+  {:git/url "https://github.com/logseq/cljs-time" :sha "xxxx"}}}
 ```
 
 ## Bugs and Enhancements
@@ -277,24 +264,11 @@ And by the magic of protocols you can pass in an isoformat string and get the un
 
 Running the tests:
 
-    $ boot test-all
-
-OR
-
-    $ boot auto-test
+    $ shadow-cljs compile test
 
 ### Getting a REPL
 
-    $ boot repl # (or jack-in from cider/etc)
-
-``` clojure
-    boot.user> (node-repl)
-    clojurescript node.js repl server listening on 56950
-    to quit, type: :cljs/quit
-    nil
-    cljs.user> (+ 1 1)
-    2
-```
+    $ shadow-cljs watch app
 
 ## Documentation
 
